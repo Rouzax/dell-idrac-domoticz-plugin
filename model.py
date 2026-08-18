@@ -99,6 +99,14 @@ def _number(value) -> float | None:
     return None
 
 
+def _int(value) -> int | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int | float):
+        return int(value)
+    return None
+
+
 def parse_sensors(payload: dict) -> dict:
     out = {}
     for member in payload.get("Members", []):
@@ -154,7 +162,7 @@ def parse_system(payload: dict) -> SystemInfo:
         health=_health(payload),
         boot_state=boot.get("LastState"),
         model=payload.get("Model"),
-        cpu_count=int(processors.get("Count") or 0),
+        cpu_count=_int(processors.get("Count")) or 0,
         rollups=rollups,
     )
 
@@ -189,10 +197,10 @@ def parse_drives(payload: dict) -> list:
                 id=node["Id"],
                 name=node.get("Name", node["Id"]),
                 media_type=node.get("MediaType"),
-                capacity_bytes=node.get("CapacityBytes"),
+                capacity_bytes=_int(node.get("CapacityBytes")),
                 health=_health(node),
                 failure_predicted=bool(node.get("FailurePredicted")),
-                life_left_pct=node.get("PredictedMediaLifeLeftPercent"),
+                life_left_pct=_int(node.get("PredictedMediaLifeLeftPercent")),
             )
         )
     return out
@@ -219,12 +227,11 @@ def parse_nics(payload: dict) -> list:
     for node in payload.get("Members", []):
         if not isinstance(node, dict) or "Id" not in node:
             continue
-        speed = node.get("SpeedMbps")
         out.append(
             Nic(
                 id=node["Id"],
                 link_status=node.get("LinkStatus"),
-                speed_mbps=int(speed) if isinstance(speed, int | float) else None,
+                speed_mbps=_int(node.get("SpeedMbps")),
             )
         )
     return out
@@ -240,9 +247,8 @@ def parse_chassis(payload: dict) -> ChassisInfo:
 
 def parse_dell_attributes(payload: dict) -> DellAttrs:
     attrs = payload.get("Attributes") or {}
-    powered_on = attrs.get("ServerOS.1.ServerPoweredOnTime")
     return DellAttrs(
         accumulative_power=_number(attrs.get("ServerPwrMon.1.AccumulativePower")),
         peak_watts=_number(attrs.get("ServerPwrMon.1.PeakPowerWatts")),
-        powered_on_seconds=int(powered_on) if isinstance(powered_on, int | float) else None,
+        powered_on_seconds=_int(attrs.get("ServerOS.1.ServerPoweredOnTime")),
     )

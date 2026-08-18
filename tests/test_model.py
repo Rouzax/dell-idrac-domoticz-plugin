@@ -61,6 +61,29 @@ def test_parse_drives_reads_health_signals():
     assert all(d.media_type in ("SSD", "HDD") for d in by_id.values())
 
 
+def test_parse_volumes_reads_raid_type_and_health():
+    volumes = model.parse_volumes(load("t550", "volumes"))
+    assert len(volumes) == 2
+    assert all(v.raid_type == "RAID5" for v in volumes)
+    assert all(v.health == "OK" for v in volumes)
+    assert all(v.id and v.name for v in volumes)
+
+
+def test_parse_volumes_ignores_unexpanded_members():
+    assert model.parse_volumes({"Members": [{"@odata.id": "/redfish/v1/x"}]}) == []
+
+
+def test_malformed_numbers_become_none_never_zero():
+    """A 0 is a real measurement; a malformed value must not masquerade as one."""
+    drives = model.parse_drives(
+        {"Drives": [{"Id": "D", "CapacityBytes": "lots", "PredictedMediaLifeLeftPercent": "n/a"}]}
+    )
+    assert drives[0].capacity_bytes is None
+    assert drives[0].life_left_pct is None
+    assert model.parse_system({"ProcessorSummary": {"Count": "two"}}).cpu_count == 0
+    assert model.parse_nics({"Members": [{"Id": "N", "SpeedMbps": "fast"}]})[0].speed_mbps is None
+
+
 def test_parse_nics_reads_link_status():
     nics = model.parse_nics(load("t550", "ethernet"))
     assert len(nics) == 2
