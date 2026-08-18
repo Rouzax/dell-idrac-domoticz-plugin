@@ -44,7 +44,8 @@ def test_parse_system_reads_state_and_rollups():
 
 def test_parse_power_reads_psu_input_watts():
     psus = model.parse_power(load("t550", "power"))
-    assert [p.id for p in psus] == ["PS1 Status", "PS2 Status"]
+    assert [p.id for p in psus] == ["PSU.0", "PSU.1"]
+    assert [p.name for p in psus] == ["PS1 Status", "PS2 Status"]
     assert psus[0].input_watts == 69.5
     assert psus[0].health == "OK"
 

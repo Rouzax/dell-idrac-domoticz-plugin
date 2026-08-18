@@ -164,9 +164,12 @@ def parse_power(payload: dict) -> list:
     for node in payload.get("PowerSupplies", []):
         status = node.get("Status") or {}
         name = node.get("Name", "")
+        # MemberId is a bare ordinal ("0", "1"). unit_alloc is one namespace shared by every
+        # resource type, so the id is namespaced to stay collision-proof and readable there.
+        member_id = node.get("MemberId")
         out.append(
             Psu(
-                id=node.get("MemberId") or name,
+                id=f"PSU.{member_id}" if member_id is not None else name,
                 name=name,
                 input_watts=_number(node.get("PowerInputWatts")),
                 health=status.get("Health"),
