@@ -1,0 +1,1486 @@
+{
+ "@odata.context": "/redfish/v1/$metadata#SensorCollection.SensorCollection",
+ "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors",
+ "@odata.type": "#SensorCollection.SensorCollection",
+ "Description": "Collection of Sensors",
+ "Members": [
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/SystemBoardPwrConsumption",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "SystemBoardPwrConsumption",
+   "Name": "System Board Pwr Consumption",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#SystemBoardPwrConsumption",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 144.0,
+   "ReadingType": "Power",
+   "ReadingUnits": "W",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 2328
+    },
+    "UpperCautionUser": {
+     "Reading": 2328
+    },
+    "UpperCritical": {
+     "Reading": 2568
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/SystemBoardIOUsage",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "SystemBoardIOUsage",
+   "Name": "System Board IO Usage",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#SystemBoardIOUsage",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 0.0,
+   "ReadingType": "Percent",
+   "ReadingUnits": "%",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 101
+    },
+    "UpperCautionUser": {
+     "Reading": 101
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/SystemBoardMEMUsage",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "SystemBoardMEMUsage",
+   "Name": "System Board MEM Usage",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#SystemBoardMEMUsage",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 0.0,
+   "ReadingType": "Percent",
+   "ReadingUnits": "%",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 101
+    },
+    "UpperCautionUser": {
+     "Reading": 101
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/SystemBoardSYSUsage",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "SystemBoardSYSUsage",
+   "Name": "System Board SYS Usage",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#SystemBoardSYSUsage",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 6.0,
+   "ReadingType": "Percent",
+   "ReadingUnits": "%",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 101
+    },
+    "UpperCautionUser": {
+     "Reading": 101
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/SystemBoardCPUUsage",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "SystemBoardCPUUsage",
+   "Name": "System Board CPU Usage",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#SystemBoardCPUUsage",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 5.0,
+   "ReadingType": "Percent",
+   "ReadingUnits": "%",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 101
+    },
+    "UpperCautionUser": {
+     "Reading": 101
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/CPU1VCOREVR",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "CPU1VCOREVR",
+   "Name": "CPU1 VCORE VR",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#CPU1VCOREVR",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "CPU",
+   "Reading": 1.81,
+   "ReadingType": "Voltage",
+   "ReadingUnits": "V",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/CPU1MEM0123VR",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "CPU1MEM0123VR",
+   "Name": "CPU1 MEM0123 VR",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#CPU1MEM0123VR",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "CPU",
+   "Reading": 1.21,
+   "ReadingType": "Voltage",
+   "ReadingUnits": "V",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/CPU1MEM4567VR",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "CPU1MEM4567VR",
+   "Name": "CPU1 MEM4567 VR",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#CPU1MEM4567VR",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "CPU",
+   "Reading": 1.21,
+   "ReadingType": "Voltage",
+   "ReadingUnits": "V",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PS1Current1",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "PS1Current1",
+   "Name": "PS1 Current 1",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#PS1Current1",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "PowerSupply",
+   "Reading": 0.4,
+   "ReadingType": "Current",
+   "ReadingUnits": "A",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PS2Current2",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "PS2Current2",
+   "Name": "PS2 Current 2",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#PS2Current2",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "PowerSupply",
+   "Reading": 0.4,
+   "ReadingType": "Current",
+   "ReadingUnits": "A",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PS1Voltage",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "PS1Voltage",
+   "Name": "PS1 Voltage 1",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#PS1Voltage",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "PowerSupply",
+   "Reading": 232.0,
+   "ReadingType": "Voltage",
+   "ReadingUnits": "V",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PS2Voltage",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "PS2Voltage",
+   "Name": "PS2 Voltage 2",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#PS2Voltage",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "PowerSupply",
+   "Reading": 232.0,
+   "ReadingType": "Voltage",
+   "ReadingUnits": "V",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Fan.Embedded.1",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "Fan.Embedded.1",
+   "Name": "System Board Fan1",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "0x17||Fan.Embedded.1",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 1800.0,
+   "ReadingType": "Rotational",
+   "ReadingUnits": "RPM",
+   "SpeedRPM": 1800,
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 840
+    },
+    "LowerCritical": {
+     "Reading": 480
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Fan.Embedded.3",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "Fan.Embedded.3",
+   "Name": "System Board Fan3",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "0x17||Fan.Embedded.3",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 1800.0,
+   "ReadingType": "Rotational",
+   "ReadingUnits": "RPM",
+   "SpeedRPM": 1800,
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 840
+    },
+    "LowerCritical": {
+     "Reading": 480
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Fan.Embedded.4",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "Fan.Embedded.4",
+   "Name": "System Board Fan4",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "0x17||Fan.Embedded.4",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 1800.0,
+   "ReadingType": "Rotational",
+   "ReadingUnits": "RPM",
+   "SpeedRPM": 1800,
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 840
+    },
+    "LowerCritical": {
+     "Reading": 480
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/CPU1Temp",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "CPU1Temp",
+   "Name": "CPU1 Temp",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#CPU1Temp",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "CPU",
+   "Reading": 53.0,
+   "ReadingType": "Temperature",
+   "ReadingUnits": "Cel",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": 3
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": 98
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/InletTemp",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "InletTemp",
+   "Name": "Inlet Temp",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#InletTemp",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 25.0,
+   "ReadingType": "Temperature",
+   "ReadingUnits": "Cel",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 3
+    },
+    "LowerCautionUser": {
+     "Reading": 3
+    },
+    "LowerCritical": {
+     "Reading": -7
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 33
+    },
+    "UpperCautionUser": {
+     "Reading": 33
+    },
+    "UpperCritical": {
+     "Reading": 42
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/SystemBoardExhaustTemp",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "SystemBoardExhaustTemp",
+   "Name": "System Board Exhaust Temp",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#SystemBoardExhaustTemp",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 33.0,
+   "ReadingType": "Temperature",
+   "ReadingUnits": "Cel",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 8
+    },
+    "LowerCritical": {
+     "Reading": 3
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": 75
+    },
+    "UpperCritical": {
+     "Reading": 80
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PSU.Slot.1_MaximumFrequency",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Power Supply 1 MaximumFrequency",
+   "Id": "PSU.Slot.1_MaximumFrequency",
+   "Name": "MaximumFrequencySensor",
+   "Oem": {},
+   "PhysicalContext": "PowerSupply",
+   "Reading": 63,
+   "ReadingType": "Frequency",
+   "ReadingUnits": "Hz",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PSU.Slot.2_MaximumFrequency",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Power Supply 2 MaximumFrequency",
+   "Id": "PSU.Slot.2_MaximumFrequency",
+   "Name": "MaximumFrequencySensor",
+   "Oem": {},
+   "PhysicalContext": "PowerSupply",
+   "Reading": 63,
+   "ReadingType": "Frequency",
+   "ReadingUnits": "Hz",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PSU.Slot.1_InputPower",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Power Supply 1 InputPower",
+   "Id": "PSU.Slot.1_InputPower",
+   "Name": "InputPowerSensor",
+   "Oem": {},
+   "PhysicalContext": "PowerSupply",
+   "Reading": 69.5,
+   "ReadingType": "Power",
+   "ReadingUnits": "W",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PSU.Slot.2_InputPower",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Power Supply 2 InputPower",
+   "Id": "PSU.Slot.2_InputPower",
+   "Name": "InputPowerSensor",
+   "Oem": {},
+   "PhysicalContext": "PowerSupply",
+   "Reading": 74.875,
+   "ReadingType": "Power",
+   "ReadingUnits": "W",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PSU.Slot.1_OutputPower",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Power Supply 1 OutputPower",
+   "Id": "PSU.Slot.1_OutputPower",
+   "Name": "OutputPowerSensor",
+   "Oem": {},
+   "PhysicalContext": "PowerSupply",
+   "Reading": 65.625,
+   "ReadingType": "Power",
+   "ReadingUnits": "W",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/PSU.Slot.2_OutputPower",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Power Supply 2 OutputPower",
+   "Id": "PSU.Slot.2_OutputPower",
+   "Name": "OutputPowerSensor",
+   "Oem": {},
+   "PhysicalContext": "PowerSupply",
+   "Reading": 66.125,
+   "ReadingType": "Power",
+   "ReadingUnits": "W",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Temperature.DIMM_MAX",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Max DIMM Temperature",
+   "Id": "Temperature.DIMM_MAX",
+   "Name": "Max DIMM Temperature",
+   "Oem": {},
+   "PhysicalContext": "MemorySubsystem",
+   "Reading": 42.0,
+   "ReadingType": "Temperature",
+   "ReadingUnits": "Cel",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/CPU2Temp",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "CPU2Temp",
+   "Name": "CPU2 Temp",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "iDRAC.Embedded.1#CPU2Temp",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "CPU",
+   "Reading": 61.0,
+   "ReadingType": "Temperature",
+   "ReadingUnits": "Cel",
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": null
+    },
+    "LowerCritical": {
+     "Reading": 3
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": 98
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Fan.Embedded.2",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "Fan.Embedded.2",
+   "Name": "System Board Fan2",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "0x17||Fan.Embedded.2",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 1800.0,
+   "ReadingType": "Rotational",
+   "ReadingUnits": "RPM",
+   "SpeedRPM": 1800,
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 840
+    },
+    "LowerCritical": {
+     "Reading": 480
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Fan.Embedded.5",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "Fan.Embedded.5",
+   "Name": "System Board Fan5",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "0x17||Fan.Embedded.5",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 1800.0,
+   "ReadingType": "Rotational",
+   "ReadingUnits": "RPM",
+   "SpeedRPM": 1800,
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 840
+    },
+    "LowerCritical": {
+     "Reading": 480
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  },
+  {
+   "@odata.context": "/redfish/v1/$metadata#Sensor.Sensor",
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Sensors/Fan.Embedded.6",
+   "@odata.type": "#Sensor.v1_9_0.Sensor",
+   "Description": "Instance of Sensor Id",
+   "Id": "Fan.Embedded.6",
+   "Name": "System Board Fan6",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellOemSensor.v1_0_0.DellOemSensor",
+     "CurrentState": "Normal",
+     "DeviceID": "0x17||Fan.Embedded.6",
+     "PossibleStates": [
+      "Unknown",
+      "Fatal",
+      "Normal",
+      "Upper Fatal",
+      "Upper Critical",
+      "Upper Non-Critical",
+      "Lower Non-Critical",
+      "Lower Critical",
+      "Lower Fatal"
+     ],
+     "PossibleStates@odata.count": 9,
+     "RequestedState": "NotApplicable"
+    }
+   },
+   "PhysicalContext": "SystemBoard",
+   "Reading": 1800.0,
+   "ReadingType": "Rotational",
+   "ReadingUnits": "RPM",
+   "SpeedRPM": 1800,
+   "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+   },
+   "Thresholds": {
+    "LowerCaution": {
+     "Reading": 840
+    },
+    "LowerCritical": {
+     "Reading": 480
+    },
+    "LowerFatal": {
+     "Reading": null
+    },
+    "UpperCaution": {
+     "Reading": null
+    },
+    "UpperCritical": {
+     "Reading": null
+    },
+    "UpperFatal": {
+     "Reading": null
+    }
+   }
+  }
+ ],
+ "Members@odata.count": 29,
+ "Name": "SensorCollection"
+}
