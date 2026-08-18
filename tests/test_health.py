@@ -41,11 +41,9 @@ def test_dell_reports_error_where_redfish_reports_critical():
 
 
 def test_real_psu_failure_turns_red_and_names_ps():
-    """Regression guard for the whole point of this device: naming the culprit.
+    """The device must name the failing subsystem, not merely raise the level.
 
-    Captured live with one PSU AC cord pulled. Before "Error" was mapped, alert_level fell
-    through to grey, the naming loop filtered it out, and the device reported a bare
-    "Critical" that never said which subsystem had failed.
+    Runs against a capture taken live with one PSU AC cord pulled.
     """
     info = model.parse_system(load("degraded", "system"))
     level, text = health.system_health(info.health, info.rollups)
@@ -64,6 +62,19 @@ def test_real_failed_psu_status_maps_red():
     psus = model.parse_power(load("degraded", "power"))
     dead = next(p for p in psus if p.input_watts == 0.0)
     assert health.simple_health(dead.health, "OK")[0] == health.LEVEL_RED
+
+
+def test_non_recoverable_maps_red():
+    assert health.alert_level("Non-Recoverable") == health.LEVEL_RED
+    assert health.alert_level("NonRecoverable") == health.LEVEL_RED
+
+
+def test_an_unmapped_status_surfaces_its_raw_value():
+    """An absent status and an unrecognised one must be distinguishable in the UI."""
+    level, text = health.simple_health("Frobnicated", "OK")
+    assert level == health.LEVEL_GREY
+    assert "Frobnicated" in text
+    assert health.simple_health(None, "OK") == (health.LEVEL_GREY, "Unknown")
 
 
 def test_system_health_unknown_when_nothing_is_known():

@@ -18,6 +18,8 @@ _LEVEL_BY_STATUS = {
     "error": LEVEL_RED,
     "failed": LEVEL_RED,
     "fatal": LEVEL_RED,
+    "non-recoverable": LEVEL_RED,
+    "nonrecoverable": LEVEL_RED,
 }
 
 # The aggregate rollup raises the level like any other, but naming it as a "subsystem" would
@@ -69,7 +71,10 @@ def simple_health(status: str | None, ok_text: str) -> tuple:
     if level == LEVEL_OK:
         return level, ok_text
     if level == LEVEL_GREY:
-        return level, "Unknown"
+        # Keep the raw string when there IS one. An absent status and a status whose spelling
+        # this module does not know must not look identical in the Domoticz UI, otherwise the
+        # next vocabulary gap is invisible until someone investigates the hardware by hand.
+        return level, f"Unknown ({status})" if status else "Unknown"
     return level, str(status)
 
 
