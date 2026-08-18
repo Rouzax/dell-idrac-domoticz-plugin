@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures"
-PROFILES = ("t550", "dual")
+PROFILES = ("t550", "dual", "degraded")
 
 
 def load(profile: str, name: str) -> dict:
