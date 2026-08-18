@@ -1,0 +1,29 @@
+[project]
+name = "dell-idrac-domoticz-plugin"
+version = "0.1.0"
+description = "Dell iDRAC (Redfish) monitoring plugin for Domoticz"
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "SIM", "UP"]
+# plugin.py's docstring is the XML manifest; its lines are exact per the spec.
+per-file-ignores = { "plugin.py" = ["E501"] }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=. --cov-report=term-missing"
+
+[tool.pyright]
+include = ["."]
+exclude = ["tests", "docs", "_TEMP", "tools"]
+# Flat plugin layout: modules import siblings by bare name (e.g. `import model`).
+extraPaths = ["."]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+
+[tool.coverage.run]
+omit = ["tests/*", "tools/*", "plugin.py"]
