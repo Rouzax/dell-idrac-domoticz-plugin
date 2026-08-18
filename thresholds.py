@@ -35,7 +35,8 @@ def describe(threshold, units: str) -> str:
         parts.append(f"warning above {_fmt(threshold.upper_non_critical)}{unit_suffix}")
     elif threshold.upper_critical is not None:
         estimated = synth_warn(threshold.upper_critical)
-        parts.append(f"warning above {_fmt(estimated)}{unit_suffix} (estimated)")
+        if estimated is not None:
+            parts.append(f"warning above {_fmt(estimated)}{unit_suffix} (estimated)")
     if threshold.upper_critical is not None:
         parts.append(f"critical above {_fmt(threshold.upper_critical)}{unit_suffix}")
 
