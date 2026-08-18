@@ -51,7 +51,13 @@ def test_counts_scale_with_hardware():
     assert len(t550.nics) == 2
 
 
-def test_everything_is_sorted_for_stable_unit_allocation():
-    inv = _inventory("dual")
-    assert list(inv.drives) == sorted(inv.drives)
-    assert list(inv.fans) == sorted(inv.fans)
+def test_drive_order_is_natural_not_lexicographic():
+    """Bay 2 must precede bay 10. Unit numbers follow this order and are persisted for good."""
+    bays = [d.split(":")[0].replace("Disk.Bay.", "") for d in _inventory("dual").drives]
+    assert bays == [str(n) for n in range(24)]
+
+
+def test_order_is_deterministic_across_repeated_discovery():
+    first, second = _inventory("dual"), _inventory("dual")
+    assert first.drives == second.drives
+    assert first.fans == second.fans
