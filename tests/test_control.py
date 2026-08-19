@@ -36,43 +36,65 @@ ALLOWABLE = [
 ]
 
 
-def test_only_graceful_actions_without_the_hard_toggle():
-    actions = control.available_actions(ALLOWABLE, allow_hard=False)
-    reset_types = [rt for _, rt in actions]
-    assert "GracefulShutdown" in reset_types
-    assert "ForceOff" not in reset_types
-    assert "PowerCycle" not in reset_types
+def test_a_level_always_means_the_same_action():
+    """The safety property this module exists for.
+
+    Domoticz stores selector levels in scenes and timers that are replayed for years. A level's
+    meaning must not depend on what the server happens to advertise today.
+    """
+    assert control.level_to_reset_type(10) == "On"
+    assert control.level_to_reset_type(20) == "GracefulShutdown"
+    assert control.level_to_reset_type(30) == "GracefulRestart"
+    assert control.level_to_reset_type(40) == "ForceOff"
+    assert control.level_to_reset_type(50) == "PowerCycle"
 
 
-def test_hard_actions_appear_when_enabled():
-    reset_types = [rt for _, rt in control.available_actions(ALLOWABLE, allow_hard=True)]
-    assert "ForceOff" in reset_types
-    assert "PowerCycle" in reset_types
+def test_the_mapping_does_not_shift_when_the_advertised_set_shrinks():
+    """Regression guard: a shrinking AllowableValues must not renumber anything."""
+    for allowable in (ALLOWABLE, ["On", "ForceOff"], [], ["GracefulShutdown"]):
+        assert control.level_to_reset_type(30) == "GracefulRestart"
+        assert control.level_to_reset_type(40) == "ForceOff"
+        # Availability changes; meaning does not.
+        control.is_available("GracefulRestart", allowable, True)
 
 
-def test_actions_the_server_does_not_advertise_are_dropped():
-    actions = control.available_actions(["On", "GracefulShutdown"], allow_hard=True)
-    assert [rt for _, rt in actions] == ["On", "GracefulShutdown"]
+def test_out_of_range_and_malformed_levels_are_refused():
+    for bad in (0, -10, 15, 999, 60, None, "x"):
+        assert control.level_to_reset_type(bad) is None
 
 
 def test_nmi_is_never_offered_even_though_the_server_allows_it():
-    """An NMI crashes the host on purpose. It is not a power action a timer should reach."""
-    for allow_hard in (False, True):
-        actions = control.available_actions(ALLOWABLE, allow_hard=allow_hard)
-        assert "Nmi" not in [rt for _, rt in actions]
+    """An NMI crashes the host on purpose. No level maps to it, under any setting."""
+    mapped = {control.level_to_reset_type(lvl) for lvl in range(10, 200, 10)}
+    assert "Nmi" not in mapped
+    assert not any(rt == "Nmi" for _, rt in control.ACTION_SLOTS)
 
 
-def test_level_maps_to_a_reset_type():
-    actions = control.available_actions(ALLOWABLE, allow_hard=False)
-    assert control.level_to_reset_type(0, actions) is None
-    assert control.level_to_reset_type(10, actions) == actions[0][1]
-    assert control.level_to_reset_type(20, actions) == actions[1][1]
+def test_hard_actions_are_unavailable_unless_the_gate_is_on():
+    assert control.is_available("ForceOff", ALLOWABLE, allow_hard=False) is False
+    assert control.is_available("PowerCycle", ALLOWABLE, allow_hard=False) is False
+    assert control.is_available("ForceOff", ALLOWABLE, allow_hard=True) is True
 
 
-def test_an_out_of_range_level_is_refused_not_clamped():
-    actions = control.available_actions(ALLOWABLE, allow_hard=False)
-    assert control.level_to_reset_type(990, actions) is None
-    assert control.level_to_reset_type(-10, actions) is None
+def test_an_action_the_server_does_not_advertise_is_unavailable():
+    assert control.is_available("GracefulRestart", ["On"], allow_hard=True) is False
+    assert control.is_available("On", ["On"], allow_hard=True) is True
+
+
+def test_nothing_is_available_when_the_server_advertised_nothing():
+    for rt in ("On", "GracefulShutdown", "ForceOff"):
+        assert control.is_available(rt, [], allow_hard=True) is False
+
+
+def test_level_names_always_have_every_slot_so_positions_never_move():
+    full = control.level_names(ALLOWABLE, allow_hard=True).split("|")
+    limited = control.level_names(["On"], allow_hard=False).split("|")
+    assert len(full) == len(limited) == len(control.ACTION_SLOTS) + 1
+    assert full[0] == limited[0] == "Idle"
+    # Same position, same action, regardless of availability.
+    assert limited[4].startswith("Force Off")
+    assert "(unavailable)" in limited[4]
+    assert limited[1] == "Power On"
 
 
 def test_no_control_devices_when_control_is_off():

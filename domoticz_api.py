@@ -49,6 +49,12 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
 
         unit.nValue = up.nvalue
         unit.sValue = up.svalue
+        if up.options and unit.Options != up.options:
+            # Options are recomputed every poll for the control selector. Setting them only at
+            # creation would freeze the menu labels, so the UI could describe an action that is no
+            # longer offered.
+            unit.Options = up.options
+            unit.Update(Log=False, UpdateOptions=True)
         owned = unit.Name == names.get(str(up.unit))
         if owned and unit.Name != up.name:
             unit.Name = up.name

@@ -313,10 +313,18 @@ def onCommand(DeviceID, Unit, Command, Level, Color):
         return
     if Unit != control.UNIT_POWER_CONTROL:
         return
-    actions = control.available_actions(_state.allowable, cfg.allow_hard_power)
-    reset_type = control.level_to_reset_type(Level, actions)
+    reset_type = control.level_to_reset_type(Level)
     if reset_type is None:
-        Domoticz.Error(f"power command refused: level {Level} is not an offered action")
+        Domoticz.Error(f"power command refused: level {Level} maps to no action")
+        return
+    # Availability is checked HERE, not by renumbering the menu, so a stored level in a scene or
+    # timer always means what it meant when it was saved.
+    if not control.is_available(reset_type, _state.allowable, cfg.allow_hard_power):
+        Domoticz.Error(
+            f"power command refused: {reset_type} is not currently available "
+            f"(server-advertised={bool(_state.allowable)}, hard actions allowed="
+            f"{cfg.allow_hard_power})"
+        )
         return
     try:
         _state.client.post(
