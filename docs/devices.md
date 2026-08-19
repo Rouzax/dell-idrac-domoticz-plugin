@@ -81,6 +81,7 @@ more devices:
 | Storage Power | `TotalStoragePower` |
 | Fan Power | `TotalFanPower` |
 | PCIe Power | `TotalPciePower` |
+| FPGA Power | `TotalFPGAPower` |
 
 Measured on a PowerEdge T550 at idle: CPU 44 W, storage 64 W, memory 5 W, fans 3.4 W. The
 storage figure is often the surprise, since a full drive bay can draw more than the processor.
@@ -126,15 +127,10 @@ to the [fan bar maximum](settings.md#devices) you set:
 
 ![Fan devices with their threshold bars](assets/fan-bars.png)
 
-Two limitations worth knowing:
+Temperature devices get bands too, drawn from the server's own warning and critical limits.
 
-- **Temperature cards may not draw bars.** The plugin writes the ranges and Domoticz stores them,
-  and you will see them pre-filled if you open the bar editor on a temperature device, but stock
-  Domoticz does not currently render them on the card: it emits its bar element only for utility
-  devices. Whether you see temperature bars therefore depends on your Domoticz version and theme.
-  The plugin's side is the same either way.
-- **Nothing else gets a bar.** Percentages, power supply wattage and the energy counter carry no
-  server-reported thresholds, so any bands there would be invented rather than measured.
+**Nothing else gets a bar.** Percentages, power supply wattage and the energy counter carry no
+server-reported thresholds, so any bands there would be invented rather than measured.
 
 A **synthesized** threshold is never drawn. The description labels an estimated warning limit
 `(estimated)`, but a coloured band carries no label, so drawing one would present a guess as a

@@ -515,6 +515,7 @@ def test_component_power_devices_are_created_from_telemetry():
     assert got[planner.UNIT_FAN_POWER].svalue == "3.4"
     # PCIe genuinely reads zero here. A reported zero is a value, not an absence.
     assert got[planner.UNIT_PCIE_POWER].svalue == "0.0"
+    assert got[planner.UNIT_FPGA_POWER].svalue == "0.0"
 
 
 def test_no_component_power_devices_without_telemetry():
@@ -531,6 +532,7 @@ def test_no_component_power_devices_without_telemetry():
         planner.UNIT_STORAGE_POWER,
         planner.UNIT_FAN_POWER,
         planner.UNIT_PCIE_POWER,
+        planner.UNIT_FPGA_POWER,
     ):
         assert unit not in got
 
@@ -648,3 +650,16 @@ def test_scientific_notation_survives_the_parser():
     """A real CPUUsage average arrived as "9.14149423131894e-13"."""
     payload = {"MetricValues": [{"MetricId": "U", "MetricValue": "9.14149423131894e-13"}]}
     assert model.metric_value(model.parse_metric_report(payload), "U") == 9.14149423131894e-13
+
+
+def test_fpga_power_is_real_on_some_machines():
+    """Zero on the development server, 43 W on a third machine's capture. A reported zero is a
+    value, so the device appears either way; only an absent metric suppresses it."""
+    parts = _parts("t550")
+    parts["metrics"] = {"TotalFPGAPower": 43.0}
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert got[planner.UNIT_FPGA_POWER].svalue == "43.0"
+    assert got[planner.UNIT_FPGA_POWER].name == "FPGA Power"

@@ -189,6 +189,7 @@ _WANTED_METRICS = frozenset(
         "TotalStoragePower",
         "TotalFanPower",
         "TotalPciePower",
+        "TotalFPGAPower",
     }
 )
 # A machine managed by OpenManage can expose a dozen reports, several of them large (SMART data,

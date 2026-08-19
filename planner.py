@@ -29,6 +29,7 @@ UNIT_MEMORY_POWER = 15
 UNIT_STORAGE_POWER = 16
 UNIT_FAN_POWER = 17
 UNIT_PCIE_POWER = 18
+UNIT_FPGA_POWER = 19
 
 # Domoticz built-in icon ids. The plugin API's Image= sets the CustomImage column
 # (hardware/plugins/PythonObjectEx.cpp), and domoticz_api applies it only when a unit is CREATED,
@@ -144,6 +145,7 @@ _POWER_METRIC_UNITS = (
     (UNIT_STORAGE_POWER, "TotalStoragePower", "Storage Power"),
     (UNIT_FAN_POWER, "TotalFanPower", "Fan Power"),
     (UNIT_PCIE_POWER, "TotalPciePower", "PCIe Power"),
+    (UNIT_FPGA_POWER, "TotalFPGAPower", "FPGA Power"),
 )
 
 _TEMP_UNITS = {

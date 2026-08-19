@@ -77,7 +77,7 @@ not describe, and a sensor that reports no reading produces no device at all rat
 | Power Redundancy | Alert | The redundancy group's own health, which can be Critical while every individual PSU still reads OK. Reads in plain English, for example `Redundant, 2 supplies (1 needed)`. Removing a supply makes the iDRAC drop the group entirely, which shows as a grey `Not reported` rather than a stale green tile. |
 
 **Where the iDRAC licence allows it**, five more devices break system power down by subsystem:
-CPU, memory, storage, fan and PCIe power. This comes from Dell's telemetry service, which needs an
+CPU, memory, storage, fan, PCIe and FPGA power. This comes from Dell's telemetry service, which needs an
 iDRAC Datacenter licence, or OpenManage Enterprise Advanced, and must be switched on. On any other
 machine the devices simply do not appear. When it is available, Server Power also reports actual
 wall draw instead of the mainboard sensor.
@@ -95,11 +95,9 @@ until you delete it, and the freed unit number is not reused.
 
 ### Bar graphs
 
-Fan cards show a coloured bar using the server's own speed thresholds: red below critical, amber
-to the warning speed, green above. Temperature devices get bands too, though whether they are
-drawn depends on your Domoticz version and theme: stock Domoticz stores them but renders its bar
-only on utility devices. Devices with no server-reported thresholds get no bar rather than an
-invented one.
+Fan and temperature cards show a coloured bar built from the server's own thresholds: red beyond
+critical, amber in the warning band, green in between. Devices with no server-reported thresholds
+get no bar rather than an invented one.
 
 ### Icons
 
