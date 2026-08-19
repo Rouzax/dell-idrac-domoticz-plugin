@@ -296,8 +296,18 @@ def plan(
             )
         )
 
-    for entry in redundancy:
-        level, text = health.simple_health(entry.health, entry.mode or "OK")
+    # Only the first group is reported; a chassis exposing several loses the rest.
+    redundancy_state = None
+    if redundancy:
+        redundancy_state = health.redundancy_health(redundancy[0])
+    elif psus:
+        # Pulling a supply EMPTIES this list rather than marking it Critical, measured on real
+        # hardware. Emitting nothing left the tile showing its last value, so it sat green
+        # claiming redundancy at the moment redundancy was lost. Grey rather than red because
+        # the plugin cannot know WHY the group vanished; System Health carries the fault text.
+        redundancy_state = (health.LEVEL_GREY, "Not reported")
+    if redundancy_state is not None:
+        level, text = redundancy_state
         out.append(
             DeviceUpdate(
                 unit=UNIT_REDUNDANCY,
@@ -307,7 +317,6 @@ def plan(
                 svalue=text,
             )
         )
-        break
 
     for sensor_id in inventory.cpu_temps:
         sensor = sensors[sensor_id]

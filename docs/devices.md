@@ -69,6 +69,31 @@ real history:
 
 ![Temperature devices with history](assets/temperatures.png)
 
+## Bar graphs
+
+Where the server reports thresholds, they also become a coloured bar across the top of the device
+card, so the safe band is visible at a glance instead of being read out of the description text.
+
+Fan cards show red below the critical speed, amber up to the warning speed, and green from there
+to the [fan bar maximum](settings.md#devices) you set:
+
+![Fan devices with their threshold bars](assets/fan-bars.png)
+
+Two limitations worth knowing:
+
+- **Temperature cards may not draw bars.** The plugin writes the ranges and Domoticz stores them,
+  and you will see them pre-filled if you open the bar editor on a temperature device, but stock
+  Domoticz does not currently render them on the card: it emits its bar element only for utility
+  devices. Whether you see temperature bars therefore depends on your Domoticz version and theme.
+  The plugin's side is the same either way.
+- **Nothing else gets a bar.** Percentages, power supply wattage and the energy counter carry no
+  server-reported thresholds, so any bands there would be invented rather than measured.
+
+A **synthesized** threshold is never drawn. The description labels an estimated warning limit
+`(estimated)`, but a coloured band carries no label, so drawing one would present a guess as a
+reported limit. That is why the description and the bar can legitimately disagree on a sensor
+whose warning threshold the server omits.
+
 ## System Health
 
 This is deliberately a single tile rather than one per subsystem, because a wall of green tiles is
@@ -93,6 +118,17 @@ is the part that matters:
 Reports the health of the redundancy **group**, which is a different question from whether each
 PSU is healthy. On the development machine this device read Critical while both power supplies
 individually read OK, which is exactly the condition a per-component view cannot show you.
+
+It reads in plain English rather than in Redfish terms, for example `Redundant, 2 supplies
+(1 needed)`. The mode, the number of supplies in the set and the number needed all come from the
+server. A fault reads `Redundancy lost` or `Redundancy degraded`.
+
+!!! note "When a supply is physically removed"
+    Pulling a power supply does not mark the group Critical: the iDRAC **removes the redundancy
+    group entirely**. The device then reads a grey `Not reported`, rather than keeping its last
+    value and claiming redundancy that no longer exists. It is grey rather than red because the
+    plugin cannot tell why the group vanished; look at System Health, which carries the iDRAC's
+    own fault text in that situation.
 
 Only the first redundancy group is reported. Chassis that expose several groups will show only
 one.

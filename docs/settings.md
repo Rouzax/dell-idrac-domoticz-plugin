@@ -47,9 +47,24 @@ creating and updating those devices; it does **not** delete devices that already
 | **Power supplies** | on | One wattage device per PSU. |
 | **Network interfaces** | on | One alert device per NIC port. |
 | **Drive life warning (%)** | 10 | Warn when a drive reports less predicted media life remaining than this. Only applies to drives that report the figure at all, which in practice means SSDs. |
+| **Fan bar maximum (RPM)** | 6000 | Top of the scale on fan bar graphs. `0` switches fan bars off. See below. |
 
 Turning off a family also skips the requests that fetch it, so on a server with many drives,
 switching **Physical drives** off measurably shortens the slow tier.
+
+### Why the fan bar maximum is a setting
+
+Redfish does not report a maximum fan speed. `MaxReadingRange` is null and the Dell OEM fan
+endpoints do not exist, so it cannot be detected. Measured on a PowerEdge T550 held at 100%, the
+three chassis fans peaked at 4920, 4920 and **5520** RPM, so even one machine has no single
+maximum, and 1U servers run far faster again.
+
+Pick a value a little above what your fans actually reach. If you do not know, run them at full
+speed once and read the devices, or leave the default.
+
+A fan spinning faster than this setting is not a problem: the bar simply reads full and stays
+green. That is the correct reading for a fan, where a **low** speed is the fault and a high one
+just means it is working hard.
 
 ## Control
 

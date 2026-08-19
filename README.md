@@ -49,6 +49,7 @@ Devices appear after the first successful poll, which is one poll interval later
 | Power supplies | on | Create a device per PSU. |
 | Network interfaces | on | Create a device per NIC port. |
 | Drive life warning (%) | 10 | Warn when an SSD reports less predicted media life remaining than this. |
+| Fan bar maximum (RPM) | 6000 | Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no fan maximum, so it cannot be detected. A faster fan still reads full and green. |
 | Allow Force Off and Power Cycle | off | Adds the two hard power actions. Inert unless Allow Control is Yes. |
 | Verify TLS certificate | off | See [Security](#security). |
 | Request Timeout (s) | 30 | Per-request timeout. Do not lower it below about 10; see [Troubleshooting](#troubleshooting). |
@@ -73,7 +74,7 @@ not describe, and a sensor that reports no reading produces no device at all rat
 | Uptime | Custom (hours) | Time since the host was powered on. |
 | Boot Status | Text | For example `OSRunning`. |
 | Chassis Intrusion | Alert | |
-| Power Redundancy | Alert | Reports the redundancy group's own health, which can be Critical while every individual PSU still reads OK. |
+| Power Redundancy | Alert | The redundancy group's own health, which can be Critical while every individual PSU still reads OK. Reads in plain English, for example `Redundant, 2 supplies (1 needed)`. Removing a supply makes the iDRAC drop the group entirely, which shows as a grey `Not reported` rather than a stale green tile. |
 
 **Per discovered component:** one temperature device per CPU, one for the hottest DIMM, one fan
 device per fan, one watts device per PSU, one alert per RAID volume, per NIC port and per physical
@@ -85,6 +86,14 @@ was derived by the plugin because the server did not report one.
 
 Devices keep the unit numbers they were first given. If you remove hardware, its device stays
 until you delete it, and the freed unit number is not reused.
+
+### Bar graphs
+
+Fan cards show a coloured bar using the server's own speed thresholds: red below critical, amber
+to the warning speed, green above. Temperature devices get bands too, though whether they are
+drawn depends on your Domoticz version and theme: stock Domoticz stores them but renders its bar
+only on utility devices. Devices with no server-reported thresholds get no bar rather than an
+invented one.
 
 ### Icons
 

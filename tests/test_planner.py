@@ -322,6 +322,56 @@ def test_a_device_without_usable_thresholds_gets_no_bar():
     assert got[planner.UNIT_INLET].color == ""
 
 
+def test_power_redundancy_reads_in_plain_english():
+    parts = _parts("t550")
+    parts["redundancy"] = [
+        model.Redundancy(
+            name="System Board PS Redundancy",
+            mode="N+m",
+            health="OK",
+            min_needed=1,
+            supplies=2,
+        )
+    ]
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert got[planner.UNIT_REDUNDANCY].svalue == "Redundant, 2 supplies (1 needed)"
+    assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_OK
+
+
+def test_a_vanished_redundancy_group_is_reported_not_left_stale():
+    """Pulling a PSU EMPTIES Power.Redundancy rather than marking it Critical.
+
+    Measured on real hardware. Looping over the empty list emitted nothing, so the tile kept its
+    last value and sat green saying "N+m" at the exact moment redundancy was lost. A chassis that
+    has power supplies but reports no redundancy group now says so. Grey, not red: the plugin
+    cannot know why the group vanished, and System Health carries the iDRAC's own fault text.
+    """
+    parts = _parts("t550")
+    parts["redundancy"] = []
+    assert parts["psus"], "the profile must have PSUs for this to mean anything"
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_GREY
+    assert got[planner.UNIT_REDUNDANCY].svalue == "Not reported"
+
+
+def test_no_redundancy_device_on_a_chassis_with_no_power_supplies():
+    """No PSUs means nothing to be redundant about, so no device rather than a grey one."""
+    parts = _parts("t550")
+    parts["redundancy"] = []
+    parts["psus"] = []
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert planner.UNIT_REDUNDANCY not in got
+
+
 def test_bars_appear_only_where_the_server_reports_thresholds():
     """Temperatures and fans report thresholds, so they get bars. Nothing else does.
 
@@ -411,16 +461,6 @@ def test_redundancy_device_is_planned_when_reported():
     )
     assert got[planner.UNIT_REDUNDANCY].type_name == "Alert"
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_RED
-
-
-def test_no_redundancy_device_when_the_chassis_reports_none():
-    parts = _parts("t550")
-    parts["redundancy"] = []
-    inv = _inventory(parts)
-    got = _by_unit(
-        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    )
-    assert planner.UNIT_REDUNDANCY not in got
 
 
 def test_fault_messages_replace_bare_subsystem_names_in_system_health():

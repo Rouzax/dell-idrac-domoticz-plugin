@@ -91,3 +91,36 @@ def drive_health(drive, life_floor_pct: int) -> tuple:
         notes.append("failure predicted")
         level = max(level, LEVEL_ORANGE)
     return level, ", ".join(notes) if notes else "OK"
+
+
+# Redfish's Redundancy Mode enum, in words. An unrecognised mode is shown verbatim rather than
+# guessed at, the same rule the rest of this module follows for unknown vocabulary.
+_REDUNDANCY_MODE_TEXT = {
+    "n+m": "Redundant",
+    "failover": "Failover",
+    "sharing": "Load sharing",
+    "sparing": "Sparing",
+    "notredundant": "Not redundant",
+}
+
+
+def redundancy_health(entry) -> tuple:
+    """Level and text for a power redundancy group.
+
+    The mode alone renders as "N+m", which is Redfish jargon on a dashboard. Where the server
+    also reports how many supplies are in the set and how many are needed, both are included;
+    neither number is inferred.
+    """
+    level = alert_level(entry.health)
+    if level == LEVEL_GREY:
+        return level, f"Unknown ({entry.health})" if entry.health else "Unknown"
+    if level != LEVEL_OK:
+        return level, "Redundancy lost" if level == LEVEL_RED else "Redundancy degraded"
+
+    mode = entry.mode or ""
+    text = _REDUNDANCY_MODE_TEXT.get(mode.strip().lower(), mode) or "Redundant"
+    if entry.supplies:
+        text += f", {entry.supplies} supplies"
+        if entry.min_needed:
+            text += f" ({entry.min_needed} needed)"
+    return level, text

@@ -125,3 +125,65 @@ def test_drive_health_critical_status_beats_predicted_failure():
 def test_drive_health_missing_life_is_not_treated_as_zero():
     level, _ = health.drive_health(_drive(life_left_pct=None), life_floor_pct=10)
     assert level == health.LEVEL_OK
+
+
+def _red(mode="N+m", status="OK", min_needed=1, supplies=2):
+    return model.Redundancy(
+        name="System Board PS Redundancy",
+        mode=mode,
+        health=status,
+        min_needed=min_needed,
+        supplies=supplies,
+    )
+
+
+def test_redundancy_text_is_plain_english_with_the_counts():
+    """ "N+m" is Redfish jargon and was leaking straight onto the dashboard.
+
+    Every number here is reported by the server: MinNumNeeded and the size of the RedundancySet.
+    """
+    assert health.redundancy_health(_red()) == (
+        health.LEVEL_OK,
+        "Redundant, 2 supplies (1 needed)",
+    )
+
+
+def test_redundancy_text_translates_every_redfish_mode():
+    modes = {
+        "N+m": "Redundant",
+        "Failover": "Failover",
+        "Sharing": "Load sharing",
+        "Sparing": "Sparing",
+        "NotRedundant": "Not redundant",
+    }
+    for mode, expected in modes.items():
+        level, text = health.redundancy_health(_red(mode=mode))
+        assert text.startswith(expected), (mode, text)
+        assert level == health.LEVEL_OK
+
+
+def test_an_unrecognised_mode_is_shown_verbatim_rather_than_guessed():
+    _, text = health.redundancy_health(_red(mode="Frobnicated"))
+    assert text.startswith("Frobnicated")
+
+
+def test_redundancy_faults_say_what_happened():
+    assert health.redundancy_health(_red(status="Critical")) == (
+        health.LEVEL_RED,
+        "Redundancy lost",
+    )
+    assert health.redundancy_health(_red(status="Warning")) == (
+        health.LEVEL_ORANGE,
+        "Redundancy degraded",
+    )
+
+
+def test_redundancy_without_counts_still_reads_sensibly():
+    level, text = health.redundancy_health(_red(min_needed=None, supplies=None))
+    assert (level, text) == (health.LEVEL_OK, "Redundant")
+
+
+def test_redundancy_with_an_unknown_status_is_grey():
+    level, text = health.redundancy_health(_red(status=None))
+    assert level == health.LEVEL_GREY
+    assert "Unknown" in text

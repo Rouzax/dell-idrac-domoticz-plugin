@@ -287,6 +287,9 @@ class Redundancy:
     name: str
     mode: str | None
     health: str | None
+    # Reported by the server alongside the mode, and far more readable than "N+m" on its own.
+    min_needed: int | None = None
+    supplies: int | None = None
 
 
 def parse_faults(payload: dict) -> list:
@@ -310,5 +313,18 @@ def parse_redundancy(payload: dict) -> list:
         if not name:
             continue
         status = node.get("Status") or {}
-        out.append(Redundancy(name=name, mode=node.get("Mode"), health=status.get("Health")))
+        # The set's own member count is what is actually installed; MaxNumSupported is the
+        # chassis capability, so it is only a fallback.
+        supplies = _int(node.get("RedundancySet@odata.count"))
+        if supplies is None:
+            supplies = _int(node.get("MaxNumSupported"))
+        out.append(
+            Redundancy(
+                name=name,
+                mode=node.get("Mode"),
+                health=status.get("Health"),
+                min_needed=_int(node.get("MinNumNeeded")),
+                supplies=supplies,
+            )
+        )
     return out
