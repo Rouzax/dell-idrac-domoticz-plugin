@@ -1,5 +1,6 @@
 """Unit allocation and the ordered list of device updates. Pure."""
 
+import json
 from dataclasses import dataclass, field
 
 import health
@@ -52,6 +53,8 @@ class DeviceUpdate:
     svalue: str
     options: dict = field(default_factory=dict)
     description: str = ""
+    # Domoticz bar ranges, written to the device's Color field. Empty means no bar.
+    color: str = ""
     image: int = 0
     switchtype: int = 0
 
@@ -131,14 +134,29 @@ def _fmt_reading(value: float) -> str:
     return str(value)
 
 
+def _temp_bar(threshold) -> str:
+    """A temperature card reads Color as an object KEYED BY SENSOR, not as a bare array.
+
+    Verified against the core: dzBarService.loadForKey indexes the parsed Color by sensor key
+    (www/app/widgets/dzBar.js), where the utility card's getBarRanges expects a bare array. The
+    wrong shape produces no bar and no error, so it would fail silently.
+    """
+    bands = thresholds.bar_ranges(threshold)
+    if not bands:
+        return ""
+    return json.dumps({"temp": bands}, separators=(",", ":"))
+
+
 def _temp_update(unit, sensor, name, threshold_map) -> DeviceUpdate:
+    threshold = threshold_map.get(sensor.name)
     return DeviceUpdate(
         unit=unit,
         type_name="Temperature",
         name=name,
         nvalue=0,
         svalue=_fmt_reading(sensor.reading),
-        description=thresholds.describe(threshold_map.get(sensor.name), "C"),
+        description=thresholds.describe(threshold, "C"),
+        color=_temp_bar(threshold),
     )
 
 

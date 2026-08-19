@@ -48,3 +48,65 @@ def test_real_fan_thresholds_render_descending():
     assert text == "warning below 840 RPM; critical below 480 RPM"
     # A fan has no upper bound reported, so nothing may be invented for one.
     assert "above" not in text
+
+
+def _th(lc=None, ln=None, un=None, uc=None):
+    return model.Threshold(
+        upper_critical=uc, upper_non_critical=un, lower_critical=lc, lower_non_critical=ln
+    )
+
+
+def test_bar_ranges_uses_the_reported_thresholds_as_band_edges():
+    """The T550's Inlet Temp reports all four thresholds, so every edge comes from the server.
+
+    Colours are Domoticz's own bar defaults (dzBar.js seedDefaults) plus an amber for the
+    warning band, so a plugin-supplied bar looks like a hand-made one.
+    """
+    bands = thresholds.bar_ranges(_th(lc=-7, ln=3, un=33, uc=42))
+    assert [(b["from"], b["to"]) for b in bands] == [
+        (-11.9, -7),
+        (-7, 3),
+        (3, 33),
+        (33, 42),
+        (42, 46.9),
+    ]
+    assert [b["color"] for b in bands] == [
+        thresholds.BAR_CRITICAL,
+        thresholds.BAR_WARNING,
+        thresholds.BAR_OK,
+        thresholds.BAR_WARNING,
+        thresholds.BAR_CRITICAL,
+    ]
+
+
+def test_bar_ranges_skips_bands_whose_thresholds_are_absent():
+    """CPU1 Temp reports no lower warning, so there is no lower amber band and none is invented."""
+    bands = thresholds.bar_ranges(_th(lc=3, un=83.3, uc=98))
+    assert [(b["from"], b["to"], b["color"]) for b in bands] == [
+        (-6.5, 3, thresholds.BAR_CRITICAL),
+        (3, 83.3, thresholds.BAR_OK),
+        (83.3, 98, thresholds.BAR_WARNING),
+        (98, 107.5, thresholds.BAR_CRITICAL),
+    ]
+
+
+def test_bar_ranges_needs_both_critical_edges():
+    """Without both criticals the axis span cannot be derived, so no bar beats a guessed one."""
+    assert thresholds.bar_ranges(_th(lc=3)) is None
+    assert thresholds.bar_ranges(_th(uc=98)) is None
+    assert thresholds.bar_ranges(None) is None
+    assert thresholds.bar_ranges(_th()) is None
+
+
+def test_bar_ranges_rejects_a_degenerate_span():
+    """Equal criticals would make a zero-width axis, which dzBar discards anyway."""
+    assert thresholds.bar_ranges(_th(lc=50, uc=50)) is None
+
+
+def test_bar_ranges_are_contiguous_and_ascending():
+    bands = thresholds.bar_ranges(_th(lc=-7, ln=3, un=33, uc=42))
+    # Deliberately not strict: pairing a list with its own tail is one shorter by design.
+    for earlier, later in zip(bands, bands[1:], strict=False):
+        # dzBar draws one continuous axis; a gap would misplace the needle.
+        assert earlier["to"] == later["from"]
+        assert earlier["from"] < earlier["to"]

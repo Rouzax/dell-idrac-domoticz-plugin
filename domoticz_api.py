@@ -28,7 +28,7 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
         if unit is None:
             if not allow_create:
                 continue
-            Domoticz.Unit(
+            new_unit = Domoticz.Unit(
                 Name=up.name,
                 DeviceID=dev_id,
                 Unit=up.unit,
@@ -38,7 +38,15 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
                 Switchtype=up.switchtype,
                 Description=up.description,
                 Used=1,
-            ).Create()
+            )
+            # Color carries the bar ranges. It is NOT a constructor keyword: CUnitEx's init
+            # kwlist (hardware/plugins/PythonObjectEx.cpp) has no "color" member, so passing it
+            # above would be silently dropped. Create() does persist self->Color into the INSERT,
+            # so it has to be assigned here first. Set at creation ONLY, like the icon: bands a
+            # user tuned by hand must survive every later poll.
+            if up.color:
+                new_unit.Color = up.color
+            new_unit.Create()
             unit = devices[dev_id].Units[up.unit]
             unit.nValue = up.nvalue
             unit.sValue = up.svalue

@@ -30,6 +30,10 @@ class Unit:
         self.nValue = 0
         self.sValue = ""
         self.TimedOut = 0
+        # Color is a real CUnitEx member but is deliberately NOT a constructor keyword here,
+        # because it is not one in the core either: CUnitEx's init kwlist has no "color", so
+        # Domoticz.Unit(Color=...) is silently dropped. Assign it on the object before Create().
+        self.Color = ""
 
     def Create(self):
         dev = Devices.setdefault(self.DeviceID, _FakeDevice(self.DeviceID))

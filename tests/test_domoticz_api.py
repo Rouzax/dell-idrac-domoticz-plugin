@@ -218,3 +218,41 @@ def test_save_state_preserves_other_configuration_keys():
     Domoticz.Configuration({"other": "keep"})
     domoticz_api.save_state(domoticz_api.load_state())
     assert Domoticz.Configuration()["other"] == "keep"
+
+
+def test_bar_ranges_are_written_at_creation():
+    """Color is NOT a constructor keyword on DomoticzEx.Unit.
+
+    Checked against the core: CUnitEx's init kwlist (hardware/plugins/PythonObjectEx.cpp) has no
+    "color" member, so Domoticz.Unit(Color=...) would be silently dropped. Create() does persist
+    self->Color into the INSERT, so it has to be assigned on the object first.
+    """
+    domoticz_stub.Devices.clear()
+    update = planner.DeviceUpdate(
+        unit=4,
+        type_name="Temperature",
+        name="Inlet Temp",
+        nvalue=0,
+        svalue="27.0",
+        color='{"temp":[{"from":0,"to":40,"color":"#66bb6a"}]}',
+    )
+    domoticz_api.apply_updates(domoticz_stub.Devices, "dev", [update], {})
+    assert domoticz_stub.Devices["dev"].Units[4].Color == update.color
+
+
+def test_bar_ranges_are_never_rewritten_on_an_existing_device():
+    """Same rule as icons: bands a user tuned by hand must survive every later poll."""
+    domoticz_stub.Devices.clear()
+    update = planner.DeviceUpdate(
+        unit=4,
+        type_name="Temperature",
+        name="Inlet Temp",
+        nvalue=0,
+        svalue="27.0",
+        color='{"temp":[{"from":0,"to":40,"color":"#66bb6a"}]}',
+    )
+    names = domoticz_api.apply_updates(domoticz_stub.Devices, "dev", [update], {})
+    unit = domoticz_stub.Devices["dev"].Units[4]
+    unit.Color = '{"temp":[{"from":0,"to":99,"color":"#123456"}]}'
+    domoticz_api.apply_updates(domoticz_stub.Devices, "dev", [update], names)
+    assert unit.Color == '{"temp":[{"from":0,"to":99,"color":"#123456"}]}'

@@ -1,8 +1,11 @@
+import json
+
 import config
 import discovery
 import health
 import model
 import planner
+import thresholds
 from tests.fixture_loader import load
 
 
@@ -287,6 +290,65 @@ def test_power_state_is_a_read_only_alert_not_a_switch():
         planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     )[planner.UNIT_POWER_STATE]
     assert (off.nvalue, off.svalue) == (health.LEVEL_GREY, "Off")
+
+
+def test_temperature_devices_carry_bar_ranges_keyed_by_sensor():
+    """Temperature cards read Color as an OBJECT keyed by sensor, not a bare array.
+
+    Confirmed from the core: dzBarService.loadForKey parses Color and indexes it by sensor key
+    (www/app/widgets/dzBar.js), unlike the utility card which reads a bare array. Getting the
+    shape wrong yields no bar and no error.
+    """
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    payload = json.loads(got[planner.UNIT_INLET].color)
+    assert list(payload) == ["temp"]
+    assert payload["temp"] == thresholds.bar_ranges(parts["threshold_map"]["Inlet Temp"])
+    assert payload["temp"][0]["color"] == thresholds.BAR_CRITICAL
+
+
+def test_a_device_without_usable_thresholds_gets_no_bar():
+    """No bar is better than a guessed one, so Color stays empty."""
+    parts = _parts("t550")
+    parts["threshold_map"] = {}
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert got[planner.UNIT_INLET].color == ""
+
+
+def test_only_temperature_devices_carry_a_bar():
+    """Fans report no upper threshold and Redfish reports MaxReadingRange null, so a fan axis
+    could only be invented. Percentages and watts likewise. Deliberately left bare."""
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    with_bars = {u.unit for u in updates if u.color}
+    assert with_bars, "the t550 profile must produce at least one bar"
+    assert all(u.type_name == "Temperature" for u in updates if u.color)
+
+
+def test_a_bar_never_shows_a_synthesized_threshold_as_if_it_were_reported():
+    """CPU1 reports no upper warning. describe() synthesizes one and LABELS it "(estimated)".
+
+    A bar band carries no label, so drawing amber there would present an estimate as a reported
+    limit. The band is deliberately omitted instead, which is why the description and the bar
+    legitimately disagree for this sensor.
+    """
+    parts = _parts("t550")
+    threshold = parts["threshold_map"]["CPU1 Temp"]
+    assert threshold.upper_non_critical is None
+    assert "(estimated)" in thresholds.describe(threshold, "C")
+    bands = thresholds.bar_ranges(threshold)
+    assert [b["color"] for b in bands] == [
+        thresholds.BAR_CRITICAL,
+        thresholds.BAR_OK,
+        thresholds.BAR_CRITICAL,
+    ]
 
 
 def test_fans_and_uptime_get_their_icons():
