@@ -3,11 +3,12 @@ import planner
 from tests import domoticz_stub
 
 
-def _update(unit, name="X", type_name="Alert", nvalue=1, svalue="OK", description=""):
+def _update(unit, name="X", type_name="Alert", nvalue=1, svalue="OK", description="", options=None):
     return planner.DeviceUpdate(
         unit=unit,
         type_name=type_name,
         name=name,
+        options=options or {},
         nvalue=nvalue,
         svalue=svalue,
         description=description,
@@ -133,6 +134,75 @@ def test_read_prev_counter_wh_parses_the_power_energy_svalue():
 
 def test_read_prev_counter_wh_is_zero_when_absent_or_malformed():
     assert domoticz_api.read_prev_counter_wh(domoticz_stub.Devices, "dellidrac_1", 99) == 0.0
+
+
+def _spy_on_update():
+    """Record Update() kwargs. The stub's Update is a no-op, so this is the only way to see them."""
+    calls = []
+    original = domoticz_stub.Unit.Update
+
+    def spy(self, **kw):
+        calls.append(kw)
+        return original(self, **kw)
+
+    domoticz_stub.Unit.Update = spy
+    return calls, original
+
+
+def test_options_are_refreshed_when_they_change():
+    """The control selector recomputes its menu every poll.
+
+    Setting Options only at creation would freeze the labels, so the UI could name an action that
+    is not the one a level actually performs.
+    """
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        "dellidrac_1",
+        [_update(200, options={"LevelNames": "Idle|Power On"})],
+        {},
+    )
+    calls, original = _spy_on_update()
+    try:
+        domoticz_api.apply_updates(
+            domoticz_stub.Devices,
+            "dellidrac_1",
+            [_update(200, options={"LevelNames": "Idle|Power On (unavailable)"})],
+            {"200": "X"},
+        )
+    finally:
+        domoticz_stub.Unit.Update = original
+    unit = domoticz_stub.Devices["dellidrac_1"].Units[200]
+    assert unit.Options == {"LevelNames": "Idle|Power On (unavailable)"}
+    assert any(kw.get("UpdateOptions") for kw in calls), "must ask Domoticz to persist Options"
+
+
+def test_options_are_not_rewritten_when_unchanged():
+    """Steady state must not issue a device write on every poll."""
+    opts = {"LevelNames": "Idle|Power On"}
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices, "dellidrac_1", [_update(200, options=dict(opts))], {}
+    )
+    calls, original = _spy_on_update()
+    try:
+        domoticz_api.apply_updates(
+            domoticz_stub.Devices, "dellidrac_1", [_update(200, options=dict(opts))], {"200": "X"}
+        )
+    finally:
+        domoticz_stub.Unit.Update = original
+    assert not any(kw.get("UpdateOptions") for kw in calls)
+
+
+def test_a_device_with_no_options_is_untouched_by_the_refresh():
+    """apply_updates is shared by every device; only ones declaring options may be rewritten."""
+    domoticz_api.apply_updates(domoticz_stub.Devices, "dellidrac_1", [_update(4)], {})
+    calls, original = _spy_on_update()
+    try:
+        domoticz_api.apply_updates(
+            domoticz_stub.Devices, "dellidrac_1", [_update(4, svalue="53")], {"4": "X"}
+        )
+    finally:
+        domoticz_stub.Unit.Update = original
+    assert not any(kw.get("UpdateOptions") for kw in calls)
 
 
 def test_state_round_trips_through_configuration():
