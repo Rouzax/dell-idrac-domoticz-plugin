@@ -64,6 +64,7 @@
 import DomoticzEx as Domoticz
 
 import config
+import control
 import discovery
 import domoticz_api
 import energy
@@ -288,6 +289,8 @@ def onHeartbeat():
         energy_wh=counter_wh,
         **parts,
     )
+    updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
+    updates.sort(key=lambda u: u.unit)
     names = domoticz_api.apply_updates(
         devices, _state.dev_id, updates, saved.auto_names, allow_create=True
     )
@@ -297,4 +300,32 @@ def onHeartbeat():
 
 
 def onCommand(DeviceID, Unit, Command, Level, Color):
-    Domoticz.Debug(f"onCommand unit={Unit} command={Command!r} level={Level}")
+    cfg = _state.cfg
+    if cfg is None or not cfg.allow_control:
+        Domoticz.Error("command ignored: control is disabled")
+        return
+    if Unit == control.UNIT_IDENTIFY:
+        want = str(Command).strip().lower() == "on"
+        try:
+            _state.client.patch(_state.client.chassis, {"LocationIndicatorActive": want})
+        except redfish_client.RedfishError as exc:
+            Domoticz.Error(f"identify LED failed: {exc}")
+        return
+    if Unit != control.UNIT_POWER_CONTROL:
+        return
+    actions = control.available_actions(_state.allowable, cfg.allow_hard_power)
+    reset_type = control.level_to_reset_type(Level, actions)
+    if reset_type is None:
+        Domoticz.Error(f"power command refused: level {Level} is not an offered action")
+        return
+    try:
+        _state.client.post(
+            _state.client.system + "/Actions/ComputerSystem.Reset",
+            {"ResetType": reset_type},
+        )
+        # HTTP 204 means the iDRAC ACCEPTED the action, not that the server acted on it. A
+        # graceful shutdown or restart is handed to the host OS, so with no OS or agent running it
+        # returns 204 and nothing happens. The Power State device reports what actually occurred.
+        Domoticz.Status(f"power action accepted by iDRAC: {reset_type}")
+    except redfish_client.RedfishError as exc:
+        Domoticz.Error(f"power action {reset_type} refused: {exc}")

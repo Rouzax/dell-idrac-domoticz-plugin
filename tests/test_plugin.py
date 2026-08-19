@@ -1,5 +1,6 @@
 import pytest
 
+import control
 import plugin
 import redfish_client
 from tests import domoticz_stub
@@ -185,3 +186,52 @@ def test_password_never_reaches_the_log(started):
     started.client = FakeClient(fail_paths=("/Sensors",))
     _beat_once(started)
     assert not any("secret" in line for line in domoticz_stub._module._log)
+
+
+def test_no_control_devices_when_control_is_off(started):
+    _beat_once(started)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert control.UNIT_POWER_CONTROL not in units
+    assert control.UNIT_IDENTIFY not in units
+
+
+def test_command_is_refused_when_control_is_off(started):
+    _beat_once(started)
+    sent = []
+    started.client.post = lambda path, body: sent.append((path, body))
+    plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 10, "")
+    assert sent == []
+
+
+def test_control_enabled_creates_the_control_devices(started, monkeypatch):
+    monkeypatch.setitem(plugin.Parameters, "AllowControl", "true")
+    plugin.onStart()
+    plugin._state.client = FakeClient()
+    _beat_once(plugin._state)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert control.UNIT_POWER_CONTROL in units
+    assert control.UNIT_IDENTIFY in units
+
+
+def test_a_power_command_posts_the_reset_action(started, monkeypatch):
+    monkeypatch.setitem(plugin.Parameters, "AllowControl", "true")
+    plugin.onStart()
+    plugin._state.client = FakeClient()
+    _beat_once(plugin._state)
+    sent = []
+    plugin._state.client.post = lambda path, body: sent.append((path, body)) or {}
+    plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 10, "")
+    assert sent and sent[0][1]["ResetType"] == "On"
+
+
+def test_a_hard_action_level_is_refused_while_hard_actions_are_off(started, monkeypatch):
+    monkeypatch.setitem(plugin.Parameters, "AllowControl", "true")
+    monkeypatch.setitem(plugin.Parameters, "AllowHardPowerActions", "false")
+    plugin.onStart()
+    plugin._state.client = FakeClient()
+    _beat_once(plugin._state)
+    sent = []
+    plugin._state.client.post = lambda path, body: sent.append((path, body)) or {}
+    # Level 40 would be a hard action if they were enabled; only 3 graceful ones exist.
+    plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 40, "")
+    assert sent == []
