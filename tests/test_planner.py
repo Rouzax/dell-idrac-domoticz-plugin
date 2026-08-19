@@ -60,6 +60,39 @@ def test_existing_assignments_are_never_reshuffled():
     assert second["Fan.Embedded.1"] == first["Fan.Embedded.1"]
 
 
+def test_block_exhaustion_skips_the_overflow_instead_of_failing_the_whole_poll():
+    """One item that does not fit must not cost every other device its update.
+
+    Blocks are fixed ranges and a unit is never freed, so a long-lived install can exhaust one
+    through ordinary component churn. Raising here would lose the entire poll.
+    """
+    sensors = {}
+    for i in range(1, 22):
+        sensors[f"Fan.Embedded.{i}"] = model.Sensor(
+            id=f"Fan.Embedded.{i}",
+            name=f"Fan{i}",
+            reading=1000.0,
+            units="RPM",
+            health="OK",
+            physical_context="SystemBoard",
+        )
+    inv = discovery.discover(sensors=sensors, psus=[], drives=[], volumes=[], nics=[])
+    alloc = planner.assign_units(inv, {})
+    assert planner.unassigned(inv, alloc) == ("Fan.Embedded.21",)
+    parts = _parts("t550")
+    parts["sensors"] = sensors
+    updates = planner.plan(inventory=inv, alloc=alloc, cfg=_cfg(), **parts)
+    fans = [u for u in updates if planner.BLOCK_FANS <= u.unit < planner.BLOCK_FANS + 20]
+    assert len(fans) == 20
+    assert updates
+
+
+def test_nothing_is_unassigned_on_a_normal_chassis():
+    parts = _parts("dual")
+    inv = _inventory(parts)
+    assert planner.unassigned(inv, planner.assign_units(inv, {})) == ()
+
+
 def test_a_new_item_takes_the_next_free_unit_in_its_block():
     inv = discovery.Inventory(fans=("Fan.Embedded.1", "Fan.Embedded.9"))
     alloc = planner.assign_units(inv, {"Fan.Embedded.1": planner.BLOCK_FANS})

@@ -63,6 +63,25 @@ def _assign_block(ids, base: int, alloc: dict, taken: set) -> None:
                 break
 
 
+def unassigned(inventory, alloc: dict) -> tuple:
+    """Resource ids discovery found that allocation could not place.
+
+    Each block is a fixed range and a unit is never freed once taken, so a long-lived install with
+    enough component churn can exhaust one. plan() skips these rather than failing the whole poll,
+    and the caller reports them so the gap is visible instead of silent.
+    """
+    wanted = [
+        *inventory.cpu_temps,
+        *([inventory.dimm_max] if inventory.dimm_max else []),
+        *inventory.fans,
+        *inventory.psus,
+        *inventory.volumes,
+        *inventory.nics,
+        *inventory.drives,
+    ]
+    return tuple(rid for rid in wanted if rid not in alloc)
+
+
 def assign_units(inventory, alloc: dict) -> dict:
     out = dict(alloc)
     taken = set(out.values())
@@ -149,7 +168,10 @@ def plan(
     # When the iDRAC states a reason, show the reason instead of a list of subsystem initials.
     messages = [f.message for f in faults if f.message]
     if messages and level not in (health.LEVEL_OK, health.LEVEL_GREY):
-        text = "; ".join(messages)[:200]
+        joined = "; ".join(messages)
+        # Domoticz sValue is VARCHAR(200). Mark a cut so a truncated fault cannot be mistaken
+        # for a complete one.
+        text = joined if len(joined) <= 200 else joined[:197] + "..."
     out.append(
         DeviceUpdate(
             unit=UNIT_HEALTH, type_name="Alert", name="System Health", nvalue=level, svalue=text
@@ -235,24 +257,25 @@ def plan(
 
     for sensor_id in inventory.cpu_temps:
         sensor = sensors[sensor_id]
-        if sensor.reading is None:
+        unit = alloc.get(sensor_id)
+        if sensor.reading is None or unit is None:
             continue
-        out.append(_temp_update(alloc[sensor_id], sensor, sensor.name, threshold_map))
+        out.append(_temp_update(unit, sensor, sensor.name, threshold_map))
 
     if inventory.dimm_max:
         sensor = sensors[inventory.dimm_max]
-        if sensor.reading is not None:
-            out.append(
-                _temp_update(alloc[inventory.dimm_max], sensor, "Max DIMM Temp", threshold_map)
-            )
+        unit = alloc.get(inventory.dimm_max)
+        if sensor.reading is not None and unit is not None:
+            out.append(_temp_update(unit, sensor, "Max DIMM Temp", threshold_map))
 
     for sensor_id in inventory.fans:
         sensor = sensors[sensor_id]
-        if sensor.reading is None:
+        unit = alloc.get(sensor_id)
+        if sensor.reading is None or unit is None:
             continue
         out.append(
             DeviceUpdate(
-                unit=alloc[sensor_id],
+                unit=unit,
                 type_name="Custom",
                 name=sensor.name,
                 nvalue=0,
@@ -264,12 +287,13 @@ def plan(
 
     if cfg.enable_psus:
         for psu in psus:
-            if psu.input_watts is None:
+            unit = alloc.get(psu.id)
+            if psu.input_watts is None or unit is None:
                 continue
             _, text = health.simple_health(psu.health, "OK")
             out.append(
                 DeviceUpdate(
-                    unit=alloc[psu.id],
+                    unit=unit,
                     type_name="Usage",
                     name=psu.name,
                     nvalue=0,
@@ -280,10 +304,13 @@ def plan(
 
     if cfg.enable_volumes:
         for volume in volumes:
+            unit = alloc.get(volume.id)
+            if unit is None:
+                continue
             level, text = health.simple_health(volume.health, volume.raid_type or "OK")
             out.append(
                 DeviceUpdate(
-                    unit=alloc[volume.id],
+                    unit=unit,
                     type_name="Alert",
                     name=f"Volume {volume.name}",
                     nvalue=level,
@@ -293,11 +320,14 @@ def plan(
 
     if cfg.enable_nics:
         for nic in nics:
+            unit = alloc.get(nic.id)
+            if unit is None:
+                continue
             up = nic.link_status == "LinkUp"
             text = f"{nic.link_status} {nic.speed_mbps} Mb" if up else str(nic.link_status)
             out.append(
                 DeviceUpdate(
-                    unit=alloc[nic.id],
+                    unit=unit,
                     type_name="Alert",
                     name=f"NIC {nic.id}",
                     nvalue=health.LEVEL_OK if up else health.LEVEL_YELLOW,
@@ -307,10 +337,13 @@ def plan(
 
     if cfg.enable_drives:
         for drive in drives:
+            unit = alloc.get(drive.id)
+            if unit is None:
+                continue
             level, text = health.drive_health(drive, cfg.drive_life_floor)
             out.append(
                 DeviceUpdate(
-                    unit=alloc[drive.id],
+                    unit=unit,
                     type_name="Alert",
                     name=drive.name,
                     nvalue=level,
