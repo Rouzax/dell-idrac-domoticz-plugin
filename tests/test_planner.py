@@ -117,6 +117,7 @@ def _cfg(**kw):
         "enable_psus": True,
         "drive_life_floor": 10,
         "fan_bar_max": 6000,
+        "enable_drive_life": False,
         "setup_telemetry": False,
         "verify_tls": False,
         "request_timeout": 30,
@@ -131,6 +132,11 @@ def _plan(profile, cfg=None):
     inv = _inventory(parts)
     alloc = planner.assign_units(inv, {})
     return planner.plan(inventory=inv, alloc=alloc, cfg=cfg or _cfg(), **parts)
+
+
+def _in_block(unit, base):
+    """Blocks are adjacent, so a hardcoded window would spill into the next one."""
+    return base <= unit < base + planner._BLOCK_LIMITS[base]
 
 
 def _by_unit(updates):
@@ -588,14 +594,8 @@ def test_gpu_devices_are_created_one_per_card():
     got = _by_unit(
         planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     )
-    powers = [
-        u
-        for unit, u in got.items()
-        if planner.BLOCK_GPU_POWER <= unit < planner.BLOCK_GPU_POWER + 20
-    ]
-    temps = [
-        u for unit, u in got.items() if planner.BLOCK_GPU_TEMP <= unit < planner.BLOCK_GPU_TEMP + 20
-    ]
+    powers = [u for unit, u in got.items() if _in_block(unit, planner.BLOCK_GPU_POWER)]
+    temps = [u for unit, u in got.items() if _in_block(unit, planner.BLOCK_GPU_TEMP)]
     assert len(powers) == 7
     assert len(temps) == 7
     # 39100.14 mW is 39.1 W, not 39100 W.
@@ -612,7 +612,7 @@ def test_no_gpu_devices_without_gpu_metrics():
     parts["gpus"] = {}
     inv = _inventory(parts)
     got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    assert not [u for u in got if u.unit >= planner.BLOCK_GPU_POWER]
+    assert not [u for u in got if _in_block(u.unit, planner.BLOCK_GPU_POWER)]
 
 
 def test_gpu_readings_converts_milliwatts_and_pairs_temperature():
@@ -641,7 +641,11 @@ def test_a_gpu_reporting_only_temperature_still_appears():
     inv = _inventory(parts)
     inv = discovery.Inventory(**{**inv.__dict__, "gpus": tuple(sorted(readings))})
     got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    gpu = [u for u in got if u.unit >= planner.BLOCK_GPU_POWER]
+    gpu = [
+        u
+        for u in got
+        if _in_block(u.unit, planner.BLOCK_GPU_POWER) or _in_block(u.unit, planner.BLOCK_GPU_TEMP)
+    ]
     # Three devices, not four: two for 7-2, temperature only for 7-3.
     assert len(gpu) == 3
 
@@ -663,3 +667,131 @@ def test_fpga_power_is_real_on_some_machines():
     )
     assert got[planner.UNIT_FPGA_POWER].svalue == "43.0"
     assert got[planner.UNIT_FPGA_POWER].name == "FPGA Power"
+
+
+def test_drives_reporting_life_get_a_percentage_device_with_a_bar():
+    """Drive health devices are Alerts, and Alert is not in Domoticz's bar-supported list.
+
+    So predicted life gets its own Percentage device, which does support a bar. The single
+    threshold is the user's own Drive life warning setting, and the 0-100 axis is inherent to a
+    percentage, so nothing here is invented.
+    """
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(
+            inventory=inv,
+            alloc=planner.assign_units(inv, {}),
+            cfg=_cfg(enable_drive_life=True),
+            **parts,
+        )
+    )
+    life = {u.name: u for unit, u in got.items() if _in_block(unit, planner.BLOCK_DRIVE_LIFE)}
+    with_life = [d for d in parts["drives"] if d.life_left_pct is not None]
+    assert with_life, "the t550 profile must have drives reporting life"
+    assert len(life) == len(with_life)
+    # HDDs report no life, so they get no device rather than a zero.
+    assert len(life) < len(parts["drives"])
+    sample = life["Solid State Disk 0:2:0 Life"]
+    assert sample.type_name == "Percentage"
+    assert sample.svalue == "100"
+    bands = json.loads(sample.color)
+    assert bands == [
+        {"from": 0, "to": 10, "color": thresholds.BAR_CRITICAL},
+        {"from": 10, "to": 100, "color": thresholds.BAR_OK},
+    ]
+
+
+def test_the_drive_life_bar_follows_the_user_setting():
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(
+            inventory=inv,
+            alloc=planner.assign_units(inv, {}),
+            cfg=_cfg(enable_drive_life=True, drive_life_floor=25),
+            **parts,
+        )
+    )
+    sample = next(u for unit, u in got.items() if _in_block(unit, planner.BLOCK_DRIVE_LIFE))
+    assert json.loads(sample.color)[0]["to"] == 25
+
+
+def test_a_zero_life_floor_gives_one_green_band_not_a_zero_width_one():
+    """dzBar discards a zero-width range, so do not emit one."""
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(
+            inventory=inv,
+            alloc=planner.assign_units(inv, {}),
+            cfg=_cfg(enable_drive_life=True, drive_life_floor=0),
+            **parts,
+        )
+    )
+    sample = next(u for unit, u in got.items() if _in_block(unit, planner.BLOCK_DRIVE_LIFE))
+    assert json.loads(sample.color) == [{"from": 0, "to": 100, "color": thresholds.BAR_OK}]
+
+
+def test_life_devices_are_off_by_default():
+    """A second device per SSD duplicates information already on the drive's Alert tile, so it
+    is opt-in rather than something an upgrade silently adds."""
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    assert not [u for u in got if _in_block(u.unit, planner.BLOCK_DRIVE_LIFE)]
+
+
+def test_no_life_devices_when_drives_are_disabled_entirely():
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = planner.plan(
+        inventory=inv,
+        alloc=planner.assign_units(inv, {}),
+        cfg=_cfg(enable_drives=False, enable_drive_life=True),
+        **parts,
+    )
+    assert not [u for u in got if _in_block(u.unit, planner.BLOCK_DRIVE_LIFE)]
+
+
+def test_every_unit_block_fits_domoticz_s_1_to_255_range():
+    """Domoticz refuses any unit outside 1-255 (PythonObjectEx.cpp:374, "Illegal Unit number").
+
+    The test stub accepts any integer, so a block placed above 255 passes every test and then
+    fails on real hardware with a KeyError after Create() silently does nothing. That happened,
+    which is why this guard exists.
+    """
+    blocks = {
+        name: value
+        for name, value in vars(planner).items()
+        if name.startswith("BLOCK_") and isinstance(value, int)
+    }
+    assert blocks, "no blocks found; this guard would silently pass"
+    for name, base in blocks.items():
+        limit = planner._BLOCK_LIMITS.get(base, 1)
+        highest = base + limit - 1
+        assert 1 <= base <= 255, f"{name} starts at {base}"
+        assert highest <= 255, f"{name} reaches unit {highest}, past Domoticz's maximum of 255"
+
+
+def test_no_two_unit_blocks_overlap():
+    """Blocks are fixed ranges; an overlap would let two device families claim the same unit."""
+    spans = []
+    for name, base in vars(planner).items():
+        if not name.startswith("BLOCK_") or not isinstance(base, int):
+            continue
+        spans.append((base, base + planner._BLOCK_LIMITS.get(base, 1) - 1, name))
+    for i, (lo, hi, name) in enumerate(sorted(spans)):
+        for other_lo, other_hi, other in sorted(spans)[i + 1 :]:
+            assert hi < other_lo or other_hi < lo, f"{name} overlaps {other}"
+
+
+def test_core_unit_numbers_do_not_collide_with_any_block():
+    core = [v for n, v in vars(planner).items() if n.startswith("UNIT_") and isinstance(v, int)]
+    bases = [v for n, v in vars(planner).items() if n.startswith("BLOCK_") and isinstance(v, int)]
+    for unit in core:
+        if unit in (planner.BLOCK_CONTROL, planner.BLOCK_CONTROL + 1):
+            continue  # the control units are deliberately inside their own block
+        for base in bases:
+            limit = planner._BLOCK_LIMITS.get(base, 1)
+            assert not (base <= unit < base + limit), f"core unit {unit} sits inside block {base}"

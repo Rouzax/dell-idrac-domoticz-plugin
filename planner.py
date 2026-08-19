@@ -43,10 +43,14 @@ BLOCK_PSUS = 60
 BLOCK_VOLUMES = 70
 BLOCK_NICS = 80
 BLOCK_DRIVES = 100
-BLOCK_GPU_POWER = 300
-BLOCK_GPU_TEMP = 320
-
 BLOCK_CONTROL = 200
+# Everything below has to fit between the control block and Domoticz's hard maximum of 255
+# (PythonObjectEx.cpp: "Illegal Unit number ... valid values range from 1 to 255"). Units above
+# that are silently not created. The drives block above cannot be shrunk to make room, because
+# existing installs have already allocated inside it and a unit number must never move.
+BLOCK_GPU_POWER = 202
+BLOCK_GPU_TEMP = 214
+BLOCK_DRIVE_LIFE = 226
 
 _BLOCK_LIMITS = {
     BLOCK_TEMPS: 20,
@@ -55,8 +59,9 @@ _BLOCK_LIMITS = {
     BLOCK_VOLUMES: 10,
     BLOCK_NICS: 20,
     BLOCK_DRIVES: 100,
-    BLOCK_GPU_POWER: 20,
-    BLOCK_GPU_TEMP: 20,
+    BLOCK_GPU_POWER: 12,
+    BLOCK_GPU_TEMP: 12,
+    BLOCK_DRIVE_LIFE: 30,
 }
 
 
@@ -103,6 +108,7 @@ def unassigned(inventory, alloc: dict) -> tuple:
         *inventory.volumes,
         *inventory.nics,
         *inventory.drives,
+        *(f"{d}#life" for d in inventory.drives),
         *(f"{g}#power" for g in inventory.gpus),
         *(f"{g}#temp" for g in inventory.gpus),
     ]
@@ -121,6 +127,8 @@ def assign_units(inventory, alloc: dict) -> dict:
     _assign_block(inventory.volumes, BLOCK_VOLUMES, out, taken)
     _assign_block(inventory.nics, BLOCK_NICS, out, taken)
     _assign_block(inventory.drives, BLOCK_DRIVES, out, taken)
+    # A second, optional device per drive, so a separate block keyed by a suffixed id.
+    _assign_block([f"{d}#life" for d in inventory.drives], BLOCK_DRIVE_LIFE, out, taken)
     # Two devices per card, so two blocks, keyed by a suffixed id to keep the namespace unique.
     _assign_block([f"{g}#power" for g in inventory.gpus], BLOCK_GPU_POWER, out, taken)
     _assign_block([f"{g}#temp" for g in inventory.gpus], BLOCK_GPU_TEMP, out, taken)
@@ -200,6 +208,21 @@ def gpu_readings(samples) -> dict:
             temps.get(device),
         )
     return out
+
+
+def _life_bar(floor_pct: int) -> str:
+    """Bands for predicted drive life: red below the user's warning floor, green above it.
+
+    A Percentage device, because the drive's own tile is an Alert and Alert is not in Domoticz's
+    bar-supported list. Nothing is invented here: 0 to 100 is inherent to a percentage and the one
+    threshold is the user's own setting. A bare array, because the utility card draws this one.
+    """
+    bands = []
+    if floor_pct > 0:
+        bands.append({"from": 0, "to": floor_pct, "color": thresholds.BAR_CRITICAL})
+    # dzBar discards a zero-width range, so a floor of 0 yields one green band rather than two.
+    bands.append({"from": max(0, floor_pct), "to": 100, "color": thresholds.BAR_OK})
+    return json.dumps(bands, separators=(",", ":"))
 
 
 def _fan_bar(threshold, axis_max) -> str:
@@ -526,6 +549,21 @@ def plan(
                     name=drive.name,
                     nvalue=level,
                     svalue=text,
+                )
+            )
+            if not cfg.enable_drive_life or drive.life_left_pct is None:
+                continue
+            life_unit = alloc.get(f"{drive.id}#life")
+            if life_unit is None:
+                continue
+            out.append(
+                DeviceUpdate(
+                    unit=life_unit,
+                    type_name="Percentage",
+                    name=f"{drive.name} Life",
+                    nvalue=0,
+                    svalue=str(drive.life_left_pct),
+                    color=_life_bar(cfg.drive_life_floor),
                 )
             )
 

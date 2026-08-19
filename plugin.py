@@ -45,6 +45,9 @@
             <param field="DriveLifeFloor" type="number" label="Drive life warning (%)" min="0" max="100" step="1" default="10" width="100px">
                 <description>Warn when a drive reports less than this much predicted media life remaining.</description>
             </param>
+            <param field="EnableDriveLife" type="boolean" label="Drive life % devices" default="false">
+                <description>Adds a second device per drive that reports predicted media life, showing it as a percentage with a bar. Off by default: the life figure is already on the drive's own tile, so this duplicates it for the sake of the graph. Only drives that report life get one, which in practice means SSDs.</description>
+            </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
                 <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">Choosing a value</a>.</description>
             </param>

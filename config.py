@@ -21,6 +21,7 @@ class PluginConfig:
     enable_psus: bool
     drive_life_floor: int
     fan_bar_max: int
+    enable_drive_life: bool
     setup_telemetry: bool
     verify_tls: bool
     request_timeout: int
@@ -83,6 +84,7 @@ def parse_config(parameters: dict) -> PluginConfig:
         enable_psus=_bool(parameters, "EnablePSUs", True, notes),
         drive_life_floor=_int(parameters, "DriveLifeFloor", 10, 0, 100, notes),
         fan_bar_max=_int(parameters, "FanBarMax", 6000, 0, 60000, notes),
+        enable_drive_life=_bool(parameters, "EnableDriveLife", False, notes),
         setup_telemetry=_bool(parameters, "SetupTelemetry", False, notes),
         verify_tls=_bool(parameters, "VerifyTLS", False, notes),
         request_timeout=_int(parameters, "RequestTimeout", 30, 5, 120, notes),
