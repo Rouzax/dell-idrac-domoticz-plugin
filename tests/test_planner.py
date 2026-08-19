@@ -776,9 +776,9 @@ def test_blocks_may_share_numbers_across_devices_but_never_within_one():
         ordered = sorted(spans)
         for i, (lo, hi) in enumerate(ordered):
             for other_lo, other_hi in ordered[i + 1 :]:
-                assert (
-                    hi < other_lo or other_hi < lo
-                ), f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
+                assert hi < other_lo or other_hi < lo, (
+                    f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
+                )
     # And the split is actually being used: at least one number appears on more than one device.
     bases = [base for _, base in planner._BLOCK_LIMITS]
     assert len(bases) > len(set(bases))
