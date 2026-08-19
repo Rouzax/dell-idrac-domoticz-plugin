@@ -86,12 +86,39 @@ def test_an_owned_name_is_renamed_when_the_plugin_changes_it():
     assert names["1"] == "Auto2"
 
 
-def test_mark_timed_out_does_not_zero_values():
-    domoticz_api.apply_updates(domoticz_stub.Devices, "dellidrac_1", [_update(1, svalue="53")], {})
-    domoticz_api.mark_timed_out(domoticz_stub.Devices, "dellidrac_1", [1])
-    unit = domoticz_stub.Devices["dellidrac_1"].Units[1]
-    assert unit.sValue == "53"
-    assert unit.TimedOut == 1
+def test_there_is_no_mark_timed_out():
+    """Domoticz does its own staleness detection and Unit has no TimedOut member.
+
+    Writing one would raise against real Domoticz on a path reached every heartbeat.
+    """
+    assert not hasattr(domoticz_api, "mark_timed_out")
+
+
+def test_apply_updates_never_touches_timedout():
+    domoticz_api.apply_updates(domoticz_stub.Devices, "dellidrac_1", [_update(1)], {})
+    domoticz_api.apply_updates(domoticz_stub.Devices, "dellidrac_1", [_update(1)], {"1": "X"})
+    assert domoticz_stub.Devices["dellidrac_1"].Units[1].TimedOut == 0
+
+
+def test_an_unreadable_counter_returns_none_not_zero():
+    """None means unknown. Zero would reset the baseline and drag the counter backwards."""
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        "dellidrac_1",
+        [_update(1, type_name="kWh", svalue="144;not-a-number")],
+        {},
+    )
+    assert domoticz_api.read_prev_counter_wh(domoticz_stub.Devices, "dellidrac_1", 1) is None
+
+
+def test_a_counter_with_extra_semicolons_still_reads():
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        "dellidrac_1",
+        [_update(1, type_name="kWh", svalue="144;2500.5;extra")],
+        {},
+    )
+    assert domoticz_api.read_prev_counter_wh(domoticz_stub.Devices, "dellidrac_1", 1) == 2500.5
 
 
 def test_read_prev_counter_wh_parses_the_power_energy_svalue():

@@ -49,7 +49,6 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
 
         unit.nValue = up.nvalue
         unit.sValue = up.svalue
-        unit.TimedOut = 0
         owned = unit.Name == names.get(str(up.unit))
         if owned and unit.Name != up.name:
             unit.Name = up.name
@@ -63,27 +62,36 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
     return names
 
 
-def mark_timed_out(devices, dev_id, units) -> None:
-    """Flag units as stale WITHOUT changing their values.
+# There is deliberately NO mark_timed_out here. Checked against the Domoticz core:
+# DomoticzEx.Unit exposes no TimedOut member (CUnitEx_members in
+# hardware/plugins/PythonObjectEx.h lists ID, Unit, Name, nValue, sValue ... Parent, while
+# TimedOut lives on CDeviceEx, the parent Device), and Unit.Update accepts only
+# log/typename/updateproperties/updateoptions/suppresstriggers. Assigning unit.TimedOut would
+# raise against real Domoticz, on a path reached every heartbeat.
+# It is also unnecessary. Domoticz does its own staleness detection from LastUpdate against the
+# SensorTimeout preference (main/mainworker.cpp), exactly as for every built-in hardware type.
+# So when the iDRAC is unreachable the correct action is to write NOTHING: the last good value
+# stays on screen, LastUpdate goes stale, and Domoticz flags the device itself. Writing nothing
+# is also what keeps a zero out of the recorded history.
 
-    A zero is a reading. Writing one when the source is unreachable would poison
-    the device history, so the last good value is left in place.
+
+def read_prev_counter_wh(devices, dev_id, unit_no):
+    """Energy half of a "POWER;ENERGY" sValue, or None when it cannot be read.
+
+    None means unknown, NOT zero. Returning 0.0 for an unreadable value would reset the counter's
+    baseline, and the next write would be a large backward jump in a device whose entire contract
+    is that it only ever climbs. The caller leaves the counter alone for that cycle instead.
     """
-    for unit_no in units:
-        unit = _existing_unit(devices, dev_id, unit_no)
-        if unit is not None:
-            unit.TimedOut = 1
-            unit.Update(Log=False, TimedOut=1)
-
-
-def read_prev_counter_wh(devices, dev_id, unit_no) -> float:
     unit = _existing_unit(devices, dev_id, unit_no)
-    if unit is None or ";" not in str(unit.sValue):
+    if unit is None:
+        return 0.0
+    parts = str(unit.sValue).split(";")
+    if len(parts) < 2:
         return 0.0
     try:
-        return float(str(unit.sValue).split(";", 1)[1])
-    except (ValueError, IndexError):
-        return 0.0
+        return float(parts[1])
+    except ValueError:
+        return None
 
 
 def load_state():
