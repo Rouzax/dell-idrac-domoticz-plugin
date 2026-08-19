@@ -252,3 +252,41 @@ def parse_dell_attributes(payload: dict) -> DellAttrs:
         peak_watts=_number(attrs.get("ServerPwrMon.1.PeakPowerWatts")),
         powered_on_seconds=_int(attrs.get("ServerOS.1.ServerPoweredOnTime")),
     )
+
+
+@dataclass(frozen=True)
+class Fault:
+    severity: str | None
+    message: str | None
+
+
+@dataclass(frozen=True)
+class Redundancy:
+    name: str
+    mode: str | None
+    health: str | None
+
+
+def parse_faults(payload: dict) -> list:
+    out = []
+    for node in payload.get("Members", []):
+        if not isinstance(node, dict):
+            continue
+        message = node.get("Message")
+        if not message:
+            continue
+        out.append(Fault(severity=node.get("Severity"), message=message))
+    return out
+
+
+def parse_redundancy(payload: dict) -> list:
+    out = []
+    for node in payload.get("Redundancy", []):
+        if not isinstance(node, dict):
+            continue
+        name = node.get("Name")
+        if not name:
+            continue
+        status = node.get("Status") or {}
+        out.append(Redundancy(name=name, mode=node.get("Mode"), health=status.get("Health")))
+    return out

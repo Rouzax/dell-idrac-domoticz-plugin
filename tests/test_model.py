@@ -109,3 +109,55 @@ def test_parse_dell_attributes():
     assert attrs.accumulative_power == 699375
     assert attrs.peak_watts == 508
     assert attrs.powered_on_seconds == 1486865
+
+
+def test_parse_faults_reads_severity_and_message():
+    payload = {
+        "Members": [
+            {
+                "Severity": "Critical",
+                "Message": "Power supply redundancy is lost.",
+                "Id": "Fault_03200004_1",
+            },
+        ]
+    }
+    faults = model.parse_faults(payload)
+    assert faults[0].severity == "Critical"
+    assert faults[0].message == "Power supply redundancy is lost."
+
+
+def test_parse_faults_skips_entries_with_no_message():
+    assert model.parse_faults({"Members": [{"Severity": "Critical"}]}) == []
+
+
+def test_parse_redundancy_on_the_degraded_capture_is_empty():
+    """Measured: with a PSU physically absent the iDRAC EMPTIES the Redundancy array."""
+    assert model.parse_redundancy(load("degraded", "power")) == []
+
+
+def test_parse_redundancy_reads_a_populated_set():
+    """Values measured live on the T550 after the pulled PSU was reseated.
+
+    Both power supplies report Status.Health OK while redundancy itself reports Critical. No
+    per-component status reveals this, which is the whole reason UNIT_REDUNDANCY exists.
+    """
+    payload = {
+        "Redundancy": [
+            {
+                "Name": "System Board PS Redundancy",
+                "Mode": "N+m",
+                "MinNumNeeded": 1,
+                "MaxNumSupported": 2,
+                "Status": {"Health": "Critical", "State": "Enabled"},
+            }
+        ]
+    }
+    red = model.parse_redundancy(payload)
+    assert len(red) == 1
+    assert red[0].name == "System Board PS Redundancy"
+    assert red[0].mode == "N+m"
+    assert red[0].health == "Critical"
+
+
+def test_parse_redundancy_skips_an_entry_with_no_name():
+    assert model.parse_redundancy({"Redundancy": [{"Mode": "N+m"}]}) == []

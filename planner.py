@@ -17,6 +17,7 @@ UNIT_SYS_USAGE = 9
 UNIT_UPTIME = 10
 UNIT_BOOT = 11
 UNIT_INTRUSION = 12
+UNIT_REDUNDANCY = 13
 
 BLOCK_TEMPS = 20
 BLOCK_FANS = 40
@@ -123,7 +124,11 @@ def plan(
     alloc,
     cfg,
     energy_wh: float = 0.0,
+    faults: list | None = None,
+    redundancy: list | None = None,
 ) -> list:
+    faults = faults or []
+    redundancy = redundancy or []
     out = []
 
     power = sensors.get("SystemBoardPwrConsumption")
@@ -140,6 +145,11 @@ def plan(
         )
 
     level, text = health.system_health(system.health, system.rollups)
+    # Dell rollups latch onto faults, so a red level often has no unhealthy component behind it.
+    # When the iDRAC states a reason, show the reason instead of a list of subsystem initials.
+    messages = [f.message for f in faults if f.message]
+    if messages and level not in (health.LEVEL_OK, health.LEVEL_GREY):
+        text = "; ".join(messages)[:200]
     out.append(
         DeviceUpdate(
             unit=UNIT_HEALTH, type_name="Alert", name="System Health", nvalue=level, svalue=text
@@ -209,6 +219,19 @@ def plan(
                 svalue=chassis.intrusion,
             )
         )
+
+    for entry in redundancy:
+        level, text = health.simple_health(entry.health, entry.mode or "OK")
+        out.append(
+            DeviceUpdate(
+                unit=UNIT_REDUNDANCY,
+                type_name="Alert",
+                name="Power Redundancy",
+                nvalue=level,
+                svalue=text,
+            )
+        )
+        break
 
     for sensor_id in inventory.cpu_temps:
         sensor = sensors[sensor_id]

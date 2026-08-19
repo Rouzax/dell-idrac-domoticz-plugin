@@ -199,3 +199,49 @@ def test_a_missing_sensor_does_not_emit_a_zero_reading():
     inv = _inventory(parts)
     updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     assert planner.UNIT_INLET not in _by_unit(updates)
+
+
+def test_redundancy_device_is_planned_when_reported():
+    parts = _parts("t550")
+    parts["redundancy"] = [
+        model.Redundancy(name="System Board PS Redundancy", mode="N+m", health="Critical")
+    ]
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert got[planner.UNIT_REDUNDANCY].type_name == "Alert"
+    assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_RED
+
+
+def test_no_redundancy_device_when_the_chassis_reports_none():
+    parts = _parts("t550")
+    parts["redundancy"] = []
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert planner.UNIT_REDUNDANCY not in got
+
+
+def test_fault_messages_replace_bare_subsystem_names_in_system_health():
+    """A latched rollup with no unhealthy component is unreadable without the fault text."""
+    parts = _parts("degraded")
+    parts["faults"] = [model.Fault(severity="Critical", message="Power supply redundancy is lost.")]
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    text = got[planner.UNIT_HEALTH].svalue
+    assert "Power supply redundancy is lost." in text
+    assert got[planner.UNIT_HEALTH].nvalue == health.LEVEL_RED
+
+
+def test_system_health_falls_back_to_subsystem_names_without_faults():
+    parts = _parts("degraded")
+    parts["faults"] = []
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert "PS" in got[planner.UNIT_HEALTH].svalue
