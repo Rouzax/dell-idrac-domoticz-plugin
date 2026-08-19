@@ -87,6 +87,7 @@ class _PluginState:
         self.slow_parts = {}
         self.alloc = {}
         self.resolved = False
+        self.orphaned_reported = ()
         self.reset_slow()
 
     def reset_slow(self):
@@ -131,7 +132,9 @@ def onStart():
     # config is pure and cannot log, so it reports what it silently changed and we surface it.
     # A setting quietly rewritten behind the user's back is worse than a wrong one they can see.
     for warning in _state.cfg.warnings:
-        Domoticz.Error(f"setting adjusted: {warning}")
+        # Status, not Error. Nothing failed and nothing needs a human to intervene; the operator
+        # simply needs to see that a value they typed is not the value being used.
+        Domoticz.Status(f"setting adjusted: {warning}")
     saved = domoticz_api.load_state()
     _state.alloc = dict(saved.unit_alloc)
     Domoticz.Heartbeat(_HEARTBEAT_SECONDS)
@@ -247,10 +250,16 @@ def onHeartbeat():
     # A unit is never freed once taken, so a block can exhaust through component churn. The
     # affected devices are skipped rather than crashing the poll, but the gap must not be silent.
     orphaned = planner.unassigned(inventory, _state.alloc)
-    if orphaned:
-        Domoticz.Error(
-            f"no free unit for {len(orphaned)} item(s), not shown: {', '.join(orphaned)}"
-        )
+    if orphaned != _state.orphaned_reported:
+        # Report only on CHANGE. An exhausted block persists until the hardware changes, so
+        # logging it every poll would bury the message it is trying to deliver.
+        if orphaned:
+            Domoticz.Error(
+                f"no free unit for {len(orphaned)} item(s), not shown: {', '.join(orphaned)}"
+            )
+        elif _state.orphaned_reported:
+            Domoticz.Status("all discovered items now have a unit")
+        _state.orphaned_reported = orphaned
 
     power = sensors.get("SystemBoardPwrConsumption")
     prev_wh = domoticz_api.read_prev_counter_wh(devices, _state.dev_id, planner.UNIT_POWER)
