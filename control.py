@@ -29,6 +29,11 @@ ACTION_SLOTS = (
 
 HARD_RESET_TYPES = frozenset({"ForceOff", "PowerCycle"})
 
+# STYPE_Selector from the Domoticz core (main/RFXNames.h). TypeName "Selector Switch" alone does
+# NOT set this: without it the device is created as STYPE_OnOff and Domoticz draws a plain toggle,
+# ignoring the level names entirely, so a click sends On or Off and no level ever arrives.
+SWITCHTYPE_SELECTOR = 18
+
 
 def level_to_reset_type(level):
     """Domoticz selector levels are 0, 10, 20 ...; level 0 is the idle entry.
@@ -75,6 +80,7 @@ def control_updates(cfg, allowable, identify_on: bool) -> list:
             type_name="Selector Switch",
             name="Power Control",
             device=planner.DEVICE_CONTROL,
+            switchtype=SWITCHTYPE_SELECTOR,
             image=planner.IMAGE_GENERIC,
             nvalue=0,
             svalue="0",

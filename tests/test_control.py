@@ -122,3 +122,16 @@ def test_the_power_control_selector_gets_an_icon():
     selector = next(u for u in updates if u.unit == control.UNIT_POWER_CONTROL)
     assert selector.image == planner.IMAGE_GENERIC
     assert selector.device == planner.DEVICE_CONTROL
+
+
+def test_the_selector_declares_itself_a_selector_switch():
+    """TypeName alone does not make it one. Verified against a live database: the device was
+    created with SwitchType 0, STYPE_OnOff, so Domoticz drew a plain on/off toggle and the level
+    names were never shown. A click would then send On or Off, and level_to_reset_type expects
+    10, 20, 30, so no power action could fire correctly."""
+    updates = control.control_updates(_cfg(allow_control=True), ["On"], False)
+    selector = next(u for u in updates if u.unit == control.UNIT_POWER_CONTROL)
+    assert selector.switchtype == control.SWITCHTYPE_SELECTOR == 18
+    identify = next(u for u in updates if u.unit == control.UNIT_IDENTIFY)
+    # The identify LED IS a plain on/off switch, so it correctly keeps the default.
+    assert identify.switchtype == 0
