@@ -45,6 +45,9 @@
             <param field="DriveLifeFloor" type="number" label="Drive life warning (%)" min="0" max="100" step="1" default="10" width="100px">
                 <description>Warn when a drive reports less than this much predicted media life remaining.</description>
             </param>
+            <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
+                <description>Top of the scale on fan bar graphs. Redfish does not report a maximum fan speed, so this cannot be detected: a tower or 2U server typically peaks around 5000 to 6000 RPM, while 1U fans can exceed 15000. Set 0 to leave fan bars off. A fan running faster than this still reads full and green rather than falling off the scale.</description>
+            </param>
         </group>
         <group label="Control">
             <param field="AllowHardPowerActions" type="boolean" label="Allow Force Off and Power Cycle" default="false">

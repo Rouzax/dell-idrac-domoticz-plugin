@@ -110,3 +110,43 @@ def test_bar_ranges_are_contiguous_and_ascending():
         # dzBar draws one continuous axis; a gap would misplace the needle.
         assert earlier["to"] == later["from"]
         assert earlier["from"] < earlier["to"]
+
+
+def test_floor_bar_ranges_for_a_sensor_where_only_low_is_bad():
+    """Fans report lower thresholds only, and no maximum exists anywhere in Redfish.
+
+    Measured on a T550 at 100%: 4920, 4920 and 5520 RPM, so even one chassis has no single
+    maximum. The axis top is therefore a user setting, not a guess. Zero is a real floor for
+    RPM (a stopped fan), so the bottom is not invented either.
+    """
+    bands = thresholds.bar_ranges_floor(_th(lc=480, ln=840), 6000)
+    assert [(b["from"], b["to"], b["color"]) for b in bands] == [
+        (0, 480, thresholds.BAR_CRITICAL),
+        (480, 840, thresholds.BAR_WARNING),
+        (840, 6000, thresholds.BAR_OK),
+    ]
+
+
+def test_floor_bar_ranges_without_a_warning_threshold():
+    bands = thresholds.bar_ranges_floor(_th(lc=480), 6000)
+    assert [(b["from"], b["to"], b["color"]) for b in bands] == [
+        (0, 480, thresholds.BAR_CRITICAL),
+        (480, 6000, thresholds.BAR_OK),
+    ]
+
+
+def test_floor_bar_ranges_needs_a_usable_axis_top():
+    """Zero disables fan bars, and a top at or below the thresholds would be nonsense."""
+    assert thresholds.bar_ranges_floor(_th(lc=480, ln=840), 0) is None
+    assert thresholds.bar_ranges_floor(_th(lc=480, ln=840), 840) is None
+    assert thresholds.bar_ranges_floor(_th(lc=480, ln=840), 500) is None
+    assert thresholds.bar_ranges_floor(_th(), 6000) is None
+    assert thresholds.bar_ranges_floor(None, 6000) is None
+
+
+def test_a_reading_above_the_axis_top_lands_in_the_last_band():
+    """Verified against dzBar.js computeBar: currentIdx starts at the LAST band and the loop only
+    breaks when a band's `to` reaches the value, so an over-range value keeps the last colour and
+    pct is clamped to 100. For a fan that is green, which is right: low RPM is the fault."""
+    bands = thresholds.bar_ranges_floor(_th(lc=480, ln=840), 6000)
+    assert bands[-1]["color"] == thresholds.BAR_OK

@@ -20,6 +20,7 @@ class PluginConfig:
     enable_nics: bool
     enable_psus: bool
     drive_life_floor: int
+    fan_bar_max: int
     verify_tls: bool
     request_timeout: int
     debug_level: int
@@ -80,6 +81,7 @@ def parse_config(parameters: dict) -> PluginConfig:
         enable_nics=_bool(parameters, "EnableNICs", True, notes),
         enable_psus=_bool(parameters, "EnablePSUs", True, notes),
         drive_life_floor=_int(parameters, "DriveLifeFloor", 10, 0, 100, notes),
+        fan_bar_max=_int(parameters, "FanBarMax", 6000, 0, 60000, notes),
         verify_tls=_bool(parameters, "VerifyTLS", False, notes),
         request_timeout=_int(parameters, "RequestTimeout", 30, 5, 120, notes),
         debug_level=_int(parameters, "DebugLevel", 0, 0, 2, notes),

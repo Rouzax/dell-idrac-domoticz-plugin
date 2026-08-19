@@ -147,6 +147,19 @@ def _temp_bar(threshold) -> str:
     return json.dumps({"temp": bands}, separators=(",", ":"))
 
 
+def _fan_bar(threshold, axis_max) -> str:
+    """A fan is a Custom Sensor, which the UTILITY card renders, so Color is a BARE ARRAY.
+
+    Temperature cards want an object keyed by sensor instead. Two different shapes for the same
+    column, confirmed from the core: dzUtilityWidget.getBarRanges requires the string to start
+    with "[", while dzBarService.loadForKey requires "{". The wrong one silently draws nothing.
+    """
+    bands = thresholds.bar_ranges_floor(threshold, axis_max)
+    if not bands:
+        return ""
+    return json.dumps(bands, separators=(",", ":"))
+
+
 def _temp_update(unit, sensor, name, threshold_map) -> DeviceUpdate:
     threshold = threshold_map.get(sensor.name)
     return DeviceUpdate(
@@ -324,6 +337,7 @@ def plan(
                 options={"Custom": "1;RPM"},
                 image=IMAGE_FAN,
                 description=thresholds.describe(threshold_map.get(sensor.name), "RPM"),
+                color=_fan_bar(threshold_map.get(sensor.name), cfg.fan_bar_max),
             )
         )
 

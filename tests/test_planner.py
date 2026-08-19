@@ -116,6 +116,7 @@ def _cfg(**kw):
         "enable_nics": True,
         "enable_psus": True,
         "drive_life_floor": 10,
+        "fan_bar_max": 6000,
         "verify_tls": False,
         "request_timeout": 30,
         "debug_level": 0,
@@ -321,15 +322,38 @@ def test_a_device_without_usable_thresholds_gets_no_bar():
     assert got[planner.UNIT_INLET].color == ""
 
 
-def test_only_temperature_devices_carry_a_bar():
-    """Fans report no upper threshold and Redfish reports MaxReadingRange null, so a fan axis
-    could only be invented. Percentages and watts likewise. Deliberately left bare."""
+def test_bars_appear_only_where_the_server_reports_thresholds():
+    """Temperatures and fans report thresholds, so they get bars. Nothing else does.
+
+    Percentages, PSU watts and the energy counter carry no server thresholds at all, so any
+    bands there would be invented rather than reported, and they stay bare on purpose.
+    """
     parts = _parts("t550")
     inv = _inventory(parts)
     updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    with_bars = {u.unit for u in updates if u.color}
-    assert with_bars, "the t550 profile must produce at least one bar"
-    assert all(u.type_name == "Temperature" for u in updates if u.color)
+    assert {u.type_name for u in updates if u.color} == {"Temperature", "Custom"}
+    fans = [
+        u for u in updates if planner.BLOCK_FANS <= u.unit < planner.BLOCK_FANS + 20 and u.color
+    ]
+    assert fans, "the t550 profile must produce fan bars"
+    # A fan is a Custom Sensor, drawn by the utility card, which needs a BARE ARRAY.
+    for fan in fans:
+        assert fan.color.startswith("[")
+    # A temperature card needs the keyed OBJECT instead. Two shapes, same column.
+    assert _by_unit(updates)[planner.UNIT_INLET].color.startswith("{")
+
+
+def test_fan_bars_are_switched_off_by_setting_the_maximum_to_zero():
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    updates = planner.plan(
+        inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(fan_bar_max=0), **parts
+    )
+    assert not [
+        u for u in updates if planner.BLOCK_FANS <= u.unit < planner.BLOCK_FANS + 20 and u.color
+    ]
+    # Temperatures are unaffected by the fan setting.
+    assert _by_unit(updates)[planner.UNIT_INLET].color
 
 
 def test_a_bar_never_shows_a_synthesized_threshold_as_if_it_were_reported():

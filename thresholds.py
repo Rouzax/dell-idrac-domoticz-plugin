@@ -93,3 +93,36 @@ def bar_ranges(threshold) -> list | None:
         {"from": upper_critical, "to": round(upper_critical + margin, 1), "color": BAR_CRITICAL}
     )
     return bands
+
+
+def bar_ranges_floor(threshold, axis_max) -> list | None:
+    """Bands for a sensor where LOW is the fault and high is merely working hard, e.g. a fan.
+
+    Redfish gives no maximum for these: MaxReadingRange reads null, and the Dell OEM fan
+    endpoints do not exist (DellFans and DellNumericSensors both 404). Measuring a T550 at full
+    speed gave 4920, 4920 and 5520 RPM, so even one chassis has no single maximum and a shipped
+    constant would be wrong somewhere. The top therefore comes from the caller, as a user
+    setting, and axis_max of 0 means "no bar" rather than a guess.
+
+    A reading above axis_max is not a problem: dzBar's computeBar keeps the last band's colour
+    and clamps the fill to 100%, so an over-speed fan reads full green rather than falling off
+    the scale.
+    """
+    if threshold is None or not axis_max or axis_max <= 0:
+        return None
+    lower_critical = threshold.lower_critical
+    if lower_critical is None:
+        return None
+    lower_warn = threshold.lower_non_critical
+    # The top has to leave room for every band below it, or the axis is nonsense.
+    if axis_max <= max(lower_critical, lower_warn or lower_critical):
+        return None
+
+    # Zero is a genuine floor for a rate like RPM, a stopped fan, so it is not an invented edge.
+    bands = [{"from": 0, "to": lower_critical, "color": BAR_CRITICAL}]
+    if lower_warn is not None and lower_warn > lower_critical:
+        bands.append({"from": lower_critical, "to": lower_warn, "color": BAR_WARNING})
+        bands.append({"from": lower_warn, "to": axis_max, "color": BAR_OK})
+    else:
+        bands.append({"from": lower_critical, "to": axis_max, "color": BAR_OK})
+    return bands
