@@ -10,10 +10,16 @@ from tests.fixture_loader import load
 class FakeClient:
     """Replays fixtures by path. Raises for paths the test did not stub."""
 
-    def __init__(self, profile="t550", fail_paths=(), telemetry_available=False):
+    def __init__(
+        self, profile="t550", fail_paths=(), telemetry_available=False, report_name="PowerMetrics"
+    ):
         self.profile = profile
         self.fail_paths = set(fail_paths)
         self.telemetry_available = telemetry_available
+        # Report ids differ by licence and management. "PowerMetrics" is what a Datacenter iDRAC
+        # serves; "OME-PMP-Power-A" is what an OpenManage-managed machine on the Advanced licence
+        # serves instead, alongside reports the plugin has no use for. Both are real.
+        self.report_name = report_name
         self.calls = []
         # Reuse the real path derivation so the test exercises the same mapping.
         redfish_client.RedfishClient._set_paths(
@@ -25,6 +31,10 @@ class FakeClient:
 
     def resolve(self):
         return None
+
+    def metric_report_ids(self):
+        # Reuse the real implementation so the test exercises the same parsing.
+        return redfish_client.RedfishClient.metric_report_ids(self)
 
     def _maybe_fail(self, path):
         self.calls.append(path)
@@ -46,12 +56,21 @@ class FakeClient:
             return load(self.profile, "dell_attributes")
         if path == self.storage_collection:
             return {"Members": [{"@odata.id": "/ctrl"}]}
-        if path == self.power_metrics:
-            # Only the t550 profile has a captured telemetry report; the others stand in for the
-            # majority of iDRACs, where telemetry is licence-gated and simply absent.
-            if self.profile == "t550" and self.telemetry_available:
-                return load(self.profile, "power_metrics")
-            return {}
+        if path == self.metric_reports:
+            if not self.telemetry_available:
+                return {}
+            return {
+                "Members": [
+                    # A report the plugin must look at and then never poll again.
+                    {"@odata.id": f"{self.metric_reports}/OME-Telemetry-SMARTData"},
+                    {"@odata.id": f"{self.metric_reports}/{self.report_name}"},
+                ]
+            }
+        if path == f"{self.metric_reports}/{self.report_name}":
+            return load(self.profile, "power_metrics")
+        if path.startswith(f"{self.metric_reports}/"):
+            # Carries no power metrics, so it must be discarded after discovery.
+            return {"MetricValues": [{"MetricId": "Junk", "MetricValue": "1"}]}
         return {}
 
     def get_expanded(self, path, levels=1):
@@ -317,10 +336,37 @@ def test_an_unavailable_telemetry_endpoint_is_asked_for_only_once(started):
     started.client = FakeClient(fail_paths=("MetricReports",))
     _beat_once(started)
     assert started.telemetry is False
-    first = sum("MetricReports" in c for c in started.client.calls)
-    assert first == 1
+    assert sum("MetricReports" in c for c in started.client.calls) == 1
     _beat_once(started)
     assert sum("MetricReports" in c for c in started.client.calls) == 1
+
+
+def test_the_power_report_is_found_under_an_openmanage_name(started):
+    """An OpenManage-managed machine has no "PowerMetrics" report at all.
+
+    Its Power Manager Plugin publishes "OME-PMP-Power-A" and friends under the Advanced licence,
+    while Dell's built-in reports answer with a licence error. Selecting by name would find
+    nothing here, so the report is selected by the metric ids it actually contains.
+    """
+    started.client = FakeClient(telemetry_available=True, report_name="OME-PMP-Power-A")
+    _beat_once(started)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
+    assert started.telemetry is True
+    assert started.metric_paths == ("/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-A",)
+
+
+def test_reports_without_power_metrics_are_discovered_once_then_dropped(started):
+    """A managed machine can expose a dozen reports, several of them large. Poll only the useful."""
+    started.client = FakeClient(telemetry_available=True)
+    _beat_once(started)
+    assert all("SMARTData" not in p for p in started.metric_paths)
+    before = sum("SMARTData" in c for c in started.client.calls)
+    assert before == 1, "the useless report is read once, during discovery"
+    _beat_once(started)
+    assert sum("SMARTData" in c for c in started.client.calls) == 1
+    # And the collection itself is not re-listed on every poll either.
+    assert sum(c.endswith("/MetricReports") for c in started.client.calls) == 1
 
 
 def test_a_failing_telemetry_call_does_not_cost_the_rest_of_the_poll(started):

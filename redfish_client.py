@@ -61,7 +61,7 @@ class RedfishClient:
         self.faults = manager + "/LogServices/FaultList/Entries"
         # Telemetry hangs off the service root, not off a system or chassis, so it does not move
         # with the resolved ids. Licence-gated in practice, so every read of it must be optional.
-        self.power_metrics = f"{ROOT}/TelemetryService/MetricReports/PowerMetrics"
+        self.metric_reports = f"{ROOT}/TelemetryService/MetricReports"
         system_id = system.rstrip("/").rsplit("/", 1)[-1]
         self.dell_attributes = f"{manager}/Oem/Dell/DellAttributes/{system_id}"
 
@@ -99,6 +99,19 @@ class RedfishClient:
         return not (
             system is DEFAULT_SYSTEM or chassis is DEFAULT_CHASSIS or manager is DEFAULT_MANAGER
         )
+
+    def metric_report_ids(self) -> list:
+        """Every metric report the service currently offers.
+
+        The ids are NOT fixed and must never be assumed. A Datacenter iDRAC serves Dell's
+        built-in reports ("PowerMetrics"); a machine managed by OpenManage Enterprise under the
+        Advanced licence instead carries the Power Manager Plugin's own reports
+        ("OME-PMP-Power-A", "OME-PMP-Power-B", ...) and returns a licence error for the built-in
+        ones. Both were observed on real hardware. Same lesson as the inlet sensor id: discover
+        it, do not hardcode it.
+        """
+        members = self.get(self.metric_reports).get("Members") or []
+        return [m["@odata.id"] for m in members if isinstance(m, dict) and m.get("@odata.id")]
 
     def redact(self, text: str) -> str:
         out = str(text)

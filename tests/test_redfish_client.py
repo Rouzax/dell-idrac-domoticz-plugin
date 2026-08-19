@@ -236,3 +236,42 @@ def test_resolve_probes_the_service_root_before_the_collections():
         "/v1/Chassis",
         "/v1/Managers",
     ]
+
+
+def test_metric_report_ids_are_discovered_not_assumed():
+    """Report NAMES differ by how the machine is licensed and managed.
+
+    A Datacenter iDRAC serves Dell's built-in "PowerMetrics". A machine managed by OpenManage
+    Enterprise with the Advanced licence instead carries the Power Manager Plugin's own reports,
+    named "OME-PMP-Power-A", "OME-PMP-Power-B" and so on, and the built-in ones return a licence
+    error. Hardcoding either name finds nothing on the other machine.
+    """
+    opener = FakeOpener(
+        [
+            {
+                "Members": [
+                    {"@odata.id": "/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-A"},
+                    {"@odata.id": "/redfish/v1/TelemetryService/MetricReports/OME-PMP-Thermal"},
+                ]
+            }
+        ]
+    )
+    client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
+    assert client.metric_report_ids() == [
+        "/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-A",
+        "/redfish/v1/TelemetryService/MetricReports/OME-PMP-Thermal",
+    ]
+    assert opener.requests[0].full_url.endswith("/TelemetryService/MetricReports")
+
+
+def test_metric_report_ids_is_empty_when_telemetry_is_unlicensed(monkeypatch):
+    """An unlicensed iDRAC answers the collection with a licence error, not an empty list."""
+    monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
+    client = _client([_http_error(400)])
+    with pytest.raises(redfish_client.RedfishError):
+        client.metric_report_ids()
+
+
+def test_metric_report_ids_tolerates_a_collection_with_no_members():
+    client = _client([{}])
+    assert client.metric_report_ids() == []

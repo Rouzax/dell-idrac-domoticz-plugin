@@ -99,6 +99,9 @@ class _PluginState:
         # False latches after the first refusal so the plugin stops paying for a request that
         # will never succeed. Reset by onStart, so a licence upgrade is picked up on restart.
         self.telemetry = None
+        # Which report paths actually carry power metrics on THIS machine. Discovered once,
+        # because the ids differ by licence and management, then polled directly.
+        self.metric_paths = ()
         # Two values, deliberately. `backoff` is the countdown the heartbeat drains to zero;
         # `backoff_level` is how long the current wait is and is what doubles. Reading growth
         # back off the countdown cannot work: it is always exactly 0.0 by the time the next poll
@@ -170,18 +173,63 @@ def poll_fast(client) -> dict:
     return model.parse_sensors(client.get_expanded(client.sensors))
 
 
+# Metric ids worth fetching a report for. A report carrying none of these is not polled again.
+_WANTED_METRICS = frozenset(
+    {
+        "SystemInputPower",
+        "TotalCPUPower",
+        "TotalMemoryPower",
+        "TotalStoragePower",
+        "TotalFanPower",
+        "TotalPciePower",
+    }
+)
+# A machine managed by OpenManage can expose a dozen reports, several of them large (SMART data,
+# NIC statistics). Discovery reads them once; this caps the damage if a server offers many more.
+_MAX_METRIC_REPORTS = 16
+
+
+def discover_metric_paths(client, state) -> tuple:
+    """Find which reports on THIS machine carry the power metrics, by reading them.
+
+    Report ids are not fixed. A Datacenter iDRAC serves Dell's built-in "PowerMetrics"; a machine
+    managed by OpenManage Enterprise under the Advanced licence instead carries the Power Manager
+    Plugin's own reports, "OME-PMP-Power-A" and friends, and answers the built-in names with a
+    licence error. Both were seen on real hardware, so the report is selected by the metric ids it
+    actually contains rather than by its name.
+    """
+    paths = []
+    for path in client.metric_report_ids()[:_MAX_METRIC_REPORTS]:
+        try:
+            found = model.parse_metric_report(client.get(path))
+        except redfish_client.RedfishError as exc:
+            # One unreadable report, licence-gated or otherwise, must not hide the others.
+            Domoticz.Debug(f"metric report {path} unreadable: {exc}")
+            continue
+        if _WANTED_METRICS & set(found):
+            paths.append(path)
+    state.metric_paths = tuple(paths)
+    return state.metric_paths
+
+
 def poll_metrics(client, state) -> dict:
-    """Dell's per-subsystem power breakdown. Optional, and absent on most machines.
+    """Per-subsystem power. Optional, and absent on most machines.
 
     Fetched in the fast tier because it also supplies the wattage the energy counter integrates,
-    which would otherwise be up to a full slow cycle stale. Guarded and latched: one refusal is
-    enough to stop asking, so a machine without the licence pays for a single request per
-    plugin start rather than one per poll.
+    which would otherwise be up to a full slow cycle stale. Guarded and latched: once the plugin
+    knows this machine cannot serve it, it stops asking, so an unlicensed iDRAC pays for one
+    discovery per plugin start rather than a wasted request on every poll.
     """
     if state.telemetry is False:
         return {}
     try:
-        metrics = model.parse_metric_report(client.get(client.power_metrics))
+        if state.telemetry is None:
+            discover_metric_paths(client, state)
+        metrics = {}
+        for path in state.metric_paths:
+            # Later reports win, which is right: they are polled in collection order and a
+            # machine exposing the same metric twice is reporting the same quantity.
+            metrics.update(model.parse_metric_report(client.get(path)))
     except redfish_client.RedfishError as exc:
         if state.telemetry is None:
             Domoticz.Status(
@@ -193,13 +241,14 @@ def poll_metrics(client, state) -> dict:
     if not metrics:
         if state.telemetry is None:
             Domoticz.Status(
-                "Dell telemetry is reachable but reports no power metrics, so the "
+                "Dell telemetry is reachable but no report carries power metrics, so the "
                 "per-component power devices will not be created"
             )
         state.telemetry = False
         return {}
     if state.telemetry is None:
-        Domoticz.Status(f"Dell telemetry available: {len(metrics)} power metrics")
+        names = ", ".join(p.rsplit("/", 1)[-1] for p in state.metric_paths)
+        Domoticz.Status(f"Dell telemetry available: {len(metrics)} metrics from {names}")
     state.telemetry = True
     return metrics
 
