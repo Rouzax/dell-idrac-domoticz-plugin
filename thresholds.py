@@ -81,9 +81,14 @@ def bar_ranges(threshold) -> list | None:
     ok_from = lower_warn if lower_warn is not None else lower_critical
     ok_to = upper_warn if upper_warn is not None else upper_critical
 
-    bands = [
-        {"from": round(lower_critical - margin, 1), "to": lower_critical, "color": BAR_CRITICAL}
-    ]
+    # Do not let the margin drag the axis across zero on its own. Domoticz switches to a
+    # centre-origin fill when an axis spans negative and positive, anchored at the axis midpoint,
+    # which is meaningless for a temperature. A sensor whose own critical low IS negative still
+    # gets its negative band, because that one is real.
+    axis_low = round(lower_critical - margin, 1)
+    if lower_critical >= 0:
+        axis_low = max(0, axis_low)
+    bands = [{"from": axis_low, "to": lower_critical, "color": BAR_CRITICAL}]
     if lower_warn is not None:
         bands.append({"from": lower_critical, "to": lower_warn, "color": BAR_WARNING})
     bands.append({"from": ok_from, "to": ok_to, "color": BAR_OK})

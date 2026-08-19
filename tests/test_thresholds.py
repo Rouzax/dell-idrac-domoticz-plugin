@@ -83,7 +83,8 @@ def test_bar_ranges_skips_bands_whose_thresholds_are_absent():
     """CPU1 Temp reports no lower warning, so there is no lower amber band and none is invented."""
     bands = thresholds.bar_ranges(_th(lc=3, un=83.3, uc=98))
     assert [(b["from"], b["to"], b["color"]) for b in bands] == [
-        (-6.5, 3, thresholds.BAR_CRITICAL),
+        # Clamped at zero: the critical low is +3, so the margin must not invent a sub-zero band.
+        (0, 3, thresholds.BAR_CRITICAL),
         (3, 83.3, thresholds.BAR_OK),
         (83.3, 98, thresholds.BAR_WARNING),
         (98, 107.5, thresholds.BAR_CRITICAL),
@@ -150,3 +151,20 @@ def test_a_reading_above_the_axis_top_lands_in_the_last_band():
     pct is clamped to 100. For a fan that is green, which is right: low RPM is the fault."""
     bands = thresholds.bar_ranges_floor(_th(lc=480, ln=840), 6000)
     assert bands[-1]["color"] == thresholds.BAR_OK
+
+
+def test_the_margin_never_drags_the_axis_below_zero_on_its_own():
+    """Crossing zero changes how Domoticz draws the bar, so do not cross it gratuitously.
+
+    dzBar switches to a centre-origin fill when the axis spans zero, anchored at the axis
+    MIDPOINT. Exhaust and CPU temperatures report a critical low of +3 C, so only the synthesized
+    margin was pushing them negative and triggering that mode for no reason.
+    """
+    bands = thresholds.bar_ranges(_th(lc=3, un=83.3, uc=98))
+    assert bands[0]["from"] == 0
+    assert bands[0]["to"] == 3
+
+    # A sensor whose own critical low IS negative still gets its negative band; that is real.
+    bands = thresholds.bar_ranges(_th(lc=-7, ln=3, un=33, uc=42))
+    assert bands[0]["from"] < 0
+    assert bands[0]["to"] == -7
