@@ -104,8 +104,17 @@ When telemetry **is** available, the Server Power device also switches to report
 sensor. On the T550 that is roughly a 6% difference: about 160 W at the wall against 144 W at the
 board. Note that this makes a visible step in the energy graph at the point it switches over.
 
-GPU power is reported through separate telemetry reports and is not yet supported, since no GPU
-hardware was available to test against.
+### GPUs
+
+Where telemetry reports them, each GPU gets a power device and a temperature device. Power is
+reported in milliwatts and converted, so a card drawing 39100 mW shows as 39.1 W.
+
+Cards are identified by the slot the server reports, including sub-indices, so a multi-GPU card
+occupying one slot appears as `Video.Slot.7-1` through `Video.Slot.7-4` rather than collapsing
+into one. A card that reports only a temperature gets only a temperature device.
+
+This has been built and tested against real captures from GPU servers, but not yet run live
+against one. If you have such a machine, confirming it is welcome.
 
 ## Bar graphs
 

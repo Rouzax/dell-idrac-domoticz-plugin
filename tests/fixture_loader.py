@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures"
-PROFILES = ("t550", "dual", "degraded")
+# "ome" is a partial profile: a single metric report from an OpenManage-managed
+# server, kept for the report shape rather than for whole-machine discovery.
+PROFILES = ("t550", "dual", "degraded", "ome")
 
 
 def load(profile: str, name: str) -> dict:

@@ -23,7 +23,7 @@
             <description>iDRAC password. Stored in cleartext in the Domoticz database and never written to the log.</description>
         </param>
         <param field="AllowControl" label="Allow Control" width="150px">
-            <description>Enable power actions and the identify LED. Off by default: the plugin stays strictly read-only until this is turned on. Once enabled, any Domoticz user, scene, timer or API client with access to this hardware can power off the server.</description>
+            <description>Off by default; the plugin stays strictly read-only until you turn it on. Once on, any Domoticz user, scene, timer or API client can power off the server. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/" target="_blank">Read this first</a>.</description>
             <options>
                 <option label="No" value="false" default="true"/>
                 <option label="Yes" value="true"/>
@@ -46,20 +46,20 @@
                 <description>Warn when a drive reports less than this much predicted media life remaining.</description>
             </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
-                <description>Top of the scale on fan bar graphs. Redfish does not report a maximum fan speed, so this cannot be detected: a tower or 2U server typically peaks around 5000 to 6000 RPM, while 1U fans can exceed 15000. Set 0 to leave fan bars off. A fan running faster than this still reads full and green rather than falling off the scale.</description>
+                <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">Choosing a value</a>.</description>
             </param>
         </group>
         <group label="Control">
             <param field="AllowHardPowerActions" type="boolean" label="Allow Force Off and Power Cycle" default="false">
-                <description>Adds the two hard power actions to the Power Control selector. Graceful shutdown and restart are always offered when control is enabled. Has no effect while Allow Control is No: no control device is created and every command is refused.</description>
+                <description>Adds Force Off and Power Cycle, which cut power with no warning and can lose data. Graceful actions are always offered. No effect while Allow Control is No. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/#graceful-versus-hard" target="_blank">Details</a>.</description>
             </param>
         </group>
         <group label="Advanced">
             <param field="VerifyTLS" type="boolean" label="Verify TLS certificate" default="false">
-                <description>Off by default because iDRAC ships a self-signed certificate. While off, the connection is encrypted but NOT authenticated, so a host on your network could impersonate the iDRAC.</description>
+                <description>Off because iDRAC ships a self-signed certificate. While off the connection is encrypted but NOT authenticated. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/security/" target="_blank">What that means</a>.</description>
             </param>
             <param field="SetupTelemetry" type="boolean" label="Configure iDRAC telemetry" default="false">
-                <description>Off by default, because this WRITES CONFIGURATION to your server: it is the only setting that does. When on, and only when per-component power is found to be unavailable, the plugin enables Dell's telemetry service and its power report, then never touches it again. It needs an iDRAC Datacenter licence, or OpenManage Enterprise Advanced. Leave it off if OpenManage or another tool manages this server's telemetry. You can do the same by hand instead: see <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#per-component-power-needs-a-licence" target="_blank">the documentation</a>.</description>
+                <description>The ONLY setting that writes configuration to your server. Enables Dell telemetry for per-component power, and only if that is found unavailable. Needs a Datacenter or OME Advanced licence. Leave off if OpenManage manages this server. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#per-component-power-needs-a-licence" target="_blank">Details, and how to do it by hand</a>.</description>
             </param>
             <param field="RequestTimeout" type="number" label="Request Timeout (s)" min="5" max="120" step="5" default="30" width="100px"/>
             <param field="DebugLevel" label="Debug Level" width="150px">
@@ -107,6 +107,8 @@ class _PluginState:
         self.metric_paths = ()
         # One configuration attempt per plugin start, never more, whether or not it worked.
         self.telemetry_setup_tried = False
+        # Per-GPU watts and temperature, when telemetry reports them. Empty on most machines.
+        self.gpus = {}
         # Two values, deliberately. `backoff` is the countdown the heartbeat drains to zero;
         # `backoff_level` is how long the current wait is and is what doubles. Reading growth
         # back off the countdown cannot work: it is always exactly 0.0 by the time the next poll
@@ -280,6 +282,7 @@ def poll_metrics(client, state) -> dict:
             value = model.metric_value(samples, metric_id)
             if value is not None:
                 metrics[metric_id] = value
+        state.gpus = planner.gpu_readings(samples)
     except redfish_client.RedfishError as exc:
         if state.telemetry is None:
             Domoticz.Status(
@@ -406,6 +409,12 @@ def onHeartbeat():
         volumes=parts["volumes"],
         nics=parts["nics"],
     )
+    # GPUs come from telemetry rather than from a Redfish collection, so discover() cannot find
+    # them. They still need units allocated from the same persisted map as everything else.
+    if _state.gpus:
+        inventory = discovery.Inventory(
+            **{**inventory.__dict__, "gpus": tuple(sorted(_state.gpus))}
+        )
     saved = domoticz_api.load_state()
     _state.alloc = planner.assign_units(inventory, _state.alloc or saved.unit_alloc)
     # A unit is never freed once taken, so a block can exhaust through component churn. The
@@ -451,6 +460,7 @@ def onHeartbeat():
         cfg=cfg,
         energy_wh=counter_wh,
         metrics=metrics,
+        gpus=_state.gpus,
         **parts,
     )
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))

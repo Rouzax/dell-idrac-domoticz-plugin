@@ -1,0 +1,1369 @@
+{
+ "@odata.id": "/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-A",
+ "@odata.type": "#MetricReport.v1_5_0.MetricReport",
+ "Id": "OME-PMP-Power-A",
+ "MetricValues": [
+  {
+   "MetricId": "TotalCPUPower",
+   "MetricProperty": "",
+   "MetricValue": "100",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalCPUPower- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalCPUPower",
+   "MetricProperty": "",
+   "MetricValue": "140",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalCPUPower- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalCPUPower",
+   "MetricProperty": "",
+   "MetricValue": "106.603223621845",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalCPUPower- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalMemoryPower",
+   "MetricProperty": "",
+   "MetricValue": "43",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalMemoryPower- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalMemoryPower",
+   "MetricProperty": "",
+   "MetricValue": "47",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalMemoryPower- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalMemoryPower",
+   "MetricProperty": "",
+   "MetricValue": "43.9838709677419",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalMemoryPower- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalStoragePower",
+   "MetricProperty": "",
+   "MetricValue": "0.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalStoragePower- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalStoragePower",
+   "MetricProperty": "",
+   "MetricValue": "0.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalStoragePower- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalStoragePower",
+   "MetricProperty": "",
+   "MetricValue": "0.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalStoragePower- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalFanPower",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalFanPower- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalFanPower",
+   "MetricProperty": "",
+   "MetricValue": "0.018555",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalFanPower- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "TotalFanPower",
+   "MetricProperty": "",
+   "MetricValue": "0.00202075436823039",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalFanPower- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "SystemPowerConsumption",
+   "MetricProperty": "",
+   "MetricValue": "700",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics SystemPowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "SystemPowerConsumption",
+   "MetricProperty": "",
+   "MetricValue": "737",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics SystemPowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "SystemPowerConsumption",
+   "MetricProperty": "",
+   "MetricValue": "708.063232421875",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics SystemPowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "44.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.1",
+     "FQDD": "PSU.Slot.1",
+     "Label": "PSU.Slot.1 PSUTemperatureReading- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "45.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.1",
+     "FQDD": "PSU.Slot.1",
+     "Label": "PSU.Slot.1 PSUTemperatureReading- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "44.9428571428571",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.1",
+     "FQDD": "PSU.Slot.1",
+     "Label": "PSU.Slot.1 PSUTemperatureReading- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "46",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.2",
+     "FQDD": "PSU.Slot.2",
+     "Label": "PSU.Slot.2 PSUTemperatureReading- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "47",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.2",
+     "FQDD": "PSU.Slot.2",
+     "Label": "PSU.Slot.2 PSUTemperatureReading- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "46.5",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.2",
+     "FQDD": "PSU.Slot.2",
+     "Label": "PSU.Slot.2 PSUTemperatureReading- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "47",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.3",
+     "FQDD": "PSU.Slot.3",
+     "Label": "PSU.Slot.3 PSUTemperatureReading- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "48",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.3",
+     "FQDD": "PSU.Slot.3",
+     "Label": "PSU.Slot.3 PSUTemperatureReading- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "47.5263157894737",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.3",
+     "FQDD": "PSU.Slot.3",
+     "Label": "PSU.Slot.3 PSUTemperatureReading- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "46",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.4",
+     "FQDD": "PSU.Slot.4",
+     "Label": "PSU.Slot.4 PSUTemperatureReading- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "47",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.4",
+     "FQDD": "PSU.Slot.4",
+     "Label": "PSU.Slot.4 PSUTemperatureReading- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PSUTemperatureReading",
+   "MetricProperty": "",
+   "MetricValue": "46.5",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PSU.Slot.4",
+     "FQDD": "PSU.Slot.4",
+     "Label": "PSU.Slot.4 PSUTemperatureReading- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#PowerConsumptionmW",
+   "MetricValue": "24612",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#PowerConsumptionmW",
+   "MetricValue": "24810",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#PowerConsumptionmW",
+   "MetricValue": "24702.8260869565",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "35",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "36",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "35.2373352165725",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#MemoryTemperatureCelsius",
+   "MetricValue": "34",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#MemoryTemperatureCelsius",
+   "MetricValue": "34",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.5-1#MemoryTemperatureCelsius",
+   "MetricValue": "34",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.5-1",
+     "FQDD": "Video.Slot.5-1",
+     "Label": "Video.Slot.5-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#PowerConsumptionmW",
+   "MetricValue": "38646",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#PowerConsumptionmW",
+   "MetricValue": "38713",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#PowerConsumptionmW",
+   "MetricValue": "38679.7083333333",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "40",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "50",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "40.0138041431262",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#MemoryTemperatureCelsius",
+   "MetricValue": "37",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#MemoryTemperatureCelsius",
+   "MetricValue": "38",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.6-1#MemoryTemperatureCelsius",
+   "MetricValue": "37.9166666666667",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.6-1",
+     "FQDD": "Video.Slot.6-1",
+     "Label": "Video.Slot.6-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#PowerConsumptionmW",
+   "MetricValue": "39353",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#PowerConsumptionmW",
+   "MetricValue": "39770",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#PowerConsumptionmW",
+   "MetricValue": "39449.0175141243",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "41",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "42",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "41.0062146892655",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#MemoryTemperatureCelsius",
+   "MetricValue": "37",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#MemoryTemperatureCelsius",
+   "MetricValue": "39",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.7-1#MemoryTemperatureCelsius",
+   "MetricValue": "37.8694915254237",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.7-1",
+     "FQDD": "Video.Slot.7-1",
+     "Label": "Video.Slot.7-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#PowerConsumptionmW",
+   "MetricValue": "25675",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#PowerConsumptionmW",
+   "MetricValue": "25851",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#PowerConsumptionmW",
+   "MetricValue": "25777.0454545455",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "35",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "36",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "35.9999058380414",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#MemoryTemperatureCelsius",
+   "MetricValue": "34",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#MemoryTemperatureCelsius",
+   "MetricValue": "35",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.8-1#MemoryTemperatureCelsius",
+   "MetricValue": "34.5",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.8-1",
+     "FQDD": "Video.Slot.8-1",
+     "Label": "Video.Slot.8-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#PowerConsumptionmW",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#PowerConsumptionmW",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#PowerConsumptionmW",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "32",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "33",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "32.8903073286052",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#MemoryTemperatureCelsius",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#MemoryTemperatureCelsius",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.9-1#MemoryTemperatureCelsius",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.9-1",
+     "FQDD": "Video.Slot.9-1",
+     "Label": "Video.Slot.9-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#PowerConsumptionmW",
+   "MetricValue": "39012",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#PowerConsumptionmW",
+   "MetricValue": "39150",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#PowerConsumptionmW",
+   "MetricValue": "39100.1428571429",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "41",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "41",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "41",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#MemoryTemperatureCelsius",
+   "MetricValue": "38",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#MemoryTemperatureCelsius",
+   "MetricValue": "38",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.10-1#MemoryTemperatureCelsius",
+   "MetricValue": "38",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.10-1",
+     "FQDD": "Video.Slot.10-1",
+     "Label": "Video.Slot.10-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#PowerConsumptionmW",
+   "MetricValue": "38321",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 PowerConsumption- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#PowerConsumptionmW",
+   "MetricValue": "38457",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 PowerConsumption- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PowerConsumption",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#PowerConsumptionmW",
+   "MetricValue": "38389.85",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 PowerConsumption- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "42",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 PrimaryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "42",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 PrimaryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "PrimaryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#PrimaryGPUTemperatureCelsius",
+   "MetricValue": "42",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 PrimaryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#MemoryTemperatureCelsius",
+   "MetricValue": "39",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 MemoryTemperature- Minimum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#MemoryTemperatureCelsius",
+   "MetricValue": "39",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 MemoryTemperature- Maximum (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  },
+  {
+   "MetricId": "MemoryTemperature",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellGPUSensors/Video.Slot.11-1#MemoryTemperatureCelsius",
+   "MetricValue": "39",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Video.Slot.11-1",
+     "FQDD": "Video.Slot.11-1",
+     "Label": "Video.Slot.11-1 MemoryTemperature- Average (5m0s)",
+     "Source": "gpu-health"
+    }
+   },
+   "Timestamp": "2026-08-19T12:15:00.000Z"
+  }
+ ],
+ "MetricValues@odata.count": 90,
+ "Name": "OME-PMP-Power-A Metric Report",
+ "Oem": {
+  "Dell": {
+   "@odata.type": "#DellMetricReport.v1_0_0.DellMetricReport",
+   "MetricReportDefinitionDigest": "99008e52a5cdd799955159f7ff3c05d93dcdc07a3d734b2fdf0c837d644fd74b",
+   "ServiceTag": "SVCTAG0",
+   "iDRACFirmwareVersion": "7.00.00.183"
+  }
+ },
+ "ReportSequence": "8936",
+ "Timestamp": "2026-08-19T12:15:58.000Z"
+}

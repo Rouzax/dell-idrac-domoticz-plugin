@@ -570,3 +570,81 @@ def test_energy_falls_back_to_the_board_sensor_without_telemetry():
     )
     watts = float(got[planner.UNIT_POWER].svalue.split(";")[0])
     assert watts == 144.0
+
+
+def _ome_samples():
+    return model.parse_metric_report(load("ome", "power_metrics"))
+
+
+def test_gpu_devices_are_created_one_per_card():
+    """From a real seven-GPU OpenManage-managed server. Power arrives in MILLIWATTS."""
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    parts["gpus"] = planner.gpu_readings(_ome_samples())
+    inv = _inventory(parts)
+    inv = discovery.Inventory(**{**inv.__dict__, "gpus": tuple(sorted(parts["gpus"]))})
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    powers = [
+        u
+        for unit, u in got.items()
+        if planner.BLOCK_GPU_POWER <= unit < planner.BLOCK_GPU_POWER + 20
+    ]
+    temps = [
+        u for unit, u in got.items() if planner.BLOCK_GPU_TEMP <= unit < planner.BLOCK_GPU_TEMP + 20
+    ]
+    assert len(powers) == 7
+    assert len(temps) == 7
+    # 39100.14 mW is 39.1 W, not 39100 W.
+    watts = {u.name: u.svalue for u in powers}
+    assert watts["GPU Video.Slot.10-1 Power"] == "39.1"
+    assert {u.type_name for u in powers} == {"Usage"}
+    assert {u.type_name for u in temps} == {"Temperature"}
+    assert dict((u.name, u.svalue) for u in temps)["GPU Video.Slot.6-1 Temp"] == "40.0"
+
+
+def test_no_gpu_devices_without_gpu_metrics():
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    parts["gpus"] = {}
+    inv = _inventory(parts)
+    got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    assert not [u for u in got if u.unit >= planner.BLOCK_GPU_POWER]
+
+
+def test_gpu_readings_converts_milliwatts_and_pairs_temperature():
+    readings = planner.gpu_readings(_ome_samples())
+    assert len(readings) == 7
+    assert readings["Video.Slot.10-1"] == (39.1, 41.0)
+    # A card reporting zero power is still a card; zero reported is a value.
+    assert readings["Video.Slot.9-1"][0] == 0.0
+
+
+def test_a_gpu_reporting_only_temperature_still_appears():
+    """Real shape from a third server: Video.Slot.7-1 through 7-4, four GPUs in ONE slot,
+    reporting PrimaryTemperature but no PowerConsumption in that report."""
+    samples = [
+        model.MetricSample("PrimaryTemperature", "Video.Slot.7-2", "Average", 41.0, "t"),
+        model.MetricSample("PrimaryTemperature", "Video.Slot.7-3", "Average", 36.0, "t"),
+        model.MetricSample("PowerConsumption", "Video.Slot.7-2", "Average", 39012.0, "t"),
+    ]
+    readings = planner.gpu_readings(samples)
+    assert readings["Video.Slot.7-2"] == (39.0, 41.0)
+    # Temperature only: the missing power is left out rather than shown as zero.
+    assert readings["Video.Slot.7-3"] == (None, 36.0)
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    parts["gpus"] = readings
+    inv = _inventory(parts)
+    inv = discovery.Inventory(**{**inv.__dict__, "gpus": tuple(sorted(readings))})
+    got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    gpu = [u for u in got if u.unit >= planner.BLOCK_GPU_POWER]
+    # Three devices, not four: two for 7-2, temperature only for 7-3.
+    assert len(gpu) == 3
+
+
+def test_scientific_notation_survives_the_parser():
+    """A real CPUUsage average arrived as "9.14149423131894e-13"."""
+    payload = {"MetricValues": [{"MetricId": "U", "MetricValue": "9.14149423131894e-13"}]}
+    assert model.metric_value(model.parse_metric_report(payload), "U") == 9.14149423131894e-13

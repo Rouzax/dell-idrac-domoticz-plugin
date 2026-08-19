@@ -297,3 +297,23 @@ def _mv(metric_id, value, fqdd="PowerMetrics", label="", timestamp="2026-08-19T1
         dell["Label"] = label
     node["Oem"] = {"Dell": dell}
     return node
+
+
+def test_gpu_power_and_temperature_are_read_per_device():
+    """Captured from an OpenManage-managed server with seven GPUs.
+
+    PowerConsumption is reported in MILLIWATTS, and every GPU shares the same metric id, so both
+    the unit and the per-device split have to be handled or the numbers are nonsense.
+    """
+    samples = model.parse_metric_report(load("ome", "power_metrics"))
+    power = model.metric_by_device(samples, "PowerConsumption")
+    assert len(power) == 7
+    # Averages, not the minimum that appears first in the payload.
+    assert power["Video.Slot.10-1"] == 39100.1428571429
+    assert power["Video.Slot.9-1"] == 0.0
+    temps = model.metric_by_device(samples, "PrimaryTemperature")
+    assert temps["Video.Slot.6-1"] == 40.0138041431262
+    # Whole-system metrics still resolve to a single value despite the repeats.
+    assert model.metric_value(samples, "TotalCPUPower") == 106.603223621845
+    # And four power supplies stay four.
+    assert len(model.metric_by_device(samples, "PSUTemperatureReading")) == 4

@@ -25,6 +25,8 @@ class Inventory:
     drives: tuple = ()
     volumes: tuple = ()
     nics: tuple = ()
+    # From telemetry, not from a Redfish collection, so discover() does not fill it.
+    gpus: tuple = ()
 
 
 def _is_cpu_temp(sensor) -> bool:

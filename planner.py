@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass, field
 
 import health
+import model
 import thresholds
 
 UNIT_POWER = 1
@@ -41,6 +42,9 @@ BLOCK_PSUS = 60
 BLOCK_VOLUMES = 70
 BLOCK_NICS = 80
 BLOCK_DRIVES = 100
+BLOCK_GPU_POWER = 300
+BLOCK_GPU_TEMP = 320
+
 BLOCK_CONTROL = 200
 
 _BLOCK_LIMITS = {
@@ -50,6 +54,8 @@ _BLOCK_LIMITS = {
     BLOCK_VOLUMES: 10,
     BLOCK_NICS: 20,
     BLOCK_DRIVES: 100,
+    BLOCK_GPU_POWER: 20,
+    BLOCK_GPU_TEMP: 20,
 }
 
 
@@ -96,6 +102,8 @@ def unassigned(inventory, alloc: dict) -> tuple:
         *inventory.volumes,
         *inventory.nics,
         *inventory.drives,
+        *(f"{g}#power" for g in inventory.gpus),
+        *(f"{g}#temp" for g in inventory.gpus),
     ]
     return tuple(rid for rid in wanted if rid not in alloc)
 
@@ -112,6 +120,9 @@ def assign_units(inventory, alloc: dict) -> dict:
     _assign_block(inventory.volumes, BLOCK_VOLUMES, out, taken)
     _assign_block(inventory.nics, BLOCK_NICS, out, taken)
     _assign_block(inventory.drives, BLOCK_DRIVES, out, taken)
+    # Two devices per card, so two blocks, keyed by a suffixed id to keep the namespace unique.
+    _assign_block([f"{g}#power" for g in inventory.gpus], BLOCK_GPU_POWER, out, taken)
+    _assign_block([f"{g}#temp" for g in inventory.gpus], BLOCK_GPU_TEMP, out, taken)
     return out
 
 
@@ -166,6 +177,29 @@ def _temp_bar(threshold) -> str:
     return json.dumps({"temp": bands}, separators=(",", ":"))
 
 
+# Dell reports GPU draw in MILLIWATTS while every other power figure is watts. Reading it raw
+# would put 39100 W on a card that is drawing 39 W.
+_MILLIWATTS_PER_WATT = 1000.0
+
+
+def gpu_readings(samples) -> dict:
+    """Watts and temperature per GPU, from a telemetry report that repeats ids per card.
+
+    Captured from a seven-GPU OpenManage-managed server. A card is included as soon as it reports
+    either figure; the other is left out rather than invented.
+    """
+    power = model.metric_by_device(samples, "PowerConsumption")
+    temps = model.metric_by_device(samples, "PrimaryTemperature")
+    out = {}
+    for device in sorted(set(power) | set(temps)):
+        watts = power.get(device)
+        out[device] = (
+            None if watts is None else round(watts / _MILLIWATTS_PER_WATT, 1),
+            temps.get(device),
+        )
+    return out
+
+
 def _fan_bar(threshold, axis_max) -> str:
     """A fan is a Custom Sensor, which the UTILITY card renders, so Color is a BARE ARRAY.
 
@@ -213,10 +247,12 @@ def plan(
     faults: list | None = None,
     redundancy: list | None = None,
     metrics: dict | None = None,
+    gpus: dict | None = None,
 ) -> list:
     faults = faults or []
     redundancy = redundancy or []
     metrics = metrics or {}
+    gpus = gpus or {}
     out = []
 
     # Prefer what the wall socket actually delivers. SystemBoardPwrConsumption misses the power
@@ -238,6 +274,32 @@ def plan(
                 options={"EnergyMeterMode": "0"},
             )
         )
+
+    for device, (watts, celsius) in sorted(gpus.items()):
+        if watts is not None:
+            unit = alloc.get(f"{device}#power")
+            if unit is not None:
+                out.append(
+                    DeviceUpdate(
+                        unit=unit,
+                        type_name="Usage",
+                        name=f"GPU {device} Power",
+                        nvalue=0,
+                        svalue=_fmt_reading(watts),
+                    )
+                )
+        if celsius is not None:
+            unit = alloc.get(f"{device}#temp")
+            if unit is not None:
+                out.append(
+                    DeviceUpdate(
+                        unit=unit,
+                        type_name="Temperature",
+                        name=f"GPU {device} Temp",
+                        nvalue=0,
+                        svalue=_fmt_reading(round(celsius, 1)),
+                    )
+                )
 
     for unit, metric_id, name in _POWER_METRIC_UNITS:
         value = metrics.get(metric_id)
