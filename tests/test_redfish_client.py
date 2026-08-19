@@ -77,7 +77,8 @@ def test_patch_uses_the_patch_verb_and_sends_json():
     assert json.loads(request.data) == {"LocationIndicatorActive": True}
 
 
-def test_transport_errors_become_redfish_error():
+def test_transport_errors_become_redfish_error(monkeypatch):
+    monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
     client = _client([OSError("connection refused")])
     with pytest.raises(redfish_client.RedfishError):
         client.get("/redfish/v1")
@@ -89,7 +90,8 @@ def test_redact_removes_the_password_from_text():
     assert "***" in client.redact("failed with hunter2 in the url")
 
 
-def test_redfish_error_message_never_contains_the_password():
+def test_redfish_error_message_never_contains_the_password(monkeypatch):
+    monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
     client = _client([OSError("auth failed for root:hunter2")])
     with pytest.raises(redfish_client.RedfishError) as excinfo:
         client.get("/redfish/v1")
@@ -126,6 +128,20 @@ def test_a_timeout_is_not_retried(monkeypatch):
     """A timeout already spent its budget; retrying it multiplies how long one poll blocks."""
     monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
     opener = FakeOpener([TimeoutError("timed out"), {"never": "reached"}])
+    client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
+    with pytest.raises(redfish_client.RedfishError) as excinfo:
+        client.get("/redfish/v1")
+    assert len(opener.requests) == 1
+    assert "timeout" in str(excinfo.value).lower()
+
+
+def test_a_connect_phase_timeout_wrapped_in_urlerror_is_not_retried(monkeypatch):
+    """urllib re-raises a connect-phase timeout as URLError, which must not reach the retry path.
+
+    Without this, a firewall silently dropping SYN would cost three full timeouts per poll.
+    """
+    monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
+    opener = FakeOpener([urllib.error.URLError(TimeoutError("timed out")), {"never": "reached"}])
     client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
     with pytest.raises(redfish_client.RedfishError) as excinfo:
         client.get("/redfish/v1")
@@ -174,7 +190,8 @@ def test_resolve_learns_non_conventional_resource_ids():
     )
 
 
-def test_resolve_falls_back_when_a_collection_is_empty_or_unreadable():
+def test_resolve_falls_back_when_a_collection_is_empty_or_unreadable(monkeypatch):
+    monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
     client = _client([{"Members": []}, OSError("nope"), {"Members": []}])
     client.resolve()
     assert client.system == redfish_client.DEFAULT_SYSTEM

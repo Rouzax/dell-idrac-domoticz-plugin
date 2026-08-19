@@ -32,15 +32,6 @@ class RedfishError(Exception):
     pass
 
 
-class _Method(urllib.request.Request):
-    def __init__(self, *args, method="GET", **kwargs):
-        super().__init__(*args, **kwargs)
-        self._method = method
-
-    def get_method(self):
-        return self._method
-
-
 class RedfishClient:
     def __init__(self, host, username, password, verify_tls=False, timeout=30, opener=None):
         self.host = host
@@ -100,7 +91,7 @@ class RedfishClient:
     def _request(self, path: str, method: str = "GET", body=None) -> dict:
         url = f"https://{self.host}{path}"
         data = json.dumps(body).encode() if body is not None else None
-        request = _Method(url, data=data, method=method)
+        request = urllib.request.Request(url, data=data, method=method)
         request.add_header("Authorization", f"Basic {self._auth}")
         request.add_header("Accept", "application/json")
         if data is not None:
@@ -120,13 +111,28 @@ class RedfishClient:
                     time.sleep(_RETRY_SLEEP_SECONDS)
                     continue
                 raise RedfishError(self.redact(f"HTTP {exc.code} for {path}")) from None
+            except urllib.error.URLError as exc:
+                # urllib wraps a CONNECT-phase timeout in URLError (do_open catches OSError and
+                # re-raises it as URLError), so it would slip past the TimeoutError branch below
+                # and be retried, which is exactly what that branch exists to prevent. A refused
+                # connection is a different URLError and IS worth retrying: it fails in
+                # milliseconds.
+                if isinstance(exc.reason, TimeoutError):
+                    raise RedfishError(
+                        self.redact(f"timeout after {self.timeout}s for {path}")
+                    ) from None
+                if not last:
+                    time.sleep(_RETRY_SLEEP_SECONDS)
+                    continue
+                raise RedfishError(self.redact(f"{type(exc).__name__} for {path}: {exc}")) from None
             except TimeoutError:
                 # Deliberately NOT retried. A timeout has already spent its full budget, so a
                 # retry multiplies the block. Measured during a real iDRAC restart: the recovering
                 # controller accepts connections but does not answer, and three retries at the
                 # default 30 s timeout would stall one poll for over 90 seconds.
-                msg = f"timeout after {self.timeout}s for {path}"
-                raise RedfishError(self.redact(msg)) from None
+                raise RedfishError(
+                    self.redact(f"timeout after {self.timeout}s for {path}")
+                ) from None
             except Exception as exc:
                 if not last:
                     time.sleep(_RETRY_SLEEP_SECONDS)
@@ -137,7 +143,7 @@ class RedfishClient:
         try:
             return json.loads(raw)
         except ValueError:
-            raise RedfishError(f"malformed JSON from {path}") from None
+            raise RedfishError(self.redact(f"malformed JSON from {path}")) from None
 
     def get(self, path: str) -> dict:
         return self._request(path)
