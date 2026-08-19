@@ -2,9 +2,9 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-08-19
 
-First release, not yet published.
+First release.
 
 ### Added
 
@@ -39,3 +39,5 @@ First release, not yet published.
 - Only the first power redundancy group is reported.
 - Turning `Allow Control` back off leaves the two control devices in place, inert but visible.
 - The iDRAC cannot see UPS battery health, charge or runtime. Add NUT or apcupsd alongside for that.
+
+[0.1.0]: https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.1.0
