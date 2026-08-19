@@ -55,3 +55,31 @@ def test_missing_keys_fall_back_to_defaults():
 
 def test_address_is_stripped_of_a_scheme_and_trailing_slash():
     assert config.parse_config(_params(Address="https://10.0.0.5/")).address == "10.0.0.5"
+
+
+def test_an_unrecognised_boolean_keeps_the_field_default_not_false():
+    """EnableDrives defaults ON. A typo must not silently disable drive monitoring."""
+    cfg = config.parse_config(_params(EnableDrives="enable"))
+    assert cfg.enable_drives is True
+    assert any("EnableDrives" in w for w in cfg.warnings)
+
+
+def test_recognised_false_forms_still_disable():
+    for value in ("false", "no", "0", "off", "FALSE"):
+        assert config.parse_config(_params(EnableDrives=value)).enable_drives is False
+
+
+def test_clamping_is_reported_not_silent():
+    cfg = config.parse_config(_params(PollInterval="9999"))
+    assert cfg.poll_interval == 600
+    assert any("PollInterval" in w and "600" in w for w in cfg.warnings)
+
+
+def test_unreadable_numeric_is_reported():
+    cfg = config.parse_config(_params(PollInterval="abc"))
+    assert cfg.poll_interval == 30
+    assert any("PollInterval" in w for w in cfg.warnings)
+
+
+def test_a_clean_config_reports_no_warnings():
+    assert config.parse_config(_params()).warnings == ()

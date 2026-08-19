@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 import persistence
 
 
@@ -30,3 +34,42 @@ def test_migrate_fills_missing_keys():
 def test_loads_tolerates_a_payload_from_a_future_field_set():
     text = '{"version":1,"unit_alloc":{},"unknown_future_key":123}'
     assert persistence.loads(text).unit_alloc == {}
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["not json at all", "{trunc", "[1,2,3]", "null", "42", '"a string"', "   ", "\t\n"],
+)
+def test_loads_never_raises_on_an_unusable_payload(text):
+    """This value comes from a DB column and is read during onStart. A raise there is fatal."""
+    assert persistence.loads(text) == persistence.PluginState()
+
+
+def test_wrong_typed_fields_are_dropped_rather_than_corrupting_state():
+    text = json.dumps(
+        {
+            "unit_alloc": [1, 2, 3],
+            "auto_names": {"1": 7},
+            "base_wh": {"1": "12.5", "2": 3},
+            "control_shown": "yes",
+            "energy_scale": "fast",
+        }
+    )
+    state = persistence.loads(text)
+    assert state.unit_alloc == {}
+    assert state.auto_names == {}
+    assert state.base_wh == {"2": 3.0}
+    assert state.control_shown is False
+    assert state.energy_scale is None
+
+
+def test_realistic_redfish_ids_survive_two_round_trips():
+    state = persistence.PluginState(
+        unit_alloc={"Disk.Bay.7:Enclosure.Internal.0-2:RAID.SL.3-1": 107, "PSU.0": 60},
+        auto_names={"1": "Server Power"},
+        base_wh={"1": 12.5},
+    )
+    once = persistence.loads(persistence.dumps(state))
+    twice = persistence.loads(persistence.dumps(once))
+    assert once == state
+    assert twice == state
