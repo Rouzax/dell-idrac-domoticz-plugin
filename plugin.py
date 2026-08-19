@@ -58,6 +58,9 @@
             <param field="VerifyTLS" type="boolean" label="Verify TLS certificate" default="false">
                 <description>Off by default because iDRAC ships a self-signed certificate. While off, the connection is encrypted but NOT authenticated, so a host on your network could impersonate the iDRAC.</description>
             </param>
+            <param field="SetupTelemetry" type="boolean" label="Configure iDRAC telemetry" default="false">
+                <description>Off by default, because this WRITES CONFIGURATION to your server: it is the only setting that does. When on, and only when per-component power is found to be unavailable, the plugin enables Dell's telemetry service and its power report, then never touches it again. It needs an iDRAC Datacenter licence, or OpenManage Enterprise Advanced. Leave it off if OpenManage or another tool manages this server's telemetry. You can do the same by hand instead: see <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#per-component-power-needs-a-licence" target="_blank">the documentation</a>.</description>
+            </param>
             <param field="RequestTimeout" type="number" label="Request Timeout (s)" min="5" max="120" step="5" default="30" width="100px"/>
             <param field="DebugLevel" label="Debug Level" width="150px">
                 <description>Logging verbosity. The iDRAC password is never written to the log at any level.</description>
@@ -102,6 +105,8 @@ class _PluginState:
         # Which report paths actually carry power metrics on THIS machine. Discovered once,
         # because the ids differ by licence and management, then polled directly.
         self.metric_paths = ()
+        # One configuration attempt per plugin start, never more, whether or not it worked.
+        self.telemetry_setup_tried = False
         # Two values, deliberately. `backoff` is the countdown the heartbeat drains to zero;
         # `backoff_level` is how long the current wait is and is what doubles. Reading growth
         # back off the countdown cannot work: it is always exactly 0.0 by the time the next poll
@@ -206,10 +211,49 @@ def discover_metric_paths(client, state) -> tuple:
             # One unreadable report, licence-gated or otherwise, must not hide the others.
             Domoticz.Debug(f"metric report {path} unreadable: {exc}")
             continue
-        if _WANTED_METRICS & set(found):
+        if _WANTED_METRICS & {sample.metric_id for sample in found}:
             paths.append(path)
     state.metric_paths = tuple(paths)
     return state.metric_paths
+
+
+# The minimum needed for the per-component power report: the master switch and that one report.
+# Nothing else is touched, so an OpenManage-managed server keeps whatever else it has configured.
+_TELEMETRY_ATTRIBUTES = {
+    "Telemetry.1.EnableTelemetry": "Enabled",
+    "TelemetryPowerMetrics.1.EnableTelemetry": "Enabled",
+}
+
+
+def setup_telemetry(client, state) -> None:
+    """Enable Dell telemetry, but ONLY when it is already known to be unavailable.
+
+    This is the one place the plugin writes configuration to the server, and it is off by
+    default. Writing only when the read failed matters: it keeps the plugin away from a machine
+    where OpenManage, or anything else, already has telemetry working and owns that config.
+    Attempted once per plugin start, so a server that cannot be fixed this way, because the
+    licence is missing, is not written to on every poll.
+    """
+    if state.telemetry_setup_tried:
+        return
+    state.telemetry_setup_tried = True
+    Domoticz.Status(
+        "configuring iDRAC telemetry, because per-component power was unavailable and "
+        "Configure iDRAC telemetry is on: "
+        + ", ".join(f"{k}={v}" for k, v in sorted(_TELEMETRY_ATTRIBUTES.items()))
+    )
+    try:
+        client.patch(client.idrac_attributes, {"Attributes": dict(_TELEMETRY_ATTRIBUTES)})
+    except redfish_client.RedfishError as exc:
+        Domoticz.Error(
+            "could not configure iDRAC telemetry, which usually means the licence does not "
+            f"allow it: {exc}"
+        )
+        return
+    Domoticz.Status("iDRAC telemetry configured; per-component power should appear shortly")
+    # Let the next poll rediscover rather than latching the failure that prompted this.
+    state.telemetry = None
+    state.metric_paths = ()
 
 
 def poll_metrics(client, state) -> dict:
@@ -225,11 +269,17 @@ def poll_metrics(client, state) -> dict:
     try:
         if state.telemetry is None:
             discover_metric_paths(client, state)
-        metrics = {}
+        samples = []
         for path in state.metric_paths:
-            # Later reports win, which is right: they are polled in collection order and a
-            # machine exposing the same metric twice is reporting the same quantity.
-            metrics.update(model.parse_metric_report(client.get(path)))
+            samples.extend(model.parse_metric_report(client.get(path)))
+        # Reduce to one value per metric only at the end. Selection has to see every sample at
+        # once: the same metric id repeats per aggregation and per device, so choosing early
+        # would pick a Minimum, or one power supply's temperature, and call it the answer.
+        metrics = {}
+        for metric_id in _WANTED_METRICS:
+            value = model.metric_value(samples, metric_id)
+            if value is not None:
+                metrics[metric_id] = value
     except redfish_client.RedfishError as exc:
         if state.telemetry is None:
             Domoticz.Status(
@@ -325,6 +375,8 @@ def onHeartbeat():
             _state.resolved = _state.client.resolve()
         sensors = poll_fast(_state.client)
         metrics = poll_metrics(_state.client, _state)
+        if not metrics and cfg.setup_telemetry and not _state.telemetry_setup_tried:
+            setup_telemetry(_state.client, _state)
         _state.slow_tick += 1
         if _state.slow_tick >= cfg.slow_every or not _state.slow_parts["threshold_map"]:
             # Reset only AFTER the call returns. Resetting first means a transient slow-tier

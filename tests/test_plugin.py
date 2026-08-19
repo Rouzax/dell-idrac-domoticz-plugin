@@ -86,25 +86,28 @@ class FakeClient:
         return {}
 
 
+_PARAMS = {
+    "HardwareID": 3,
+    "Address": "10.0.0.1",
+    "Username": "root",
+    "Password": "secret",
+    "AllowControl": "false",
+    "PollInterval": "30",
+    "SlowEvery": "10",
+    "EnableDrives": "true",
+    "EnableVolumes": "true",
+    "EnableNICs": "true",
+    "EnablePSUs": "true",
+    "DriveLifeFloor": "10",
+    "VerifyTLS": "false",
+    "RequestTimeout": "30",
+    "DebugLevel": "0",
+}
+
+
 @pytest.fixture
 def started(monkeypatch):
-    params = {
-        "HardwareID": 3,
-        "Address": "10.0.0.1",
-        "Username": "root",
-        "Password": "secret",
-        "AllowControl": "false",
-        "PollInterval": "30",
-        "SlowEvery": "10",
-        "EnableDrives": "true",
-        "EnableVolumes": "true",
-        "EnableNICs": "true",
-        "EnablePSUs": "true",
-        "DriveLifeFloor": "10",
-        "VerifyTLS": "false",
-        "RequestTimeout": "30",
-        "DebugLevel": "0",
-    }
+    params = dict(_PARAMS)
     monkeypatch.setattr(plugin, "Parameters", params, raising=False)
     monkeypatch.setattr(plugin, "Devices", domoticz_stub.Devices, raising=False)
     plugin.onStart()
@@ -376,3 +379,63 @@ def test_a_failing_telemetry_call_does_not_cost_the_rest_of_the_poll(started):
     assert plugin.planner.UNIT_HEALTH in units
     assert plugin.planner.UNIT_INLET in units
     assert started.backoff == 0.0
+
+
+class RecordingClient(FakeClient):
+    """FakeClient that records PATCHes and can start unlicensed, then succeed after one."""
+
+    def __init__(self, *a, becomes_available=False, **kw):
+        super().__init__(*a, **kw)
+        self.patches = []
+        self.becomes_available = becomes_available
+
+    def patch(self, path, body):
+        self.calls.append(f"PATCH {path}")
+        self.patches.append((path, body))
+        if self.becomes_available:
+            self.telemetry_available = True
+        return {}
+
+
+def test_telemetry_is_never_configured_unless_the_setting_is_on(started):
+    started.client = RecordingClient()
+    _beat_once(started)
+    assert started.client.patches == []
+
+
+def test_the_setting_enables_telemetry_and_the_metrics_then_appear(started):
+    started.cfg = plugin.config.parse_config(
+        {**_PARAMS, "SetupTelemetry": "true", "DebugLevel": "0"}
+    )
+    started.client = RecordingClient(becomes_available=True)
+    _beat_once(started)
+    paths = {p for p, _ in started.client.patches}
+    assert paths == {started.client.idrac_attributes}
+    body = started.client.patches[0][1]["Attributes"]
+    assert body == {
+        "Telemetry.1.EnableTelemetry": "Enabled",
+        "TelemetryPowerMetrics.1.EnableTelemetry": "Enabled",
+    }
+    # The next poll finds the report that the write just switched on.
+    _beat_once(started)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
+
+
+def test_telemetry_is_not_reconfigured_when_it_already_works(started):
+    """The safeguard that keeps the plugin off a machine OpenManage already manages."""
+    started.cfg = plugin.config.parse_config({**_PARAMS, "SetupTelemetry": "true"})
+    started.client = RecordingClient(telemetry_available=True)
+    _beat_once(started)
+    assert started.client.patches == []
+    assert started.telemetry is True
+
+
+def test_telemetry_setup_is_attempted_only_once_per_start(started):
+    """A machine that cannot be fixed this way must not be written to on every poll."""
+    started.cfg = plugin.config.parse_config({**_PARAMS, "SetupTelemetry": "true"})
+    started.client = RecordingClient(becomes_available=False)
+    _beat_once(started)
+    _beat_once(started)
+    _beat_once(started)
+    assert len(started.client.patches) == 1

@@ -17,6 +17,7 @@ def _cfg(**kw):
         "enable_psus": True,
         "drive_life_floor": 10,
         "fan_bar_max": 6000,
+        "setup_telemetry": False,
         "verify_tls": False,
         "request_timeout": 30,
         "debug_level": 0,

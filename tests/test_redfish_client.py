@@ -275,3 +275,25 @@ def test_metric_report_ids_is_empty_when_telemetry_is_unlicensed(monkeypatch):
 def test_metric_report_ids_tolerates_a_collection_with_no_members():
     client = _client([{}])
     assert client.metric_report_ids() == []
+
+
+def test_the_idrac_attribute_path_is_derived_from_the_manager_not_the_system():
+    """Telemetry attributes live under the MANAGER id, not the system id.
+
+    dell_attributes points at DellAttributes/<system id>, which is where power and thermal
+    settings live. The telemetry switches are under DellAttributes/<manager id>, a different
+    resource, and writing to the wrong one silently does nothing useful.
+    """
+    opener = FakeOpener(
+        [
+            {"@odata.id": "/redfish/v1"},
+            {"Members": [{"@odata.id": "/redfish/v1/Systems/Node1.Slot.3"}]},
+            {"Members": [{"@odata.id": "/redfish/v1/Chassis/Node1.Slot.3"}]},
+            {"Members": [{"@odata.id": "/redfish/v1/Managers/iDRAC.Modular.3"}]},
+        ]
+    )
+    client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
+    client.resolve()
+    assert client.dell_attributes.endswith("/DellAttributes/Node1.Slot.3")
+    assert client.idrac_attributes.endswith("/DellAttributes/iDRAC.Modular.3")
+    assert client.idrac_attributes.startswith("/redfish/v1/Managers/iDRAC.Modular.3/")

@@ -195,41 +195,105 @@ def test_parse_redundancy_skips_an_entry_with_no_name():
     assert model.parse_redundancy({"Redundancy": [{"Mode": "N+m"}]}) == []
 
 
+def test_metric_id_alone_is_not_a_unique_key():
+    """Captured from an OpenManage-managed server, where one report carried all of this.
+
+    The same MetricId appears once per AGGREGATION, all at the identical timestamp, and again
+    once per DEVICE. Keying on MetricId alone silently reports a minimum as if it were the
+    current value, and collapses four power supplies into one.
+    """
+    payload = {
+        "MetricValues": [
+            _mv("TotalCPUPower", "100", label="PowerMetrics TotalCPUPower- Minimum (5m0s)"),
+            _mv("TotalCPUPower", "140", label="PowerMetrics TotalCPUPower- Maximum (5m0s)"),
+            _mv("TotalCPUPower", "106.6", label="PowerMetrics TotalCPUPower- Average (5m0s)"),
+            _mv("PSUTemperatureReading", "44.9", fqdd="PSU.Slot.1", label="x Average (5m0s)"),
+            _mv("PSUTemperatureReading", "46.5", fqdd="PSU.Slot.2", label="x Average (5m0s)"),
+        ]
+    }
+    samples = model.parse_metric_report(payload)
+    # The average is chosen, not the minimum that happens to come first.
+    assert model.metric_value(samples, "TotalCPUPower") == 106.6
+    # And the two supplies stay distinct rather than collapsing into one.
+    by_device = model.metric_by_device(samples, "PSUTemperatureReading")
+    assert by_device == {"PSU.Slot.1": 44.9, "PSU.Slot.2": 46.5}
+
+
+def test_a_metric_with_no_aggregation_label_is_used_as_is():
+    """Dell's own built-in reports carry no aggregation label, just the instantaneous value."""
+    payload = {"MetricValues": [_mv("TotalCPUPower", "44.0", label=None)]}
+    assert model.metric_value(model.parse_metric_report(payload), "TotalCPUPower") == 44.0
+
+
+def test_an_average_is_preferred_over_min_and_max_whatever_the_order():
+    for order in ([0, 1, 2], [2, 1, 0], [1, 2, 0]):
+        rows = [
+            _mv("P", "1", label="a Minimum (5m0s)"),
+            _mv("P", "9", label="a Maximum (5m0s)"),
+            _mv("P", "5", label="a Average (5m0s)"),
+        ]
+        payload = {"MetricValues": [rows[i] for i in order]}
+        assert model.metric_value(model.parse_metric_report(payload), "P") == 5.0
+
+
+def test_metric_value_returns_none_when_a_metric_spans_several_devices():
+    """Ambiguous by construction: TemperatureReading covers CPU1, CPU2 and the inlet.
+
+    Returning one of them arbitrarily would put a CPU temperature on an inlet device.
+    """
+    payload = {
+        "MetricValues": [
+            _mv("TemperatureReading", "34", fqdd="iDRAC.Embedded.1#CPU1Temp"),
+            _mv("TemperatureReading", "47", fqdd="iDRAC.Embedded.1#CPU2Temp"),
+        ]
+    }
+    assert model.metric_value(model.parse_metric_report(payload), "TemperatureReading") is None
+
+
 def test_parse_metric_report_takes_the_newest_sample_per_metric():
     """A metric report is a TIME SERIES, not a snapshot.
 
-    The live PowerMetrics report carried 120 MetricValues: ten metrics sampled about every five
-    seconds. Reading it like a flat object would pick an arbitrary sample, so the newest one per
-    MetricId is taken.
+    Dell's built-in PowerMetrics report carried 120 MetricValues: ten metrics sampled about every
+    five seconds, with no aggregation labels, so the newest sample is the current value.
     """
-    metrics = model.parse_metric_report(load("t550", "power_metrics"))
-    assert metrics["TotalCPUPower"] == 52.0
-    assert metrics["TotalMemoryPower"] == 7.0
-    assert metrics["TotalFanPower"] == 3.4
-    assert metrics["SystemInputPower"] == 170.0
+    samples = model.parse_metric_report(load("t550", "power_metrics"))
+    assert model.metric_value(samples, "TotalCPUPower") == 52.0
+    assert model.metric_value(samples, "TotalMemoryPower") == 7.0
+    assert model.metric_value(samples, "TotalFanPower") == 3.4
+    assert model.metric_value(samples, "SystemInputPower") == 170.0
     # PCIe genuinely reads zero on this machine; zero reported IS a value, unlike an absence.
-    assert metrics["TotalPciePower"] == 0.0
+    assert model.metric_value(samples, "TotalPciePower") == 0.0
 
 
 def test_parse_metric_report_survives_an_empty_or_odd_payload():
-    assert model.parse_metric_report({}) == {}
-    assert model.parse_metric_report({"MetricValues": []}) == {}
-    assert model.parse_metric_report({"MetricValues": [{"MetricId": "X"}]}) == {}
-    assert model.parse_metric_report({"MetricValues": ["nope"]}) == {}
+    assert model.parse_metric_report({}) == []
+    assert model.parse_metric_report({"MetricValues": []}) == []
+    assert model.parse_metric_report({"MetricValues": [{"MetricId": "X"}]}) == []
+    assert model.parse_metric_report({"MetricValues": ["nope"]}) == []
     assert (
         model.parse_metric_report(
             {"MetricValues": [{"MetricId": "X", "MetricValue": "not-a-number"}]}
         )
-        == {}
+        == []
     )
+    assert model.metric_value([], "anything") is None
+    assert model.metric_by_device([], "anything") == {}
 
 
-def test_parse_metric_report_ignores_a_sample_with_no_timestamp_ordering():
-    """Timestamps are strings; ordering must not blow up when one is missing."""
+def test_a_sample_with_no_timestamp_loses_to_one_that_has_it():
     payload = {
         "MetricValues": [
             {"MetricId": "P", "MetricValue": "1", "Timestamp": "2026-08-19T11:00:00.000Z"},
             {"MetricId": "P", "MetricValue": "2"},
         ]
     }
-    assert model.parse_metric_report(payload)["P"] == 1.0
+    assert model.metric_value(model.parse_metric_report(payload), "P") == 1.0
+
+
+def _mv(metric_id, value, fqdd="PowerMetrics", label="", timestamp="2026-08-19T12:15:00.000Z"):
+    node = {"MetricId": metric_id, "MetricValue": value, "Timestamp": timestamp}
+    dell = {"FQDD": fqdd}
+    if label is not None:
+        dell["Label"] = label
+    node["Oem"] = {"Dell": dell}
+    return node

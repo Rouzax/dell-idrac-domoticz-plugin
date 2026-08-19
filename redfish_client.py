@@ -64,6 +64,11 @@ class RedfishClient:
         self.metric_reports = f"{ROOT}/TelemetryService/MetricReports"
         system_id = system.rstrip("/").rsplit("/", 1)[-1]
         self.dell_attributes = f"{manager}/Oem/Dell/DellAttributes/{system_id}"
+        # A DIFFERENT attribute resource from the one above: power and thermal settings are keyed
+        # by the SYSTEM id, while the iDRAC's own settings, telemetry among them, are keyed by the
+        # MANAGER id. Writing to the wrong one succeeds and does nothing.
+        manager_id = manager.rstrip("/").rsplit("/", 1)[-1]
+        self.idrac_attributes = f"{manager}/Oem/Dell/DellAttributes/{manager_id}"
 
     def _first_member(self, collection_path: str, fallback: str) -> str:
         try:

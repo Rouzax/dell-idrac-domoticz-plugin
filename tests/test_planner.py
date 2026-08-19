@@ -117,6 +117,7 @@ def _cfg(**kw):
         "enable_psus": True,
         "drive_life_floor": 10,
         "fan_bar_max": 6000,
+        "setup_telemetry": False,
         "verify_tls": False,
         "request_timeout": 30,
         "debug_level": 0,
@@ -487,7 +488,11 @@ def test_system_health_falls_back_to_subsystem_names_without_faults():
 
 
 def _metrics():
-    return model.parse_metric_report(load("t550", "power_metrics"))
+    samples = model.parse_metric_report(load("t550", "power_metrics"))
+    ids = {s.metric_id for s in samples}
+    return {
+        i: model.metric_value(samples, i) for i in ids if model.metric_value(samples, i) is not None
+    }
 
 
 def test_component_power_devices_are_created_from_telemetry():

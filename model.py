@@ -330,16 +330,39 @@ def parse_redundancy(payload: dict) -> list:
     return out
 
 
-def parse_metric_report(payload: dict) -> dict:
-    """Newest value per MetricId from a Redfish metric report.
+@dataclass(frozen=True)
+class MetricSample:
+    """One value from a metric report.
 
-    A metric report is a TIME SERIES, not a snapshot: the live PowerMetrics report carried 120
-    MetricValues, ten metrics sampled about every five seconds. Samples are ordered by their
-    Timestamp string, which is ISO 8601 and therefore sorts correctly as text, and a sample with
-    no timestamp loses to one that has it rather than winning by accident of position.
+    METRIC ID ALONE IS NOT A KEY, which a single machine's data will not show you. Captured from
+    an OpenManage-managed server: TotalCPUPower appeared three times at the SAME timestamp as
+    Minimum, Maximum and Average, and PSUTemperatureReading appeared once per power supply. The
+    identifying pair is (metric_id, device); the aggregation says which statistic it is.
     """
-    newest: dict = {}
-    stamps: dict = {}
+
+    metric_id: str
+    device: str | None
+    aggregate: str | None
+    value: float
+    timestamp: str
+
+
+_AGGREGATES = ("Average", "Minimum", "Maximum")
+
+
+def _aggregate_of(label) -> str | None:
+    """Dell states the statistic in free text, e.g. "PowerMetrics TotalCPUPower- Average (5m0s)"."""
+    if not isinstance(label, str):
+        return None
+    for name in _AGGREGATES:
+        if name in label:
+            return name
+    return None
+
+
+def parse_metric_report(payload: dict) -> list:
+    """Every sample in a metric report, keeping the detail needed to tell them apart."""
+    out = []
     for node in payload.get("MetricValues", []):
         if not isinstance(node, dict):
             continue
@@ -349,12 +372,53 @@ def parse_metric_report(payload: dict) -> dict:
         value = _number_from_text(node.get("MetricValue"))
         if value is None:
             continue
-        stamp = node.get("Timestamp") or ""
-        if metric_id in newest and stamp <= stamps[metric_id]:
-            continue
-        newest[metric_id] = value
-        stamps[metric_id] = stamp
-    return newest
+        dell = ((node.get("Oem") or {}).get("Dell")) or {}
+        out.append(
+            MetricSample(
+                metric_id=metric_id,
+                device=dell.get("FQDD") or dell.get("ContextID"),
+                aggregate=_aggregate_of(dell.get("Label")),
+                value=value,
+                timestamp=node.get("Timestamp") or "",
+            )
+        )
+    return out
+
+
+# Higher is better. A plain reading beats every aggregate; among aggregates an Average is the
+# closest thing to a current value. A Minimum is real but it is not now, and picking it because
+# it happened to come first in the list would misreport draw as far lower than it actually is.
+_AGGREGATE_RANK = {None: 3, "Average": 2, "Maximum": 1, "Minimum": 0}
+
+
+def _best(samples: list):
+    """Best-quality, newest sample. An ISO 8601 timestamp sorts correctly as text, and a missing
+    one is the empty string, which loses to every real timestamp rather than winning by default."""
+    return max(samples, key=lambda s: (_AGGREGATE_RANK.get(s.aggregate, -1), s.timestamp))
+
+
+def metric_value(samples: list, metric_id: str):
+    """The one value for a metric, or None when it is not unambiguous.
+
+    Returns None when several devices report the same metric id, because choosing between them
+    arbitrarily would attach one device's reading to another. TemperatureReading covers CPU1,
+    CPU2 and the chassis inlet on the same machine, so this case is real.
+    """
+    matching = [s for s in samples if s.metric_id == metric_id]
+    if not matching:
+        return None
+    if len({s.device for s in matching}) > 1:
+        return None
+    return _best(matching).value
+
+
+def metric_by_device(samples: list, metric_id: str) -> dict:
+    """Per-device values for a metric that legitimately repeats, e.g. one entry per PSU or GPU."""
+    grouped: dict = {}
+    for sample in samples:
+        if sample.metric_id == metric_id and sample.device:
+            grouped.setdefault(sample.device, []).append(sample)
+    return {device: _best(rows).value for device, rows in grouped.items()}
 
 
 def _number_from_text(value) -> float | None:
