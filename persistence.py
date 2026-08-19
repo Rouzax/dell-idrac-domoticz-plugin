@@ -22,6 +22,8 @@ class PluginState:
 
     unit_alloc: dict[str, int] = field(default_factory=dict)
     auto_names: dict[str, str] = field(default_factory=dict)
+    # Bar-range payloads the plugin last wrote, so it can tell its own bands from a user's edit.
+    auto_colors: dict[str, str] = field(default_factory=dict)
     base_wh: dict[str, float] = field(default_factory=dict)
     control_shown: bool = False
     energy_scale: float | None = None
@@ -33,6 +35,7 @@ def migrate(raw: dict) -> dict:
     # field changes meaning, otherwise a v1 payload would be read under v2 semantics.
     raw.setdefault("unit_alloc", {})
     raw.setdefault("auto_names", {})
+    raw.setdefault("auto_colors", {})
     raw.setdefault("base_wh", {})
     raw.setdefault("control_shown", False)
     raw.setdefault("energy_scale", None)
@@ -46,6 +49,7 @@ def dumps(state: PluginState) -> str:
             "version": STATE_VERSION,
             "unit_alloc": state.unit_alloc,
             "auto_names": state.auto_names,
+            "auto_colors": state.auto_colors,
             "base_wh": state.base_wh,
             "control_shown": state.control_shown,
             "energy_scale": state.energy_scale,
@@ -97,6 +101,7 @@ def loads(text: str) -> PluginState:
     return PluginState(
         unit_alloc=_str_keyed(raw.get("unit_alloc"), int),
         auto_names=_str_keyed(raw.get("auto_names"), str),
+        auto_colors=_str_keyed(raw.get("auto_colors"), str),
         base_wh={k: float(v) for k, v in _str_keyed(raw.get("base_wh"), int | float).items()},
         control_shown=raw.get("control_shown") is True,
         energy_scale=_number(raw.get("energy_scale")),

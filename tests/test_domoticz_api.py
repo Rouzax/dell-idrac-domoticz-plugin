@@ -46,7 +46,7 @@ def test_apply_creates_units_in_ascending_order():
 
 
 def test_apply_returns_auto_names_for_created_units():
-    names = domoticz_api.apply_updates(
+    names, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, name="Server Power")], {}
     )
     assert names[domoticz_api.name_key("dellidrac_1", 1)] == "Server Power"
@@ -80,7 +80,7 @@ def test_a_user_rename_is_never_overwritten():
     )
     unit = domoticz_stub.Devices["dellidrac_1"].Units[1]
     unit.Name = "My Server"
-    names = domoticz_api.apply_updates(
+    names, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices,
         _ids("dellidrac_1"),
         [_update(1, name="Auto2")],
@@ -94,7 +94,7 @@ def test_an_owned_name_is_renamed_when_the_plugin_changes_it():
     domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, name="Auto")], {}
     )
-    names = domoticz_api.apply_updates(
+    names, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices,
         _ids("dellidrac_1"),
         [_update(1, name="Auto2")],
@@ -276,7 +276,7 @@ def test_bar_ranges_are_never_rewritten_on_an_existing_device():
         svalue="27.0",
         color='{"temp":[{"from":0,"to":40,"color":"#66bb6a"}]}',
     )
-    names = domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [update], {})
+    names, _ = domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [update], {})
     unit = domoticz_stub.Devices["dev"].Units[4]
     unit.Color = '{"temp":[{"from":0,"to":99,"color":"#123456"}]}'
     domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [update], names)
@@ -286,3 +286,55 @@ def test_bar_ranges_are_never_rewritten_on_an_existing_device():
 def _ids(dev_id):
     """Every family mapped to one DeviceID, so a test can keep using a single device."""
     return dict.fromkeys(planner.DEVICE_FAMILIES, dev_id)
+
+
+def _life(color, floor=10):
+    return planner.DeviceUpdate(
+        unit=4, type_name="Percentage", name="SSD Life", nvalue=0, svalue="100", color=color
+    )
+
+
+def test_bands_follow_a_changed_setting():
+    """Bands are derived from settings and hardware thresholds, so they must not be frozen.
+
+    Writing them only at creation meant changing Drive life warning left every existing bar on
+    the old threshold, with nothing to show the setting had taken effect.
+    """
+    domoticz_stub.Devices.clear()
+    first = '{"a":1}'
+    names, colors = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dev"), [_life(first)], {}, {}
+    )
+    unit = domoticz_stub.Devices["dev"].Units[4]
+    assert unit.Color == first
+    second = '{"a":2}'
+    domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [_life(second)], names, colors)
+    assert unit.Color == second
+
+
+def test_bands_a_user_edited_are_never_overwritten():
+    """Same ownership rule as device names: once you change it, it is yours."""
+    domoticz_stub.Devices.clear()
+    names, colors = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dev"), [_life('{"a":1}')], {}, {}
+    )
+    unit = domoticz_stub.Devices["dev"].Units[4]
+    unit.Color = '{"mine":true}'
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dev"), [_life('{"a":2}')], names, colors
+    )
+    assert unit.Color == '{"mine":true}'
+
+
+def test_unchanged_bands_are_not_rewritten_every_poll():
+    domoticz_stub.Devices.clear()
+    names, colors = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dev"), [_life('{"a":1}')], {}, {}
+    )
+    unit = domoticz_stub.Devices["dev"].Units[4]
+    calls = []
+    unit.Update = lambda **kw: calls.append(kw)
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dev"), [_life('{"a":1}')], names, colors
+    )
+    assert not [c for c in calls if c.get("UpdateProperties")]

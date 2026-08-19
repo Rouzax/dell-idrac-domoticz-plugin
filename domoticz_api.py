@@ -27,15 +27,17 @@ def _existing_unit(devices, dev_id, unit):
     return dev.Units.get(unit)
 
 
-def apply_updates(devices, dev_ids, updates, auto_names, allow_create=True) -> dict:
+def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow_create=True):
     """Apply updates across every Device the plan touches.
 
     `dev_ids` maps a planner family name to its DeviceID. Domoticz creates each Device implicitly
     when its first Unit is created, so nothing has to be set up in advance.
     """
     names = dict(auto_names)
+    colors = dict(auto_colors or {})
     created = 0
     renamed = 0
+    recoloured = 0
     # Create in ascending device then unit order: Domoticz lists devices in creation order, so
     # this keeps the on-disk layout matching the logical numbering.
     for up in sorted(updates, key=lambda u: (u.device, u.unit)):
@@ -63,6 +65,7 @@ def apply_updates(devices, dev_ids, updates, auto_names, allow_create=True) -> d
             # user tuned by hand must survive every later poll.
             if up.color:
                 new_unit.Color = up.color
+                colors[key] = up.color
             new_unit.Create()
             unit = devices[dev_id].Units[up.unit]
             unit.nValue = up.nvalue
@@ -80,6 +83,17 @@ def apply_updates(devices, dev_ids, updates, auto_names, allow_create=True) -> d
             # longer offered.
             unit.Options = up.options
             unit.Update(Log=False, UpdateOptions=True)
+        # Bands are DERIVED from settings and hardware thresholds, so they must follow a change
+        # to either. They are still only rewritten while the plugin still owns them: the same
+        # rule as names, so bands a user tuned by hand survive every later poll.
+        if up.color and up.color != unit.Color:
+            owns_color = not unit.Color or unit.Color == colors.get(key)
+            if owns_color:
+                unit.Color = up.color
+                unit.Update(Log=False, UpdateProperties=True)
+                colors[key] = up.color
+                recoloured += 1
+
         owned = unit.Name == names.get(key)
         if owned and unit.Name != up.name:
             unit.Name = up.name
@@ -89,8 +103,11 @@ def apply_updates(devices, dev_ids, updates, auto_names, allow_create=True) -> d
         else:
             unit.Update(Log=False)
     if updates:
-        Domoticz.Debug(f"apply units={len(updates)} created={created} renamed={renamed}")
-    return names
+        Domoticz.Debug(
+            f"apply units={len(updates)} created={created} renamed={renamed} "
+            f"recoloured={recoloured}"
+        )
+    return names, colors
 
 
 # There is deliberately NO mark_timed_out here. Checked against the Domoticz core:

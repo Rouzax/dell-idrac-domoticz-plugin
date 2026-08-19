@@ -475,10 +475,11 @@ def onHeartbeat():
     )
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
     updates.sort(key=lambda u: u.unit)
-    names = domoticz_api.apply_updates(
-        devices, _state.dev_ids, updates, saved.auto_names, allow_create=True
+    names, colors = domoticz_api.apply_updates(
+        devices, _state.dev_ids, updates, saved.auto_names, saved.auto_colors, allow_create=True
     )
     saved.auto_names = names
+    saved.auto_colors = colors
     saved.unit_alloc = _state.alloc
     domoticz_api.save_state(saved)
 
