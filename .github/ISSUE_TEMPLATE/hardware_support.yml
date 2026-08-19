@@ -1,0 +1,106 @@
+name: Hardware support / unsupported model
+description: A PowerEdge model where devices are missing, misnamed, or the plugin does not work at all.
+labels: ["hardware"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful kind of report for this project.
+
+        Everything is developed against a small number of real machines, and models differ more
+        than you would expect. The chassis inlet probe alone is called `InletTemp` on one
+        PowerEdge and `SystemBoardInletTemp` on another, which silently lost the reading on half
+        a fleet until a second machine was captured. A sanitized payload from a model nobody has
+        tested is genuinely how these get found.
+
+        **Scrub any capture before pasting it.** `tools/capture_fixtures.py` in the repo does
+        this for you: it replaces the service tag, serial numbers, UUID, MAC addresses and
+        hostname with placeholders.
+
+  - type: input
+    id: server-model
+    attributes:
+      label: Server model
+      description: For example PowerEdge R740, R6525, C6420.
+    validations:
+      required: true
+
+  - type: input
+    id: idrac-version
+    attributes:
+      label: iDRAC generation and firmware version
+      description: For example "iDRAC8, 2.86.86.86" or "iDRAC10, 1.00.00.00".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: What is the situation?
+      options:
+        - "The plugin works, but some devices are missing"
+        - "The plugin works, but a device shows a wrong or odd value"
+        - "The plugin creates no devices at all"
+        - "The plugin cannot connect at all"
+        - "Something else"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What is missing or wrong
+      description: >-
+        Which devices you expected and did not get, or which reading looks wrong compared with
+        the iDRAC web interface.
+    validations:
+      required: true
+
+  - type: textarea
+    id: sensors
+    attributes:
+      label: Sensor collection payload
+      description: |
+        This one payload answers most missing-device questions, because it carries the sensor
+        **ids**, which is what varies between models.
+
+        ```
+        curl -sk -u USER:PASS "https://IDRAC/redfish/v1/Chassis/System.Embedded.1/Sensors?$expand=*(\$levels=1)"
+        ```
+
+        Scrub it first.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: system
+    attributes:
+      label: System payload (optional)
+      description: |
+        ```
+        curl -sk -u USER:PASS "https://IDRAC/redfish/v1/Systems/System.Embedded.1"
+        ```
+
+        Useful when health or power state is the problem. Scrub it first.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Domoticz log at Verbose
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I scrubbed the service tag, serial numbers, UUID, MAC addresses, hostname and password from every payload above.
+          required: true
+        - label: I am willing to test a fix against this hardware.
+          required: false

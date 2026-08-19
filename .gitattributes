@@ -5,6 +5,11 @@ tests/                   export-ignore
 tools/                   export-ignore
 _TEMP/                   export-ignore
 .github/                 export-ignore
+site/                    export-ignore
+mkdocs.yml               export-ignore
+CONTRIBUTING.md          export-ignore
+CHANGELOG.md             export-ignore
+.vulture_whitelist.py    export-ignore
 requirements-dev.txt     export-ignore
 .pre-commit-config.yaml  export-ignore
 .gitignore               export-ignore

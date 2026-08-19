@@ -1,0 +1,123 @@
+name: Bug report
+description: Something the plugin does is wrong, or it stopped working.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting.
+
+        **Before you fill this in**, the
+        [troubleshooting page](https://rouzax.github.io/dell-idrac-domoticz-plugin/faq/) is
+        organised by symptom and covers the most common cases, including several readings that
+        look wrong but are correct: a power supply sitting near 0 W, System Health staying red
+        while every component reads OK, and devices holding stale values during an outage.
+
+        **Never paste your iDRAC password, service tag, serial numbers or a public hostname
+        into this form.** Redact them. The plugin does not log the password, but other things
+        you copy might contain it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+      placeholder: |
+        The Inlet Temp device shows no value at all, but the iDRAC web interface reports 24 C.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce it
+      description: The steps that lead to it, and whether it happens every time.
+      placeholder: |
+        1. Add the hardware with default settings
+        2. Wait two poll intervals
+        3. Inlet Temp is missing from the device list
+        Happens on every restart.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Domoticz log
+      description: >-
+        Set Debug Level to Verbose, reproduce, then paste the lines mentioning the plugin.
+        Redact any hostname or address you do not want public. This is automatically formatted
+        as code, so no backticks are needed.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: server-model
+    attributes:
+      label: Server model
+      description: For example PowerEdge R650, T550, R6515.
+    validations:
+      required: true
+
+  - type: input
+    id: idrac-version
+    attributes:
+      label: iDRAC generation and firmware version
+      description: >-
+        Shown on the iDRAC dashboard. For example "iDRAC9, 7.10.30.00". This matters more than
+        it looks: sensor ids and available endpoints genuinely differ between models and
+        firmware.
+    validations:
+      required: true
+
+  - type: input
+    id: domoticz-version
+    attributes:
+      label: Domoticz version
+      description: From Setup then About. For example "2026.3 (build 18230)".
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: Shown in the log line "Initialized version X, author Rouzax".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: control-enabled
+    attributes:
+      label: Is Allow Control enabled?
+      options:
+        - "No (default, read-only)"
+        - "Yes"
+        - "Yes, including Force Off and Power Cycle"
+    validations:
+      required: true
+
+  - type: textarea
+    id: payload
+    attributes:
+      label: Relevant Redfish payload (optional, but often decisive)
+      description: >-
+        If the problem is a wrong or missing reading, the raw payload usually settles it
+        immediately. For example, for a missing temperature:
+        `curl -sk -u USER:PASS "https://IDRAC/redfish/v1/Chassis/System.Embedded.1/Sensors?$expand=*($levels=1)"`.
+        **Scrub it before pasting**: service tag, serial numbers, UUID, MAC addresses, hostnames
+        and addresses. See `tools/capture_fixtures.py` in the repo, which does this for you.
+      render: json
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have removed passwords, service tags, serial numbers and hostnames from everything I pasted above.
+          required: true
+        - label: I checked the troubleshooting page and this is not one of the documented expected behaviours.
+          required: true

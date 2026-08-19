@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or general help
+    url: https://github.com/Rouzax/dell-idrac-domoticz-plugin/discussions
+    about: Ask here if you are not sure something is a bug.
+  - name: Documentation
+    url: https://rouzax.github.io/dell-idrac-domoticz-plugin/
+    about: Settings, device list, power control and a troubleshooting page organised by symptom.
+  - name: Report a security vulnerability
+    url: https://github.com/Rouzax/dell-idrac-domoticz-plugin/security/advisories/new
+    about: Please do NOT open a public issue for anything security related.

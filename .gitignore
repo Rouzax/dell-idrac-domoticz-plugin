@@ -33,3 +33,6 @@ captures/
 # Real identifiers used by the fixture sanitization sweep. NEVER commit this.
 tests/forbidden_literals.local.json
 *.local.json
+
+# mkdocs build output
+site/

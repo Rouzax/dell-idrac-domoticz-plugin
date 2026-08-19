@@ -1,0 +1,81 @@
+site_name: Dell iDRAC Monitor for Domoticz
+site_description: >-
+  A read-only-by-default Domoticz plugin for Dell PowerEdge servers: temperatures, fans, power,
+  utilization, storage and health read from the iDRAC over Redfish, with opt-in power control.
+site_author: Rouzax
+site_url: https://rouzax.github.io/dell-idrac-domoticz-plugin/
+repo_url: https://github.com/Rouzax/dell-idrac-domoticz-plugin
+repo_name: Rouzax/dell-idrac-domoticz-plugin
+copyright: Copyright &copy; 2026 Rouzax - not affiliated with Dell Technologies
+
+theme:
+  name: material
+  icon:
+    logo: material/server
+    repo: fontawesome/brands/github
+  favicon: assets/favicon.svg
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+# Never publish the local-only planning docs (gitignored; also kept out of any
+# local `mkdocs gh-deploy` build where they exist on disk).
+exclude_docs: |
+  superpowers/
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Installation: install.md
+  - Settings: settings.md
+  - Monitoring devices: devices.md
+  - Power control: control.md
+  - How it works: internals.md
+  - Security: security.md
+  - Troubleshooting / FAQ: faq.md
+  - About: about.md

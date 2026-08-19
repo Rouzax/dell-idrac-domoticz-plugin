@@ -1,0 +1,75 @@
+name: Feature request
+description: Something the plugin should do that it does not do yet.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, a few things are deliberate design decisions rather than gaps, and are
+        explained in the docs:
+
+        - **The plugin does not enable iDRAC telemetry** to get per-component power. Telemetry is
+          disabled by default and enabling it means writing configuration to your server, which a
+          read-only-by-default monitoring plugin should not do on its own.
+        - **It does not escalate a graceful shutdown to a forced power-off.** Dell's own scripts
+          do; a monitoring plugin force-killing a server is a destructive surprise.
+        - **It does not use the iDRAC's lifetime energy counter**, because that counter does not
+          accumulate continuously and would produce invented plateaus in a Domoticz graph.
+        - **It cannot see UPS battery health.** The iDRAC does not expose it. Use Domoticz's NUT
+          or apcupsd support alongside.
+
+        If you want to argue with one of those, please do, but say why rather than just
+        restating the request.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: >-
+        Describe the goal, not the implementation. What are you trying to see, automate or find
+        out? This often has a simpler answer than the feature you had in mind.
+      placeholder: |
+        I want to be alerted when a drive is predicted to fail, before it actually does.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like the plugin to do?
+      validations:
+        required: false
+
+  - type: textarea
+    id: redfish
+    attributes:
+      label: Where does the data come from?
+      description: >-
+        If you know which Redfish endpoint or Dell OEM attribute carries it, say so. That turns a
+        request into something implementable. A sanitized payload showing the field is even
+        better.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: control
+    attributes:
+      label: Would this write anything to the server?
+      description: >-
+        Anything beyond a GET is held to a higher bar, and anything that can affect power is
+        gated behind an explicit opt-in.
+      options:
+        - "No, read-only"
+        - "Yes, it would change a setting on the server"
+        - "Yes, it would affect power state"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Server model and iDRAC version
+      description: Helps judge whether it would work across models or only on yours.
+    validations:
+      required: false
