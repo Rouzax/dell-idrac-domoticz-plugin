@@ -6,8 +6,18 @@ import DomoticzEx as Domoticz
 import persistence
 
 
-def device_id(hardware_id) -> str:
-    return f"dellidrac_{hardware_id}"
+def device_id(hardware_id, family: str) -> str:
+    """One DeviceID per family, because each Device has its own 1-255 unit space.
+
+    Including the hardware id keeps two iDRAC hardware entries in one Domoticz install apart.
+    """
+    return f"dellidrac_{hardware_id}_{family}"
+
+
+def name_key(dev_id: str, unit: int) -> str:
+    """Names are tracked per DEVICE and unit: unit numbers repeat across devices now, so keying
+    on the number alone would let a rename on one device suppress renaming on another."""
+    return f"{dev_id}:{unit}"
 
 
 def _existing_unit(devices, dev_id, unit):
@@ -17,13 +27,20 @@ def _existing_unit(devices, dev_id, unit):
     return dev.Units.get(unit)
 
 
-def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> dict:
+def apply_updates(devices, dev_ids, updates, auto_names, allow_create=True) -> dict:
+    """Apply updates across every Device the plan touches.
+
+    `dev_ids` maps a planner family name to its DeviceID. Domoticz creates each Device implicitly
+    when its first Unit is created, so nothing has to be set up in advance.
+    """
     names = dict(auto_names)
     created = 0
     renamed = 0
-    # Create in ascending unit order: Domoticz lists devices in creation order, so
-    # this keeps the on-disk layout matching the logical unit numbering.
-    for up in sorted(updates, key=lambda u: u.unit):
+    # Create in ascending device then unit order: Domoticz lists devices in creation order, so
+    # this keeps the on-disk layout matching the logical numbering.
+    for up in sorted(updates, key=lambda u: (u.device, u.unit)):
+        dev_id = dev_ids[up.device]
+        key = name_key(dev_id, up.unit)
         unit = _existing_unit(devices, dev_id, up.unit)
         if unit is None:
             if not allow_create:
@@ -51,7 +68,7 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
             unit.nValue = up.nvalue
             unit.sValue = up.svalue
             unit.Update(Log=False)
-            names[str(up.unit)] = up.name
+            names[key] = up.name
             created += 1
             continue
 
@@ -63,11 +80,11 @@ def apply_updates(devices, dev_id, updates, auto_names, allow_create=True) -> di
             # longer offered.
             unit.Options = up.options
             unit.Update(Log=False, UpdateOptions=True)
-        owned = unit.Name == names.get(str(up.unit))
+        owned = unit.Name == names.get(key)
         if owned and unit.Name != up.name:
             unit.Name = up.name
             unit.Update(Log=False, UpdateProperties=True)
-            names[str(up.unit)] = up.name
+            names[key] = up.name
             renamed += 1
         else:
             unit.Update(Log=False)

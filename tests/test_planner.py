@@ -85,7 +85,7 @@ def test_block_exhaustion_skips_the_overflow_instead_of_failing_the_whole_poll()
     parts = _parts("t550")
     parts["sensors"] = sensors
     updates = planner.plan(inventory=inv, alloc=alloc, cfg=_cfg(), **parts)
-    fans = [u for u in updates if planner.BLOCK_FANS <= u.unit < planner.BLOCK_FANS + 20]
+    fans = [u for u in updates if _in_block(u, planner.DEVICE_THERMAL, planner.BLOCK_FANS)]
     assert len(fans) == 20
     assert updates
 
@@ -134,13 +134,15 @@ def _plan(profile, cfg=None):
     return planner.plan(inventory=inv, alloc=alloc, cfg=cfg or _cfg(), **parts)
 
 
-def _in_block(unit, base):
-    """Blocks are adjacent, so a hardcoded window would spill into the next one."""
-    return base <= unit < base + planner._BLOCK_LIMITS[base]
+def _in_block(update, device, base):
+    """A unit number now identifies a device only together with its DeviceID."""
+    limit = planner._BLOCK_LIMITS[(device, base)]
+    return update.device == device and base <= update.unit < base + limit
 
 
-def _by_unit(updates):
-    return {u.unit: u for u in updates}
+def _by_unit(updates, device=planner.DEVICE_SYSTEM):
+    """Unit numbers repeat across devices, so a lookup has to name the device it means."""
+    return {u.unit: u for u in updates if u.device == device}
 
 
 def test_core_devices_are_always_planned():
@@ -183,14 +185,14 @@ def test_temperature_description_carries_the_estimated_warn_band():
 
 def test_drive_devices_are_planned_per_disk_and_reflect_health():
     updates = _plan("dual")
-    drives = [u for u in updates if planner.BLOCK_DRIVES <= u.unit < planner.BLOCK_DRIVES + 100]
+    drives = [u for u in updates if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVES)]
     assert len(drives) == 24
     assert any(u.nvalue == health.LEVEL_ORANGE for u in drives)
 
 
 def test_disabling_a_block_removes_those_devices():
     updates = _plan("dual", cfg=_cfg(enable_drives=False))
-    assert not [u for u in updates if planner.BLOCK_DRIVES <= u.unit < planner.BLOCK_DRIVES + 100]
+    assert not [u for u in updates if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVES)]
 
 
 def test_updates_are_sorted_by_unit_so_creation_order_matches_layout():
@@ -269,7 +271,7 @@ def test_a_nic_with_no_link_status_is_unknown_not_down():
         for u in planner.plan(
             inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts
         )
-        if planner.BLOCK_NICS <= u.unit < planner.BLOCK_NICS + 20
+        if _in_block(u, planner.DEVICE_NETWORK, planner.BLOCK_NICS)
     ]
     assert got[0].nvalue == health.LEVEL_GREY
     assert got[0].svalue == "Unknown"
@@ -390,7 +392,7 @@ def test_bars_appear_only_where_the_server_reports_thresholds():
     updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     assert {u.type_name for u in updates if u.color} == {"Temperature", "Custom"}
     fans = [
-        u for u in updates if planner.BLOCK_FANS <= u.unit < planner.BLOCK_FANS + 20 and u.color
+        u for u in updates if _in_block(u, planner.DEVICE_THERMAL, planner.BLOCK_FANS) and u.color
     ]
     assert fans, "the t550 profile must produce fan bars"
     # A fan is a Custom Sensor, drawn by the utility card, which needs a BARE ARRAY.
@@ -407,7 +409,7 @@ def test_fan_bars_are_switched_off_by_setting_the_maximum_to_zero():
         inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(fan_bar_max=0), **parts
     )
     assert not [
-        u for u in updates if planner.BLOCK_FANS <= u.unit < planner.BLOCK_FANS + 20 and u.color
+        u for u in updates if _in_block(u, planner.DEVICE_THERMAL, planner.BLOCK_FANS) and u.color
     ]
     # Temperatures are unaffected by the fan setting.
     assert _by_unit(updates)[planner.UNIT_INLET].color
@@ -438,10 +440,9 @@ def test_fans_and_uptime_get_their_icons():
     user who later picks a different icon keeps it."""
     parts = _parts("t550")
     inv = _inventory(parts)
-    got = _by_unit(
-        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    )
-    fans = [u for unit, u in got.items() if planner.BLOCK_FANS <= unit < planner.BLOCK_FANS + 20]
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    got = _by_unit(updates)
+    fans = [u for u in updates if _in_block(u, planner.DEVICE_THERMAL, planner.BLOCK_FANS)]
     assert fans, "the t550 profile must have fans for this to mean anything"
     assert all(u.image == planner.IMAGE_FAN for u in fans)
     assert got[planner.UNIT_UPTIME].image == planner.IMAGE_CLOCK
@@ -591,11 +592,9 @@ def test_gpu_devices_are_created_one_per_card():
     parts["gpus"] = planner.gpu_readings(_ome_samples())
     inv = _inventory(parts)
     inv = discovery.Inventory(**{**inv.__dict__, "gpus": tuple(sorted(parts["gpus"]))})
-    got = _by_unit(
-        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    )
-    powers = [u for unit, u in got.items() if _in_block(unit, planner.BLOCK_GPU_POWER)]
-    temps = [u for unit, u in got.items() if _in_block(unit, planner.BLOCK_GPU_TEMP)]
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    powers = [u for u in updates if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_POWER)]
+    temps = [u for u in updates if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_TEMP)]
     assert len(powers) == 7
     assert len(temps) == 7
     # 39100.14 mW is 39.1 W, not 39100 W.
@@ -612,7 +611,7 @@ def test_no_gpu_devices_without_gpu_metrics():
     parts["gpus"] = {}
     inv = _inventory(parts)
     got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    assert not [u for u in got if _in_block(u.unit, planner.BLOCK_GPU_POWER)]
+    assert not [u for u in got if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_POWER)]
 
 
 def test_gpu_readings_converts_milliwatts_and_pairs_temperature():
@@ -644,7 +643,8 @@ def test_a_gpu_reporting_only_temperature_still_appears():
     gpu = [
         u
         for u in got
-        if _in_block(u.unit, planner.BLOCK_GPU_POWER) or _in_block(u.unit, planner.BLOCK_GPU_TEMP)
+        if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_POWER)
+        or _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_TEMP)
     ]
     # Three devices, not four: two for 7-2, temperature only for 7-3.
     assert len(gpu) == 3
@@ -678,15 +678,15 @@ def test_drives_reporting_life_get_a_percentage_device_with_a_bar():
     """
     parts = _parts("t550")
     inv = _inventory(parts)
-    got = _by_unit(
-        planner.plan(
-            inventory=inv,
-            alloc=planner.assign_units(inv, {}),
-            cfg=_cfg(enable_drive_life=True),
-            **parts,
-        )
+    updates = planner.plan(
+        inventory=inv,
+        alloc=planner.assign_units(inv, {}),
+        cfg=_cfg(enable_drive_life=True),
+        **parts,
     )
-    life = {u.name: u for unit, u in got.items() if _in_block(unit, planner.BLOCK_DRIVE_LIFE)}
+    life = {
+        u.name: u for u in updates if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVE_LIFE)
+    }
     with_life = [d for d in parts["drives"] if d.life_left_pct is not None]
     assert with_life, "the t550 profile must have drives reporting life"
     assert len(life) == len(with_life)
@@ -705,15 +705,15 @@ def test_drives_reporting_life_get_a_percentage_device_with_a_bar():
 def test_the_drive_life_bar_follows_the_user_setting():
     parts = _parts("t550")
     inv = _inventory(parts)
-    got = _by_unit(
-        planner.plan(
-            inventory=inv,
-            alloc=planner.assign_units(inv, {}),
-            cfg=_cfg(enable_drive_life=True, drive_life_floor=25),
-            **parts,
-        )
+    updates = planner.plan(
+        inventory=inv,
+        alloc=planner.assign_units(inv, {}),
+        cfg=_cfg(enable_drive_life=True, drive_life_floor=25),
+        **parts,
     )
-    sample = next(u for unit, u in got.items() if _in_block(unit, planner.BLOCK_DRIVE_LIFE))
+    sample = next(
+        u for u in updates if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVE_LIFE)
+    )
     assert json.loads(sample.color)[0]["to"] == 25
 
 
@@ -721,15 +721,15 @@ def test_a_zero_life_floor_gives_one_green_band_not_a_zero_width_one():
     """dzBar discards a zero-width range, so do not emit one."""
     parts = _parts("t550")
     inv = _inventory(parts)
-    got = _by_unit(
-        planner.plan(
-            inventory=inv,
-            alloc=planner.assign_units(inv, {}),
-            cfg=_cfg(enable_drive_life=True, drive_life_floor=0),
-            **parts,
-        )
+    updates = planner.plan(
+        inventory=inv,
+        alloc=planner.assign_units(inv, {}),
+        cfg=_cfg(enable_drive_life=True, drive_life_floor=0),
+        **parts,
     )
-    sample = next(u for unit, u in got.items() if _in_block(unit, planner.BLOCK_DRIVE_LIFE))
+    sample = next(
+        u for u in updates if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVE_LIFE)
+    )
     assert json.loads(sample.color) == [{"from": 0, "to": 100, "color": thresholds.BAR_OK}]
 
 
@@ -739,7 +739,7 @@ def test_life_devices_are_off_by_default():
     parts = _parts("t550")
     inv = _inventory(parts)
     got = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
-    assert not [u for u in got if _in_block(u.unit, planner.BLOCK_DRIVE_LIFE)]
+    assert not [u for u in got if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVE_LIFE)]
 
 
 def test_no_life_devices_when_drives_are_disabled_entirely():
@@ -751,47 +751,40 @@ def test_no_life_devices_when_drives_are_disabled_entirely():
         cfg=_cfg(enable_drives=False, enable_drive_life=True),
         **parts,
     )
-    assert not [u for u in got if _in_block(u.unit, planner.BLOCK_DRIVE_LIFE)]
+    assert not [u for u in got if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVE_LIFE)]
 
 
 def test_every_unit_block_fits_domoticz_s_1_to_255_range():
     """Domoticz refuses any unit outside 1-255 (PythonObjectEx.cpp:374, "Illegal Unit number").
 
-    The test stub accepts any integer, so a block placed above 255 passes every test and then
-    fails on real hardware with a KeyError after Create() silently does nothing. That happened,
-    which is why this guard exists.
+    The test stub accepts any integer, so a block past 255 passes every test and then fails on
+    real hardware with a KeyError after Create() silently does nothing. That happened once.
     """
-    blocks = {
-        name: value
-        for name, value in vars(planner).items()
-        if name.startswith("BLOCK_") and isinstance(value, int)
-    }
-    assert blocks, "no blocks found; this guard would silently pass"
-    for name, base in blocks.items():
-        limit = planner._BLOCK_LIMITS.get(base, 1)
-        highest = base + limit - 1
-        assert 1 <= base <= 255, f"{name} starts at {base}"
-        assert highest <= 255, f"{name} reaches unit {highest}, past Domoticz's maximum of 255"
+    assert planner._BLOCK_LIMITS, "no blocks found; this guard would silently pass"
+    for (device, base), limit in planner._BLOCK_LIMITS.items():
+        assert 1 <= base <= 255, f"{device} block starts at {base}"
+        assert base + limit - 1 <= 255, f"{device} block from {base} reaches past 255"
 
 
-def test_no_two_unit_blocks_overlap():
-    """Blocks are fixed ranges; an overlap would let two device families claim the same unit."""
-    spans = []
-    for name, base in vars(planner).items():
-        if not name.startswith("BLOCK_") or not isinstance(base, int):
-            continue
-        spans.append((base, base + planner._BLOCK_LIMITS.get(base, 1) - 1, name))
-    for i, (lo, hi, name) in enumerate(sorted(spans)):
-        for other_lo, other_hi, other in sorted(spans)[i + 1 :]:
-            assert hi < other_lo or other_hi < lo, f"{name} overlaps {other}"
+def test_blocks_may_share_numbers_across_devices_but_never_within_one():
+    """Sharing numbers across devices is the point of the split. Sharing within one would let
+    two families claim the same unit."""
+    by_device: dict = {}
+    for (device, base), limit in planner._BLOCK_LIMITS.items():
+        by_device.setdefault(device, []).append((base, base + limit - 1))
+    for device, spans in by_device.items():
+        ordered = sorted(spans)
+        for i, (lo, hi) in enumerate(ordered):
+            for other_lo, other_hi in ordered[i + 1 :]:
+                assert (
+                    hi < other_lo or other_hi < lo
+                ), f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
+    # And the split is actually being used: at least one number appears on more than one device.
+    bases = [base for _, base in planner._BLOCK_LIMITS]
+    assert len(bases) > len(set(bases))
 
 
-def test_core_unit_numbers_do_not_collide_with_any_block():
+def test_the_system_device_carries_fixed_core_units_and_no_block():
     core = [v for n, v in vars(planner).items() if n.startswith("UNIT_") and isinstance(v, int)]
-    bases = [v for n, v in vars(planner).items() if n.startswith("BLOCK_") and isinstance(v, int)]
-    for unit in core:
-        if unit in (planner.BLOCK_CONTROL, planner.BLOCK_CONTROL + 1):
-            continue  # the control units are deliberately inside their own block
-        for base in bases:
-            limit = planner._BLOCK_LIMITS.get(base, 1)
-            assert not (base <= unit < base + limit), f"core unit {unit} sits inside block {base}"
+    assert core and max(core) <= 255
+    assert not [b for (d, b) in planner._BLOCK_LIMITS if d == planner.DEVICE_SYSTEM]

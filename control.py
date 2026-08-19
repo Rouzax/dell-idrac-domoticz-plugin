@@ -74,6 +74,7 @@ def control_updates(cfg, allowable, identify_on: bool) -> list:
             unit=UNIT_POWER_CONTROL,
             type_name="Selector Switch",
             name="Power Control",
+            device=planner.DEVICE_CONTROL,
             nvalue=0,
             svalue="0",
             options={
@@ -87,6 +88,7 @@ def control_updates(cfg, allowable, identify_on: bool) -> list:
             unit=UNIT_IDENTIFY,
             type_name="Switch",
             name="Identify LED",
+            device=planner.DEVICE_CONTROL,
             nvalue=1 if identify_on else 0,
             svalue="",
         ),

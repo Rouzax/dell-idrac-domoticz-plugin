@@ -115,6 +115,17 @@ def started(monkeypatch):
     return plugin._state
 
 
+def _units(family=None):
+    """Units of one Device. Unit numbers repeat across devices now, so a lookup names its family."""
+    dev_id = plugin._state.dev_ids[family or plugin.planner.DEVICE_SYSTEM]
+    dev = domoticz_stub.Devices.get(dev_id)
+    return dev.Units if dev else {}
+
+
+def _control_id():
+    return plugin._state.dev_ids[plugin.planner.DEVICE_CONTROL]
+
+
 def _beat_once(state):
     """Advance past the poll-interval gate and run one heartbeat."""
     state.beat = state.cfg.poll_interval // 10
@@ -127,18 +138,23 @@ def test_onstart_sets_up_state_without_touching_the_network():
 
 def test_heartbeat_creates_devices_for_discovered_hardware(started):
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert plugin.planner.UNIT_POWER in units
     assert plugin.planner.UNIT_HEALTH in units
-    fans = [u for u in units.values() if u.Options.get("Custom") == "1;RPM"]
+    # Fans live on the thermal Device, not the system one.
+    fans = [
+        u
+        for u in _units(plugin.planner.DEVICE_THERMAL).values()
+        if u.Options.get("Custom") == "1;RPM"
+    ]
     assert len(fans) == 3
 
 
 def test_heartbeat_is_idempotent(started):
     _beat_once(started)
-    first = len(domoticz_stub.Devices["dellidrac_3"].Units)
+    first = len(_units())
     _beat_once(started)
-    assert len(domoticz_stub.Devices["dellidrac_3"].Units) == first
+    assert len(_units()) == first
 
 
 def test_unit_allocation_persists_across_a_restart(started, monkeypatch):
@@ -157,7 +173,7 @@ def test_transport_failure_writes_nothing_and_keeps_the_last_value(started):
     LastUpdate. Writing anything here, a zero above all, would corrupt recorded history.
     """
     _beat_once(started)
-    unit = domoticz_stub.Devices["dellidrac_3"].Units[plugin.planner.UNIT_INLET]
+    unit = _units()[plugin.planner.UNIT_INLET]
     before_s, before_n = unit.sValue, unit.nValue
     started.client = FakeClient(fail_paths=("/Sensors",))
     _beat_once(started)
@@ -226,14 +242,14 @@ def test_backoff_resets_after_a_successful_poll(started):
 def test_a_failing_storage_subcall_does_not_cost_the_rest_of_the_slow_tier(started):
     started.client = FakeClient(fail_paths=("/ctrl",))
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert plugin.planner.UNIT_HEALTH in units
     assert not [u for u in units if u >= plugin.planner.BLOCK_DRIVES]
 
 
 def test_uptime_and_intrusion_devices_are_created(started):
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert float(units[plugin.planner.UNIT_UPTIME].sValue) > 0
     assert units[plugin.planner.UNIT_INTRUSION].sValue == "Normal"
 
@@ -241,20 +257,19 @@ def test_uptime_and_intrusion_devices_are_created(started):
 def test_dual_socket_profile_creates_two_cpu_temp_devices(started):
     started.client = FakeClient(profile="dual")
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
-    cpu = [u for u in units.values() if "CPU" in u.Name and "Temp" in u.Name]
+    cpu = [
+        u
+        for u in _units(plugin.planner.DEVICE_THERMAL).values()
+        if "CPU" in u.Name and "Temp" in u.Name
+    ]
     assert len(cpu) == 2
 
 
 def test_energy_counter_never_decreases(started):
     _beat_once(started)
-    first = float(
-        domoticz_stub.Devices["dellidrac_3"].Units[plugin.planner.UNIT_POWER].sValue.split(";")[1]
-    )
+    first = float(_units()[plugin.planner.UNIT_POWER].sValue.split(";")[1])
     _beat_once(started)
-    second = float(
-        domoticz_stub.Devices["dellidrac_3"].Units[plugin.planner.UNIT_POWER].sValue.split(";")[1]
-    )
+    second = float(_units()[plugin.planner.UNIT_POWER].sValue.split(";")[1])
     assert second >= first
 
 
@@ -266,7 +281,7 @@ def test_password_never_reaches_the_log(started):
 
 def test_no_control_devices_when_control_is_off(started):
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units(plugin.planner.DEVICE_CONTROL)
     assert control.UNIT_POWER_CONTROL not in units
     assert control.UNIT_IDENTIFY not in units
 
@@ -275,7 +290,7 @@ def test_command_is_refused_when_control_is_off(started):
     _beat_once(started)
     sent = []
     started.client.post = lambda path, body: sent.append((path, body))
-    plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 10, "")
+    plugin.onCommand(_control_id(), control.UNIT_POWER_CONTROL, "Set Level", 10, "")
     assert sent == []
 
 
@@ -284,7 +299,7 @@ def test_control_enabled_creates_the_control_devices(started, monkeypatch):
     plugin.onStart()
     plugin._state.client = FakeClient()
     _beat_once(plugin._state)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert control.UNIT_POWER_CONTROL in units
     assert control.UNIT_IDENTIFY in units
 
@@ -296,7 +311,7 @@ def test_a_power_command_posts_the_reset_action(started, monkeypatch):
     _beat_once(plugin._state)
     sent = []
     plugin._state.client.post = lambda path, body: sent.append((path, body)) or {}
-    plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 10, "")
+    plugin.onCommand(_control_id(), control.UNIT_POWER_CONTROL, "Set Level", 10, "")
     assert sent and sent[0][1]["ResetType"] == "On"
 
 
@@ -309,14 +324,14 @@ def test_a_hard_action_level_is_refused_while_hard_actions_are_off(started, monk
     sent = []
     plugin._state.client.post = lambda path, body: sent.append((path, body)) or {}
     # Level 40 would be a hard action if they were enabled; only 3 graceful ones exist.
-    plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 40, "")
+    plugin.onCommand(_control_id(), control.UNIT_POWER_CONTROL, "Set Level", 40, "")
     assert sent == []
 
 
 def test_component_power_devices_appear_when_telemetry_is_available(started):
     started.client = FakeClient(telemetry_available=True)
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
     assert units[plugin.planner.UNIT_STORAGE_POWER].Name == "Storage Power"
     assert started.telemetry is True
@@ -327,7 +342,7 @@ def test_component_power_devices_appear_when_telemetry_is_available(started):
 def test_no_component_power_devices_when_telemetry_is_absent(started):
     """The normal case: most iDRACs cannot serve this at all."""
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert plugin.planner.UNIT_CPU_POWER not in units
     assert started.telemetry is False
     # Energy falls back to the board sensor.
@@ -353,7 +368,7 @@ def test_the_power_report_is_found_under_an_openmanage_name(started):
     """
     started.client = FakeClient(telemetry_available=True, report_name="OME-PMP-Power-A")
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
     assert started.telemetry is True
     assert started.metric_paths == ("/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-A",)
@@ -375,7 +390,7 @@ def test_reports_without_power_metrics_are_discovered_once_then_dropped(started)
 def test_a_failing_telemetry_call_does_not_cost_the_rest_of_the_poll(started):
     started.client = FakeClient(fail_paths=("MetricReports",))
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert plugin.planner.UNIT_HEALTH in units
     assert plugin.planner.UNIT_INLET in units
     assert started.backoff == 0.0
@@ -418,7 +433,7 @@ def test_the_setting_enables_telemetry_and_the_metrics_then_appear(started):
     }
     # The next poll finds the report that the write just switched on.
     _beat_once(started)
-    units = domoticz_stub.Devices["dellidrac_3"].Units
+    units = _units()
     assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
 
 
@@ -439,3 +454,35 @@ def test_telemetry_setup_is_attempted_only_once_per_start(started):
     _beat_once(started)
     _beat_once(started)
     assert len(started.client.patches) == 1
+
+
+def test_a_command_from_another_device_is_ignored(started):
+    """Unit numbers are unique only WITHIN a Device, so unit 1 exists on every one of them.
+
+    Dispatching on the unit number alone would let a click on an unrelated tile, the first PSU
+    or the first RAID volume, fire a power action. onCommand must match the DeviceID too.
+    """
+    started.cfg = plugin.config.parse_config({**_PARAMS, "AllowControl": "true"})
+    sent = []
+    started.client = FakeClient()
+    started.client.post = lambda path, body: sent.append((path, body))
+    started.allowable = ["On"]
+
+    for family in (
+        plugin.planner.DEVICE_SYSTEM,
+        plugin.planner.DEVICE_POWER,
+        plugin.planner.DEVICE_STORAGE,
+        plugin.planner.DEVICE_GPU,
+    ):
+        plugin.onCommand(started.dev_ids[family], control.UNIT_POWER_CONTROL, "Set Level", 10, "")
+    assert sent == [], "a power action fired from a device that is not the control device"
+
+    # And the real control device still works.
+    plugin.onCommand(_control_id(), control.UNIT_POWER_CONTROL, "Set Level", 10, "")
+    assert sent and sent[0][1]["ResetType"] == "On"
+
+
+def test_each_family_gets_its_own_device_id(started):
+    ids = started.dev_ids
+    assert len(set(ids.values())) == len(plugin.planner.DEVICE_FAMILIES)
+    assert all(str(_PARAMS["HardwareID"]) in v for v in ids.values())

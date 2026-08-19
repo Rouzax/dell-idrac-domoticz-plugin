@@ -74,6 +74,30 @@ An iDRAC restart, measured twice, has two distinct phases: roughly three minutes
 connections failing in milliseconds, then a short window where the controller accepts connections
 but does not answer, producing timeouts. The split above is chosen for exactly that shape.
 
+## One Domoticz Device per family
+
+Domoticz gives each **Device** its own unit-number space of 1 to 255, and a plugin may create as
+many Devices as it likes. This plugin uses one per family, so you will see several entries rather
+than one:
+
+| Device | Holds |
+|---|---|
+| `..._system` | overall power, health, power state, chassis temperatures, utilization, uptime, boot status, intrusion, redundancy, per-component power |
+| `..._thermal` | per-CPU and DIMM temperatures, fan speeds |
+| `..._power` | per-power-supply wattage |
+| `..._storage` | RAID volumes, physical drives, drive life |
+| `..._network` | NIC ports |
+| `..._gpu` | per-GPU power and temperature |
+| `..._control` | power control and identify LED |
+
+The split exists because a single Device caps out at 255 units, which a machine with many drives
+and GPUs can exhaust. Each Device is created automatically when its first unit appears, so nothing
+needs setting up.
+
+One consequence worth knowing: **a unit number is unique only within its Device**. Unit 1 exists on
+every one of them. Anything acting on a unit, including the plugin's own command handling, has to
+match the Device as well as the number.
+
 ## Unit numbers persist
 
 Every discovered component is assigned a Domoticz unit number once, from a block reserved for its

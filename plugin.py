@@ -98,7 +98,8 @@ class _PluginState:
     def __init__(self):
         self.cfg = None
         self.client = None
-        self.dev_id = ""
+        # family -> DeviceID. One Device per family, each with its own 1-255 unit space.
+        self.dev_ids = {}
         self.beat = 0
         self.slow_tick = 0
         # Telemetry is licence-gated and absent on most iDRACs. None means "not tried yet";
@@ -152,7 +153,10 @@ def onStart():
     _state.cfg = config.parse_config(Parameters)
     if _state.cfg.debug_level >= 2:
         Domoticz.Debugging(1)
-    _state.dev_id = domoticz_api.device_id(Parameters["HardwareID"])
+    _state.dev_ids = {
+        family: domoticz_api.device_id(Parameters["HardwareID"], family)
+        for family in planner.DEVICE_FAMILIES
+    }
     _state.client = redfish_client.RedfishClient(
         host=_state.cfg.address,
         username=_state.cfg.username,
@@ -441,7 +445,9 @@ def onHeartbeat():
     watts = metrics.get("SystemInputPower")
     if watts is None:
         watts = board.reading if board is not None else None
-    prev_wh = domoticz_api.read_prev_counter_wh(devices, _state.dev_id, planner.UNIT_POWER)
+    prev_wh = domoticz_api.read_prev_counter_wh(
+        devices, _state.dev_ids[planner.DEVICE_SYSTEM], planner.UNIT_POWER
+    )
     if prev_wh is None:
         # Unknown, not zero. Leave the counter untouched this cycle rather than restart it.
         Domoticz.Error("energy counter unreadable; leaving it untouched this cycle")
@@ -470,7 +476,7 @@ def onHeartbeat():
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
     updates.sort(key=lambda u: u.unit)
     names = domoticz_api.apply_updates(
-        devices, _state.dev_id, updates, saved.auto_names, allow_create=True
+        devices, _state.dev_ids, updates, saved.auto_names, allow_create=True
     )
     saved.auto_names = names
     saved.unit_alloc = _state.alloc
@@ -481,6 +487,11 @@ def onCommand(DeviceID, Unit, Command, Level, Color):
     cfg = _state.cfg
     if cfg is None or not cfg.allow_control:
         Domoticz.Error("command ignored: control is disabled")
+        return
+    # Match the DEVICE as well as the unit. Unit numbers are unique only within a Device, so
+    # unit 1 exists on every one of them; dispatching on the number alone could fire a power
+    # action from an unrelated tile.
+    if DeviceID != _state.dev_ids.get(planner.DEVICE_CONTROL):
         return
     if Unit == control.UNIT_IDENTIFY:
         want = str(Command).strip().lower() == "on"

@@ -36,32 +36,56 @@ UNIT_FPGA_POWER = 19
 # so a user who later picks a different icon keeps it.
 IMAGE_FAN = 7
 IMAGE_CLOCK = 21
+IMAGE_HARDDISK = 3
 
-BLOCK_TEMPS = 20
+# Each DeviceID has its own 1-255 unit space (Developing_a_Python_plugin.wiki: "each Device can
+# have 256 Units", "Unit numbers must be less than 256"). Splitting by family therefore removes
+# the cramping that a single Device imposes, and Domoticz creates each Device implicitly when its
+# first Unit appears. A unit number is only unique WITHIN its device, which is why onCommand has
+# to match on DeviceID as well as Unit.
+DEVICE_SYSTEM = "system"
+DEVICE_THERMAL = "thermal"
+DEVICE_POWER = "power"
+DEVICE_STORAGE = "storage"
+DEVICE_NETWORK = "network"
+DEVICE_GPU = "gpu"
+DEVICE_CONTROL = "control"
+
+# Every family, so the caller can build one DeviceID per family without duplicating the list.
+DEVICE_FAMILIES = (
+    DEVICE_SYSTEM,
+    DEVICE_THERMAL,
+    DEVICE_POWER,
+    DEVICE_STORAGE,
+    DEVICE_NETWORK,
+    DEVICE_GPU,
+    DEVICE_CONTROL,
+)
+
+BLOCK_TEMPS = 1
 BLOCK_FANS = 40
-BLOCK_PSUS = 60
-BLOCK_VOLUMES = 70
-BLOCK_NICS = 80
-BLOCK_DRIVES = 100
-BLOCK_CONTROL = 200
-# Everything below has to fit between the control block and Domoticz's hard maximum of 255
-# (PythonObjectEx.cpp: "Illegal Unit number ... valid values range from 1 to 255"). Units above
-# that are silently not created. The drives block above cannot be shrunk to make room, because
-# existing installs have already allocated inside it and a unit number must never move.
-BLOCK_GPU_POWER = 202
-BLOCK_GPU_TEMP = 214
-BLOCK_DRIVE_LIFE = 226
+BLOCK_PSUS = 1
+BLOCK_VOLUMES = 1
+BLOCK_DRIVES = 40
+BLOCK_DRIVE_LIFE = 150
+BLOCK_NICS = 1
+BLOCK_GPU_POWER = 1
+BLOCK_GPU_TEMP = 40
+BLOCK_CONTROL = 1
 
+# (device, base) -> how many units the block may use. The device is part of the key because the
+# same base number now legitimately appears on more than one device.
 _BLOCK_LIMITS = {
-    BLOCK_TEMPS: 20,
-    BLOCK_FANS: 20,
-    BLOCK_PSUS: 10,
-    BLOCK_VOLUMES: 10,
-    BLOCK_NICS: 20,
-    BLOCK_DRIVES: 100,
-    BLOCK_GPU_POWER: 12,
-    BLOCK_GPU_TEMP: 12,
-    BLOCK_DRIVE_LIFE: 30,
+    (DEVICE_THERMAL, BLOCK_TEMPS): 20,
+    (DEVICE_THERMAL, BLOCK_FANS): 20,
+    (DEVICE_POWER, BLOCK_PSUS): 20,
+    (DEVICE_STORAGE, BLOCK_VOLUMES): 20,
+    (DEVICE_STORAGE, BLOCK_DRIVES): 100,
+    (DEVICE_STORAGE, BLOCK_DRIVE_LIFE): 100,
+    (DEVICE_NETWORK, BLOCK_NICS): 20,
+    (DEVICE_GPU, BLOCK_GPU_POWER): 20,
+    (DEVICE_GPU, BLOCK_GPU_TEMP): 20,
+    (DEVICE_CONTROL, BLOCK_CONTROL): 2,
 }
 
 
@@ -76,20 +100,26 @@ class DeviceUpdate:
     description: str = ""
     # Domoticz bar ranges, written to the device's Color field. Empty means no bar.
     color: str = ""
+    # Which DeviceID this unit belongs to. Unit numbers are unique only WITHIN a device.
+    device: str = DEVICE_SYSTEM
     image: int = 0
     switchtype: int = 0
 
 
-def _assign_block(ids, base: int, alloc: dict, taken: set) -> None:
-    limit = _BLOCK_LIMITS[base]
+def _assign_block(ids, device: str, base: int, alloc: dict, taken: dict) -> None:
+    """Allocate units for one block. `taken` is PER DEVICE, since the same unit number is free
+    again on a different DeviceID and blocking it globally would waste the whole point of the
+    split."""
+    limit = _BLOCK_LIMITS[(device, base)]
+    used = taken.setdefault(device, set())
     for resource_id in ids:
         if resource_id in alloc:
             continue
         for offset in range(limit):
             candidate = base + offset
-            if candidate not in taken:
+            if candidate not in used:
                 alloc[resource_id] = candidate
-                taken.add(candidate)
+                used.add(candidate)
                 break
 
 
@@ -100,38 +130,41 @@ def unassigned(inventory, alloc: dict) -> tuple:
     enough component churn can exhaust one. plan() skips these rather than failing the whole poll,
     and the caller reports them so the gap is visible instead of silent.
     """
-    wanted = [
-        *inventory.cpu_temps,
-        *([inventory.dimm_max] if inventory.dimm_max else []),
-        *inventory.fans,
-        *inventory.psus,
-        *inventory.volumes,
-        *inventory.nics,
-        *inventory.drives,
-        *(f"{d}#life" for d in inventory.drives),
-        *(f"{g}#power" for g in inventory.gpus),
-        *(f"{g}#temp" for g in inventory.gpus),
-    ]
+    wanted = [rid for _, _, ids in _block_members(inventory) for rid in ids]
     return tuple(rid for rid in wanted if rid not in alloc)
+
+
+def _block_members(inventory) -> tuple:
+    """Every block, in allocation order, as (device, base, resource ids)."""
+    temps = list(inventory.cpu_temps)
+    if inventory.dimm_max:
+        temps.append(inventory.dimm_max)
+    return (
+        (DEVICE_THERMAL, BLOCK_TEMPS, temps),
+        (DEVICE_THERMAL, BLOCK_FANS, list(inventory.fans)),
+        (DEVICE_POWER, BLOCK_PSUS, list(inventory.psus)),
+        (DEVICE_STORAGE, BLOCK_VOLUMES, list(inventory.volumes)),
+        (DEVICE_STORAGE, BLOCK_DRIVES, list(inventory.drives)),
+        # A second, optional device per drive, keyed by a suffixed id to stay unique.
+        (DEVICE_STORAGE, BLOCK_DRIVE_LIFE, [f"{d}#life" for d in inventory.drives]),
+        (DEVICE_NETWORK, BLOCK_NICS, list(inventory.nics)),
+        # Two devices per card, so two blocks.
+        (DEVICE_GPU, BLOCK_GPU_POWER, [f"{g}#power" for g in inventory.gpus]),
+        (DEVICE_GPU, BLOCK_GPU_TEMP, [f"{g}#temp" for g in inventory.gpus]),
+    )
 
 
 def assign_units(inventory, alloc: dict) -> dict:
     out = dict(alloc)
-    taken = set(out.values())
-    temps = list(inventory.cpu_temps)
-    if inventory.dimm_max:
-        temps.append(inventory.dimm_max)
-    _assign_block(temps, BLOCK_TEMPS, out, taken)
-    _assign_block(inventory.fans, BLOCK_FANS, out, taken)
-    _assign_block(inventory.psus, BLOCK_PSUS, out, taken)
-    _assign_block(inventory.volumes, BLOCK_VOLUMES, out, taken)
-    _assign_block(inventory.nics, BLOCK_NICS, out, taken)
-    _assign_block(inventory.drives, BLOCK_DRIVES, out, taken)
-    # A second, optional device per drive, so a separate block keyed by a suffixed id.
-    _assign_block([f"{d}#life" for d in inventory.drives], BLOCK_DRIVE_LIFE, out, taken)
-    # Two devices per card, so two blocks, keyed by a suffixed id to keep the namespace unique.
-    _assign_block([f"{g}#power" for g in inventory.gpus], BLOCK_GPU_POWER, out, taken)
-    _assign_block([f"{g}#temp" for g in inventory.gpus], BLOCK_GPU_TEMP, out, taken)
+    # Rebuild the per-device used-set from what is already allocated, so a restart does not hand
+    # a stored unit number to something else on the same device.
+    taken: dict = {}
+    for device, base, ids in _block_members(inventory):
+        limit = _BLOCK_LIMITS[(device, base)]
+        used = taken.setdefault(device, set())
+        used.update(out[rid] for rid in ids if rid in out and base <= out[rid] < base + limit)
+    for device, base, ids in _block_members(inventory):
+        _assign_block(ids, device, base, out, taken)
     return out
 
 
@@ -238,7 +271,7 @@ def _fan_bar(threshold, axis_max) -> str:
     return json.dumps(bands, separators=(",", ":"))
 
 
-def _temp_update(unit, sensor, name, threshold_map) -> DeviceUpdate:
+def _temp_update(unit, sensor, name, threshold_map, device=DEVICE_SYSTEM) -> DeviceUpdate:
     threshold = threshold_map.get(sensor.name)
     return DeviceUpdate(
         unit=unit,
@@ -248,6 +281,7 @@ def _temp_update(unit, sensor, name, threshold_map) -> DeviceUpdate:
         svalue=_fmt_reading(sensor.reading),
         description=thresholds.describe(threshold, "C"),
         color=_temp_bar(threshold),
+        device=device,
     )
 
 
@@ -309,6 +343,7 @@ def plan(
                         unit=unit,
                         type_name="Usage",
                         name=f"GPU {device} Power",
+                        device=DEVICE_GPU,
                         nvalue=0,
                         svalue=_fmt_reading(watts),
                     )
@@ -321,6 +356,7 @@ def plan(
                         unit=unit,
                         type_name="Temperature",
                         name=f"GPU {device} Temp",
+                        device=DEVICE_GPU,
                         nvalue=0,
                         svalue=_fmt_reading(round(celsius, 1)),
                     )
@@ -454,13 +490,13 @@ def plan(
         unit = alloc.get(sensor_id)
         if sensor.reading is None or unit is None:
             continue
-        out.append(_temp_update(unit, sensor, sensor.name, threshold_map))
+        out.append(_temp_update(unit, sensor, sensor.name, threshold_map, DEVICE_THERMAL))
 
     if inventory.dimm_max:
         sensor = sensors[inventory.dimm_max]
         unit = alloc.get(inventory.dimm_max)
         if sensor.reading is not None and unit is not None:
-            out.append(_temp_update(unit, sensor, "Max DIMM Temp", threshold_map))
+            out.append(_temp_update(unit, sensor, "Max DIMM Temp", threshold_map, DEVICE_THERMAL))
 
     for sensor_id in inventory.fans:
         sensor = sensors[sensor_id]
@@ -475,6 +511,7 @@ def plan(
                 nvalue=0,
                 svalue=_fmt_reading(sensor.reading),
                 options={"Custom": "1;RPM"},
+                device=DEVICE_THERMAL,
                 image=IMAGE_FAN,
                 description=thresholds.describe(threshold_map.get(sensor.name), "RPM"),
                 color=_fan_bar(threshold_map.get(sensor.name), cfg.fan_bar_max),
@@ -492,6 +529,7 @@ def plan(
                     unit=unit,
                     type_name="Usage",
                     name=psu.name,
+                    device=DEVICE_POWER,
                     nvalue=0,
                     svalue=_fmt_reading(psu.input_watts),
                     description=text,
@@ -509,6 +547,7 @@ def plan(
                     unit=unit,
                     type_name="Alert",
                     name=f"Volume {volume.name}",
+                    device=DEVICE_STORAGE,
                     nvalue=level,
                     svalue=text,
                 )
@@ -531,6 +570,7 @@ def plan(
                     unit=unit,
                     type_name="Alert",
                     name=f"NIC {nic.id}",
+                    device=DEVICE_NETWORK,
                     nvalue=level,
                     svalue=text,
                 )
@@ -547,6 +587,7 @@ def plan(
                     unit=unit,
                     type_name="Alert",
                     name=drive.name,
+                    device=DEVICE_STORAGE,
                     nvalue=level,
                     svalue=text,
                 )
@@ -561,9 +602,11 @@ def plan(
                     unit=life_unit,
                     type_name="Percentage",
                     name=f"{drive.name} Life",
+                    device=DEVICE_STORAGE,
                     nvalue=0,
                     svalue=str(drive.life_left_pct),
                     color=_life_bar(cfg.drive_life_floor),
+                    image=IMAGE_HARDDISK,
                 )
             )
 
