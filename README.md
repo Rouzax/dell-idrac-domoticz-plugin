@@ -93,6 +93,10 @@ was derived by the plugin because the server did not report one.
 Devices keep the unit numbers they were first given. If you remove hardware, its device stays
 until you delete it, and the freed unit number is not reused.
 
+The plugin creates several Domoticz Devices rather than one, grouped by family: system, thermal,
+power, storage, network, GPU and control. Each gets its own unit-number space, which is what lets
+a machine with many drives or GPUs be covered without running out.
+
 ### Bar graphs
 
 Fan and temperature cards show a coloured bar built from the server's own thresholds: red beyond

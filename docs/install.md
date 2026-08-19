@@ -80,8 +80,9 @@ not parse the plugin manifest, and the new hardware type will not appear in the 
 5. Click **Add**.
 
 Devices appear after the **first successful poll**, which is one poll interval later (30 seconds
-at the default), not instantly. On a typical server you should see somewhere between 20 and 40
-devices depending on how many fans, drives, volumes and NICs the machine has.
+at the default), not instantly. On a typical server you should see somewhere between 30 and 50
+devices depending on how many fans, drives, volumes and NICs the machine has, grouped into
+several Domoticz Devices by family.
 
 !!! warning "onStart does no network I/O, on purpose"
     Domoticz starts hardware synchronously, so a plugin that contacted an unreachable server

@@ -225,6 +225,10 @@ Unit numbers are allocated once per piece of hardware and then persist. If you r
 its device stays until you delete it, and its unit number is not handed to something else. This
 keeps scenes, timers and scripts pointing at the same thing across a drive replacement.
 
+The plugin creates **several Domoticz Devices**, one per family, rather than a single one. See
+[How it works](internals.md#one-domoticz-device-per-family). A unit number is unique only within
+its Device, so a script acting on one should match the Device as well as the number.
+
 ## Icons
 
 Fans get the Fan icon and Uptime the Clock icon when they are first created. If you pick a
