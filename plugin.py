@@ -22,7 +22,7 @@
             </options>
         </param>
         <group label="Polling">
-            <param field="PollInterval" type="number" label="Poll Interval (s)" min="15" max="600" step="5" default="30" width="100px">
+            <param field="PollInterval" type="number" label="Poll Interval (s)" min="20" max="600" step="10" default="30" width="100px">
                 <description>How often to read live sensors, in seconds. One request per poll.</description>
             </param>
             <param field="SlowEvery" type="number" label="Slow Poll (every N polls)" min="1" max="60" step="1" default="10" width="100px">
@@ -128,6 +128,10 @@ def onStart():
     # NO network I/O here. Domoticz calls onStart synchronously while starting the hardware, so
     # a request to an unreachable iDRAC would stall Domoticz itself for the full timeout plus
     # retries. Path resolution happens lazily on the first heartbeat instead.
+    # config is pure and cannot log, so it reports what it silently changed and we surface it.
+    # A setting quietly rewritten behind the user's back is worse than a wrong one they can see.
+    for warning in _state.cfg.warnings:
+        Domoticz.Error(f"setting adjusted: {warning}")
     saved = domoticz_api.load_state()
     _state.alloc = dict(saved.unit_alloc)
     Domoticz.Heartbeat(_HEARTBEAT_SECONDS)
@@ -207,14 +211,17 @@ def onHeartbeat():
     try:
         if not _state.resolved:
             # Lazy, and inside the same guard as the poll so an unreachable iDRAC backs off
-            # rather than stalling. Conventional default paths are used until this succeeds.
-            _state.client.resolve()
-            _state.resolved = True
+            # rather than stalling. resolve() NEVER raises: it falls back to the conventional
+            # ids per collection. Latch only when every id was genuinely discovered, otherwise a
+            # first heartbeat during an outage would pin the wrong paths for the whole process.
+            _state.resolved = _state.client.resolve()
         sensors = poll_fast(_state.client)
         _state.slow_tick += 1
         if _state.slow_tick >= cfg.slow_every or not _state.slow_parts["threshold_map"]:
-            _state.slow_tick = 0
+            # Reset only AFTER the call returns. Resetting first means a transient slow-tier
+            # failure pushes the next refresh out by a whole extra cycle instead of retrying.
             _state.slow_parts = poll_slow(_state.client, cfg)
+            _state.slow_tick = 0
     except redfish_client.RedfishError as exc:
         _state.backoff = min(
             _BACKOFF_CAP, _state.backoff * 2 if _state.backoff else _BACKOFF_INITIAL
@@ -237,6 +244,13 @@ def onHeartbeat():
     )
     saved = domoticz_api.load_state()
     _state.alloc = planner.assign_units(inventory, _state.alloc or saved.unit_alloc)
+    # A unit is never freed once taken, so a block can exhaust through component churn. The
+    # affected devices are skipped rather than crashing the poll, but the gap must not be silent.
+    orphaned = planner.unassigned(inventory, _state.alloc)
+    if orphaned:
+        Domoticz.Error(
+            f"no free unit for {len(orphaned)} item(s), not shown: {', '.join(orphaned)}"
+        )
 
     power = sensors.get("SystemBoardPwrConsumption")
     prev_wh = domoticz_api.read_prev_counter_wh(devices, _state.dev_id, planner.UNIT_POWER)

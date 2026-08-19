@@ -73,7 +73,7 @@ def parse_config(parameters: dict) -> PluginConfig:
         password=str(parameters.get("Password", "")),
         allow_control=_bool(parameters, "AllowControl", False, notes),
         allow_hard_power=_bool(parameters, "AllowHardPowerActions", False, notes),
-        poll_interval=_int(parameters, "PollInterval", 30, 15, 600, notes),
+        poll_interval=_int(parameters, "PollInterval", 30, 20, 600, notes),
         slow_every=_int(parameters, "SlowEvery", 10, 1, 60, notes),
         enable_drives=_bool(parameters, "EnableDrives", True, notes),
         enable_volumes=_bool(parameters, "EnableVolumes", True, notes),

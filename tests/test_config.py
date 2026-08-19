@@ -38,7 +38,9 @@ def test_booleans_accept_the_manifest_string_forms():
 
 
 def test_numeric_fields_are_clamped_to_their_manifest_range():
-    assert config.parse_config(_params(PollInterval="1")).poll_interval == 15
+    # Floor is 20, not 15: the heartbeat ticks every 10 s, so every selectable PollInterval must
+    # be a multiple of 10 or the setting would quietly poll later than it claims.
+    assert config.parse_config(_params(PollInterval="1")).poll_interval == 20
     assert config.parse_config(_params(PollInterval="9999")).poll_interval == 600
     assert config.parse_config(_params(SlowEvery="0")).slow_every == 1
 

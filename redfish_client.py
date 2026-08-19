@@ -73,12 +73,19 @@ class RedfishClient:
                 return odata_id
         return fallback
 
-    def resolve(self) -> None:
-        """Learn the real resource ids instead of assuming the conventional ones."""
-        self._set_paths(
-            self._first_member(f"{ROOT}/Systems", DEFAULT_SYSTEM),
-            self._first_member(f"{ROOT}/Chassis", DEFAULT_CHASSIS),
-            self._first_member(f"{ROOT}/Managers", DEFAULT_MANAGER),
+    def resolve(self) -> bool:
+        """Learn the real resource ids instead of assuming the conventional ones.
+
+        Returns True only when all three collections were readable. False means at least one id
+        is a conventional fallback rather than something the server reported, so the caller can
+        try again rather than treating a guess as settled.
+        """
+        system = self._first_member(f"{ROOT}/Systems", DEFAULT_SYSTEM)
+        chassis = self._first_member(f"{ROOT}/Chassis", DEFAULT_CHASSIS)
+        manager = self._first_member(f"{ROOT}/Managers", DEFAULT_MANAGER)
+        self._set_paths(system, chassis, manager)
+        return not (
+            system is DEFAULT_SYSTEM or chassis is DEFAULT_CHASSIS or manager is DEFAULT_MANAGER
         )
 
     def redact(self, text: str) -> str:
