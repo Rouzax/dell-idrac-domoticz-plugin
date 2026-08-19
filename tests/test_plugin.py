@@ -486,3 +486,67 @@ def test_each_family_gets_its_own_device_id(started):
     ids = started.dev_ids
     assert len(set(ids.values())) == len(plugin.planner.DEVICE_FAMILIES)
     assert all(str(_PARAMS["HardwareID"]) in v for v in ids.values())
+
+
+def test_identify_survives_the_next_poll(started):
+    """The plugin used to fight the user here.
+
+    identify_on is refreshed only in the slow tier, but the control devices are rewritten every
+    fast poll, so 30 seconds after a successful switch-on the plugin wrote the tile back to off
+    from its stale cache. The LED really was blinking; the tile said otherwise.
+    """
+    started.cfg = plugin.config.parse_config({**_PARAMS, "AllowControl": "true"})
+    patched = []
+    started.client = FakeClient()
+    started.client.patch = lambda path, body: patched.append(body) or {}
+    _beat_once(started)
+
+    plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "On", 0, "")
+    assert patched == [{"LocationIndicatorActive": True}]
+    assert started.slow_parts["chassis"].identify_on is True
+
+    _beat_once(started)
+    unit = _units(plugin.planner.DEVICE_CONTROL)[control.UNIT_IDENTIFY]
+    assert unit.nValue == 1, "the next poll reverted the switch the user just turned on"
+
+
+def test_identify_off_is_also_remembered(started):
+    started.cfg = plugin.config.parse_config({**_PARAMS, "AllowControl": "true"})
+    started.client = FakeClient()
+    started.client.patch = lambda path, body: {}
+    _beat_once(started)
+    plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "On", 0, "")
+    plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "Off", 0, "")
+    assert started.slow_parts["chassis"].identify_on is False
+    _beat_once(started)
+    assert _units(plugin.planner.DEVICE_CONTROL)[control.UNIT_IDENTIFY].nValue == 0
+
+
+def test_a_failed_identify_does_not_claim_success(started):
+    started.cfg = plugin.config.parse_config({**_PARAMS, "AllowControl": "true"})
+    started.client = FakeClient()
+
+    def boom(path, body):
+        raise plugin.redfish_client.RedfishError("nope")
+
+    started.client.patch = boom
+    _beat_once(started)
+    before = started.slow_parts["chassis"].identify_on
+    plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "On", 0, "")
+    assert started.slow_parts["chassis"].identify_on == before
+
+
+def test_the_identify_switch_responds_immediately(started):
+    """A switch that takes a poll interval to move looks broken even when it worked."""
+    started.cfg = plugin.config.parse_config({**_PARAMS, "AllowControl": "true"})
+    started.client = FakeClient()
+    started.client.patch = lambda path, body: {}
+    _beat_once(started)
+    unit = _units(plugin.planner.DEVICE_CONTROL)[control.UNIT_IDENTIFY]
+    assert unit.nValue == 0
+
+    plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "On", 0, "")
+    assert unit.nValue == 1, "the tile should move on the command, not on the next poll"
+
+    plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "Off", 0, "")
+    assert unit.nValue == 0

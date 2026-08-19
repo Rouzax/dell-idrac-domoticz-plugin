@@ -78,6 +78,8 @@
 </plugin>
 """
 
+import dataclasses
+
 import DomoticzEx as Domoticz
 
 import config
@@ -500,6 +502,17 @@ def onCommand(DeviceID, Unit, Command, Level, Color):
             _state.client.patch(_state.client.chassis, {"LocationIndicatorActive": want})
         except redfish_client.RedfishError as exc:
             Domoticz.Error(f"identify LED failed: {exc}")
+            return
+        # Remember it straight away. The chassis is only re-read on the SLOW tier, while the
+        # control devices are rewritten on EVERY poll, so without this the next poll would push
+        # the switch back to its stale value and undo what the user just did.
+        chassis = _state.slow_parts.get("chassis")
+        if chassis is not None:
+            _state.slow_parts["chassis"] = dataclasses.replace(chassis, identify_on=want)
+        domoticz_api.set_switch(
+            _devices(), _state.dev_ids[planner.DEVICE_CONTROL], control.UNIT_IDENTIFY, want
+        )
+        Domoticz.Status(f"identify LED turned {'on' if want else 'off'}")
         return
     if Unit != control.UNIT_POWER_CONTROL:
         return

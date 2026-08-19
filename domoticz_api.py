@@ -151,3 +151,17 @@ def save_state(state) -> None:
     cfg = Domoticz.Configuration()
     cfg["state"] = persistence.dumps(state)
     Domoticz.Configuration(cfg)
+
+
+def set_switch(devices, dev_id, unit_no, on: bool) -> None:
+    """Move a switch immediately, without waiting for the next poll.
+
+    A control device is only rewritten when the poll runs, so without this a switch the user just
+    clicked sits at its old value for up to a full poll interval and reads as though the command
+    was ignored.
+    """
+    unit = _existing_unit(devices, dev_id, unit_no)
+    if unit is None:
+        return
+    unit.nValue = 1 if on else 0
+    unit.Update(Log=False)
