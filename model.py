@@ -46,6 +46,10 @@ class Drive:
     health: str | None
     failure_predicted: bool
     life_left_pct: int | None
+    # Which controller owns the drive. Dell names drives differently per controller, so this is
+    # what lets a boot card's "SSD 0" be told apart from a PERC's "Solid State Disk 0:2:0".
+    controller: str | None = None
+    is_boot_card: bool = False
 
 
 @dataclass(frozen=True)
@@ -209,7 +213,22 @@ def parse_power(payload: dict) -> list:
     return out
 
 
+# Dell's BOSS cards are the boot-optimised M.2 pair, physically and logically separate from the
+# RAID controller's bays. The model string is what identifies them; it has been "BOSS-S2" and
+# "BOSS-N1" across generations, so match the family rather than one exact model.
+_BOOT_CARD_MARKER = "BOSS"
+
+
+def _controller_name(payload: dict) -> str | None:
+    controllers = payload.get("StorageControllers") or []
+    first = controllers[0] if controllers and isinstance(controllers[0], dict) else {}
+    name = first.get("Model") or payload.get("Name")
+    return name if isinstance(name, str) and name.strip() else None
+
+
 def parse_drives(payload: dict) -> list:
+    controller = _controller_name(payload)
+    is_boot = bool(controller and _BOOT_CARD_MARKER in controller.upper())
     out = []
     for node in payload.get("Drives", []):
         if not isinstance(node, dict) or "Id" not in node:
@@ -223,6 +242,8 @@ def parse_drives(payload: dict) -> list:
                 health=_health(node),
                 failure_predicted=bool(node.get("FailurePredicted")),
                 life_left_pct=_int(node.get("PredictedMediaLifeLeftPercent")),
+                controller=controller,
+                is_boot_card=is_boot,
             )
         )
     return out

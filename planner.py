@@ -37,6 +37,7 @@ UNIT_FPGA_POWER = 19
 IMAGE_FAN = 7
 IMAGE_CLOCK = 21
 IMAGE_HARDDISK = 3
+IMAGE_GENERIC = 9
 
 # Each DeviceID has its own 1-255 unit space (Developing_a_Python_plugin.wiki: "each Device can
 # have 256 Units", "Unit numbers must be less than 256"). Splitting by family therefore removes
@@ -241,6 +242,25 @@ def gpu_readings(samples) -> dict:
             temps.get(device),
         )
     return out
+
+
+# Dell's own drive names, which differ by controller and read poorly next to each other:
+# "Solid State Disk 0:2:0" from a PERC, "SSD 0" from a BOSS boot card. Only these two prefixes
+# are rewritten; any other name the server reports is left exactly as it is.
+_DRIVE_PREFIXES = {"Solid State Disk": "SSD", "Physical Disk": "HDD"}
+
+
+def drive_name(drive) -> str:
+    """A short, consistent name: media type then location, with a boot card marked as such."""
+    name = drive.name
+    if drive.media_type:
+        for verbose, short in _DRIVE_PREFIXES.items():
+            if name.startswith(verbose):
+                name = short + name[len(verbose) :]
+                break
+    if drive.is_boot_card and not name.upper().startswith("BOSS"):
+        name = f"BOSS {name}"
+    return name
 
 
 def _life_bar(floor_pct: int) -> str:
@@ -586,7 +606,7 @@ def plan(
                 DeviceUpdate(
                     unit=unit,
                     type_name="Alert",
-                    name=drive.name,
+                    name=drive_name(drive),
                     device=DEVICE_STORAGE,
                     nvalue=level,
                     svalue=text,
@@ -601,7 +621,7 @@ def plan(
                 DeviceUpdate(
                     unit=life_unit,
                     type_name="Percentage",
-                    name=f"{drive.name} Life",
+                    name=f"{drive_name(drive)} Life",
                     device=DEVICE_STORAGE,
                     nvalue=0,
                     svalue=str(drive.life_left_pct),

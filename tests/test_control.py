@@ -1,5 +1,6 @@
 import config
 import control
+import planner
 
 
 def _cfg(**kw):
@@ -113,3 +114,11 @@ def test_control_devices_are_in_the_control_block():
 def test_identify_reflects_current_state():
     assert control.control_updates(_cfg(), ALLOWABLE, identify_on=True)[1].nvalue == 1
     assert control.control_updates(_cfg(), ALLOWABLE, identify_on=False)[1].nvalue == 0
+
+
+def test_the_power_control_selector_gets_an_icon():
+    """Chosen on the live rig. Set at creation only, so a later choice of yours survives."""
+    updates = control.control_updates(_cfg(allow_control=True), ["On"], False)
+    selector = next(u for u in updates if u.unit == control.UNIT_POWER_CONTROL)
+    assert selector.image == planner.IMAGE_GENERIC
+    assert selector.device == planner.DEVICE_CONTROL

@@ -75,6 +75,7 @@ def control_updates(cfg, allowable, identify_on: bool) -> list:
             type_name="Selector Switch",
             name="Power Control",
             device=planner.DEVICE_CONTROL,
+            image=planner.IMAGE_GENERIC,
             nvalue=0,
             svalue="0",
             options={

@@ -692,7 +692,7 @@ def test_drives_reporting_life_get_a_percentage_device_with_a_bar():
     assert len(life) == len(with_life)
     # HDDs report no life, so they get no device rather than a zero.
     assert len(life) < len(parts["drives"])
-    sample = life["Solid State Disk 0:2:0 Life"]
+    sample = life["SSD 0:2:0 Life"]
     assert sample.type_name == "Percentage"
     assert sample.svalue == "100"
     bands = json.loads(sample.color)
@@ -788,3 +788,50 @@ def test_the_system_device_carries_fixed_core_units_and_no_block():
     core = [v for n, v in vars(planner).items() if n.startswith("UNIT_") and isinstance(v, int)]
     assert core and max(core) <= 255
     assert not [b for (d, b) in planner._BLOCK_LIMITS if d == planner.DEVICE_SYSTEM]
+
+
+def _drive(name, media="SSD", boot=False, ident="X"):
+    return model.Drive(
+        id=ident,
+        name=name,
+        media_type=media,
+        capacity_bytes=None,
+        health="OK",
+        failure_predicted=False,
+        life_left_pct=None,
+        controller="c",
+        is_boot_card=boot,
+    )
+
+
+def test_drive_names_use_the_media_type_and_mark_the_boot_card():
+    """Dell's own names are inconsistent between controllers, and "SSD 0" versus "SSD 0:2:0"
+    is easy to misread. The media type comes from the server, so a mixed bay stays correct."""
+    assert planner.drive_name(_drive("Solid State Disk 0:2:0")) == "SSD 0:2:0"
+    assert planner.drive_name(_drive("Physical Disk 0:2:3", media="HDD")) == "HDD 0:2:3"
+    assert planner.drive_name(_drive("SSD 0", boot=True)) == "BOSS SSD 0"
+    assert planner.drive_name(_drive("SSD 1", boot=True)) == "BOSS SSD 1"
+
+
+def test_an_unfamiliar_drive_name_is_left_alone():
+    """Only the two prefixes Dell actually uses are rewritten; anything else is the server's."""
+    assert planner.drive_name(_drive("NVMe Express Device 3")) == "NVMe Express Device 3"
+    assert planner.drive_name(_drive("NVMe Express Device 3", boot=True)) == (
+        "BOSS NVMe Express Device 3"
+    )
+
+
+def test_a_drive_with_no_media_type_keeps_its_reported_name():
+    drive = _drive("Solid State Disk 0:2:0", media=None)
+    assert planner.drive_name(drive) == "Solid State Disk 0:2:0"
+
+
+def test_the_planned_drive_devices_use_the_new_names():
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    names = {u.name for u in updates if _in_block(u, planner.DEVICE_STORAGE, planner.BLOCK_DRIVES)}
+    assert "SSD 0:2:0" in names
+    assert "HDD 0:2:3" in names
+    assert not [n for n in names if n.startswith("Solid State Disk")]
+    assert not [n for n in names if n.startswith("Physical Disk")]

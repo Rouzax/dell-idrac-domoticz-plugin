@@ -317,3 +317,37 @@ def test_gpu_power_and_temperature_are_read_per_device():
     assert model.metric_value(samples, "TotalCPUPower") == 106.603223621845
     # And four power supplies stay four.
     assert len(model.metric_by_device(samples, "PSUTemperatureReading")) == 4
+
+
+def test_drives_carry_the_controller_that_owns_them():
+    """Dell names drives inconsistently depending on the controller.
+
+    Measured on a real T550: the PERC H755 calls them "Solid State Disk 0:2:0", while the BOSS-S2
+    boot card calls its two "SSD 0" and "SSD 1". Knowing the controller is what lets those be told
+    apart, and it is already in the payload the plugin fetches.
+    """
+    payload = {
+        "Name": "BOSS-S2",
+        "StorageControllers": [{"Model": "BOSS-S2", "Manufacturer": "DELL"}],
+        "Drives": [{"Id": "Disk.Direct.0-0:AHCI.SL.10-1", "Name": "SSD 0", "MediaType": "SSD"}],
+    }
+    drive = model.parse_drives(payload)[0]
+    assert drive.controller == "BOSS-S2"
+    assert drive.is_boot_card is True
+
+
+def test_a_perc_controller_is_not_a_boot_card():
+    payload = {
+        "Name": "PERC H755 Front",
+        "StorageControllers": [{"Model": "PERC H755 Front"}],
+        "Drives": [{"Id": "Disk.Bay.0:x:RAID.SL.3-1", "Name": "Solid State Disk 0:2:0"}],
+    }
+    drive = model.parse_drives(payload)[0]
+    assert drive.controller == "PERC H755 Front"
+    assert drive.is_boot_card is False
+
+
+def test_a_controller_with_no_name_does_not_break_drive_parsing():
+    drive = model.parse_drives({"Drives": [{"Id": "X", "Name": "X"}]})[0]
+    assert drive.controller is None
+    assert drive.is_boot_card is False

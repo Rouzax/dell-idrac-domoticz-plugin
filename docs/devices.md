@@ -46,6 +46,16 @@ One device is created for each item the server reports:
 - **Physical drive**, one alert per disk, showing media type and predicted life where the drive
   reports it.
 
+### Drive names
+
+Dell names drives differently depending on which controller they sit behind, which reads badly
+when both appear in one list: a PERC calls a drive `Solid State Disk 0:2:0` while a BOSS boot card
+calls its pair `SSD 0` and `SSD 1`. The plugin shortens the long form and marks the boot card, so
+you get `SSD 0:2:0`, `HDD 0:2:3` and `BOSS SSD 0`.
+
+The media type comes from the server, so a bay holding a mix stays correctly labelled. A drive
+whose name is not one Dell's two known forms is left exactly as the server reports it.
+
 Fans, drives, volumes and NICs are re-discovered on every slow poll, so hardware added later
 appears without reinstalling anything.
 
