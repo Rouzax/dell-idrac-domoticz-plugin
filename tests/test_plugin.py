@@ -10,9 +10,10 @@ from tests.fixture_loader import load
 class FakeClient:
     """Replays fixtures by path. Raises for paths the test did not stub."""
 
-    def __init__(self, profile="t550", fail_paths=()):
+    def __init__(self, profile="t550", fail_paths=(), telemetry_available=False):
         self.profile = profile
         self.fail_paths = set(fail_paths)
+        self.telemetry_available = telemetry_available
         self.calls = []
         # Reuse the real path derivation so the test exercises the same mapping.
         redfish_client.RedfishClient._set_paths(
@@ -45,6 +46,12 @@ class FakeClient:
             return load(self.profile, "dell_attributes")
         if path == self.storage_collection:
             return {"Members": [{"@odata.id": "/ctrl"}]}
+        if path == self.power_metrics:
+            # Only the t550 profile has a captured telemetry report; the others stand in for the
+            # majority of iDRACs, where telemetry is licence-gated and simply absent.
+            if self.profile == "t550" and self.telemetry_available:
+                return load(self.profile, "power_metrics")
+            return {}
         return {}
 
     def get_expanded(self, path, levels=1):
@@ -282,3 +289,44 @@ def test_a_hard_action_level_is_refused_while_hard_actions_are_off(started, monk
     # Level 40 would be a hard action if they were enabled; only 3 graceful ones exist.
     plugin.onCommand("dellidrac_3", control.UNIT_POWER_CONTROL, "Set Level", 40, "")
     assert sent == []
+
+
+def test_component_power_devices_appear_when_telemetry_is_available(started):
+    started.client = FakeClient(telemetry_available=True)
+    _beat_once(started)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
+    assert units[plugin.planner.UNIT_STORAGE_POWER].Name == "Storage Power"
+    assert started.telemetry is True
+    # And the energy device switches to the wall figure telemetry reports.
+    assert float(units[plugin.planner.UNIT_POWER].sValue.split(";")[0]) == 170.0
+
+
+def test_no_component_power_devices_when_telemetry_is_absent(started):
+    """The normal case: most iDRACs cannot serve this at all."""
+    _beat_once(started)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert plugin.planner.UNIT_CPU_POWER not in units
+    assert started.telemetry is False
+    # Energy falls back to the board sensor.
+    assert float(units[plugin.planner.UNIT_POWER].sValue.split(";")[0]) == 144.0
+
+
+def test_an_unavailable_telemetry_endpoint_is_asked_for_only_once(started):
+    """A licence-gated endpoint must not cost a wasted request on every single poll."""
+    started.client = FakeClient(fail_paths=("MetricReports",))
+    _beat_once(started)
+    assert started.telemetry is False
+    first = sum("MetricReports" in c for c in started.client.calls)
+    assert first == 1
+    _beat_once(started)
+    assert sum("MetricReports" in c for c in started.client.calls) == 1
+
+
+def test_a_failing_telemetry_call_does_not_cost_the_rest_of_the_poll(started):
+    started.client = FakeClient(fail_paths=("MetricReports",))
+    _beat_once(started)
+    units = domoticz_stub.Devices["dellidrac_3"].Units
+    assert plugin.planner.UNIT_HEALTH in units
+    assert plugin.planner.UNIT_INLET in units
+    assert started.backoff == 0.0

@@ -20,6 +20,15 @@ UNIT_BOOT = 11
 UNIT_INTRUSION = 12
 UNIT_REDUNDANCY = 13
 
+# Per-subsystem power from Dell's PowerMetrics telemetry report. Separate constants rather than a
+# block, because each is a FIXED slot tied to one metric: a stored unit number must always mean
+# the same thing. Licence-gated in practice, so these devices simply do not appear on most iDRACs.
+UNIT_CPU_POWER = 14
+UNIT_MEMORY_POWER = 15
+UNIT_STORAGE_POWER = 16
+UNIT_FAN_POWER = 17
+UNIT_PCIE_POWER = 18
+
 # Domoticz built-in icon ids. The plugin API's Image= sets the CustomImage column
 # (hardware/plugins/PythonObjectEx.cpp), and domoticz_api applies it only when a unit is CREATED,
 # so a user who later picks a different icon keeps it.
@@ -116,6 +125,16 @@ _PCT_UNITS = {
 # The sensor Id for the same physical probe DIFFERS BETWEEN MODELS. Measured: a PowerEdge T550
 # calls it "InletTemp" while an R6515 calls it "SystemBoardInletTemp". A single hardcoded id
 # silently loses the reading on half the fleet, so each slot accepts the known aliases in order.
+# Append only, and never repoint a slot at a different metric. GPU power lives in separate
+# telemetry reports (GPUSubsystemPower, GPUMetrics) that need their own switch, so it is not here.
+_POWER_METRIC_UNITS = (
+    (UNIT_CPU_POWER, "TotalCPUPower", "CPU Power"),
+    (UNIT_MEMORY_POWER, "TotalMemoryPower", "Memory Power"),
+    (UNIT_STORAGE_POWER, "TotalStoragePower", "Storage Power"),
+    (UNIT_FAN_POWER, "TotalFanPower", "Fan Power"),
+    (UNIT_PCIE_POWER, "TotalPciePower", "PCIe Power"),
+)
+
 _TEMP_UNITS = {
     UNIT_INLET: (("InletTemp", "SystemBoardInletTemp"), "Inlet Temp"),
     UNIT_EXHAUST: (("SystemBoardExhaustTemp", "ExhaustTemp"), "Exhaust Temp"),
@@ -193,21 +212,46 @@ def plan(
     energy_wh: float = 0.0,
     faults: list | None = None,
     redundancy: list | None = None,
+    metrics: dict | None = None,
 ) -> list:
     faults = faults or []
     redundancy = redundancy or []
+    metrics = metrics or {}
     out = []
 
-    power = sensors.get("SystemBoardPwrConsumption")
-    if power is not None and power.reading is not None:
+    # Prefer what the wall socket actually delivers. SystemBoardPwrConsumption misses the power
+    # supplies' own conversion loss: measured on a T550, input ran 158 to 174 W against a board
+    # figure of 144 W. Telemetry is licence-gated, so the board sensor remains the fallback and
+    # is what most installs will use.
+    watts = metrics.get("SystemInputPower")
+    if watts is None:
+        board = sensors.get("SystemBoardPwrConsumption")
+        watts = board.reading if board is not None else None
+    if watts is not None:
         out.append(
             DeviceUpdate(
                 unit=UNIT_POWER,
                 type_name="kWh",
                 name="Server Power",
                 nvalue=0,
-                svalue=f"{power.reading};{energy_wh}",
+                svalue=f"{watts};{energy_wh}",
                 options={"EnergyMeterMode": "0"},
+            )
+        )
+
+    for unit, metric_id, name in _POWER_METRIC_UNITS:
+        value = metrics.get(metric_id)
+        if value is None:
+            continue
+        out.append(
+            DeviceUpdate(
+                unit=unit,
+                type_name="Usage",
+                name=name,
+                nvalue=0,
+                # Telemetry values carry float32 noise, e.g. storage power arrives as
+                # "63.600002". A tenth of a watt is well past anything meaningful here.
+                svalue=_fmt_reading(round(value, 1)),
             )
         )
 

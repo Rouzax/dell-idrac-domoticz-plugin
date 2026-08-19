@@ -69,6 +69,44 @@ real history:
 
 ![Temperature devices with history](assets/temperatures.png)
 
+## Per-component power (needs a licence)
+
+Dell can break system power down by subsystem, and where it is available the plugin creates five
+more devices:
+
+| Device | Metric |
+|---|---|
+| CPU Power | `TotalCPUPower` |
+| Memory Power | `TotalMemoryPower` |
+| Storage Power | `TotalStoragePower` |
+| Fan Power | `TotalFanPower` |
+| PCIe Power | `TotalPciePower` |
+
+Measured on a PowerEdge T550 at idle: CPU 44 W, storage 64 W, memory 5 W, fans 3.4 W. The
+storage figure is often the surprise, since a full drive bay can draw more than the processor.
+
+!!! warning "This needs an iDRAC licence, and most machines will not have it"
+    The data comes from Dell's telemetry service, which is licence-gated: an **iDRAC Datacenter**
+    licence unlocks all metrics, and **OpenManage Enterprise Advanced** unlocks these particular
+    ones. On any other iDRAC the devices simply do not appear, and everything else works exactly
+    as before.
+
+    Telemetry must also be switched on. It is off by default. Both the master switch
+    (`Telemetry.1.EnableTelemetry`) and the individual report (`TelemetryPowerMetrics`) need to be
+    `Enabled`; the plugin never changes either, because it does not write configuration to your
+    server.
+
+    The plugin asks once per start. If the answer is no, it stops asking and logs a single line
+    saying so, rather than wasting a request on every poll.
+
+When telemetry **is** available, the Server Power device also switches to reporting
+`SystemInputPower`, which is what the wall socket actually delivers, rather than the mainboard
+sensor. On the T550 that is roughly a 6% difference: about 160 W at the wall against 144 W at the
+board. Note that this makes a visible step in the energy graph at the point it switches over.
+
+GPU power is reported through separate telemetry reports and is not yet supported, since no GPU
+hardware was available to test against.
+
 ## Bar graphs
 
 Where the server reports thresholds, they also become a coloured bar across the top of the device

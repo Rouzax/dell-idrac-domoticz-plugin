@@ -95,6 +95,10 @@ class _PluginState:
         self.dev_id = ""
         self.beat = 0
         self.slow_tick = 0
+        # Telemetry is licence-gated and absent on most iDRACs. None means "not tried yet";
+        # False latches after the first refusal so the plugin stops paying for a request that
+        # will never succeed. Reset by onStart, so a licence upgrade is picked up on restart.
+        self.telemetry = None
         # Two values, deliberately. `backoff` is the countdown the heartbeat drains to zero;
         # `backoff_level` is how long the current wait is and is what doubles. Reading growth
         # back off the countdown cannot work: it is always exactly 0.0 by the time the next poll
@@ -164,6 +168,40 @@ def onStop():
 
 def poll_fast(client) -> dict:
     return model.parse_sensors(client.get_expanded(client.sensors))
+
+
+def poll_metrics(client, state) -> dict:
+    """Dell's per-subsystem power breakdown. Optional, and absent on most machines.
+
+    Fetched in the fast tier because it also supplies the wattage the energy counter integrates,
+    which would otherwise be up to a full slow cycle stale. Guarded and latched: one refusal is
+    enough to stop asking, so a machine without the licence pays for a single request per
+    plugin start rather than one per poll.
+    """
+    if state.telemetry is False:
+        return {}
+    try:
+        metrics = model.parse_metric_report(client.get(client.power_metrics))
+    except redfish_client.RedfishError as exc:
+        if state.telemetry is None:
+            Domoticz.Status(
+                "per-component power unavailable, so those devices will not be created "
+                f"(needs Dell telemetry, which is licence-gated): {exc}"
+            )
+        state.telemetry = False
+        return {}
+    if not metrics:
+        if state.telemetry is None:
+            Domoticz.Status(
+                "Dell telemetry is reachable but reports no power metrics, so the "
+                "per-component power devices will not be created"
+            )
+        state.telemetry = False
+        return {}
+    if state.telemetry is None:
+        Domoticz.Status(f"Dell telemetry available: {len(metrics)} power metrics")
+    state.telemetry = True
+    return metrics
 
 
 def poll_slow(client, cfg) -> dict:
@@ -237,6 +275,7 @@ def onHeartbeat():
             # first heartbeat during an outage would pin the wrong paths for the whole process.
             _state.resolved = _state.client.resolve()
         sensors = poll_fast(_state.client)
+        metrics = poll_metrics(_state.client, _state)
         _state.slow_tick += 1
         if _state.slow_tick >= cfg.slow_every or not _state.slow_parts["threshold_map"]:
             # Reset only AFTER the call returns. Resetting first means a transient slow-tier
@@ -282,15 +321,18 @@ def onHeartbeat():
             Domoticz.Status("all discovered items now have a unit")
         _state.orphaned_reported = orphaned
 
-    power = sensors.get("SystemBoardPwrConsumption")
+    # Integrate the same figure the device displays: wall draw when telemetry supplies it,
+    # otherwise the board sensor. Anything else would make the counter disagree with its own watts.
+    board = sensors.get("SystemBoardPwrConsumption")
+    watts = metrics.get("SystemInputPower")
+    if watts is None:
+        watts = board.reading if board is not None else None
     prev_wh = domoticz_api.read_prev_counter_wh(devices, _state.dev_id, planner.UNIT_POWER)
     if prev_wh is None:
         # Unknown, not zero. Leave the counter untouched this cycle rather than restart it.
         Domoticz.Error("energy counter unreadable; leaving it untouched this cycle")
-        prev_wh, power = 0.0, None
-    added = (
-        energy.integrate_wh(power.reading, cfg.poll_interval) if power and power.reading else 0.0
-    )
+        prev_wh, watts = 0.0, None
+    added = energy.integrate_wh(watts, cfg.poll_interval) if watts else 0.0
     # Tie the sanity ceiling to the machine's OWN measured peak draw rather than a flat constant.
     # A flat 1_000_000 Wh headroom is roughly 278 days of running at 150 W, so it could never fire.
     # Allowing twice the observed peak over ten poll intervals still leaves generous slack for a
@@ -307,6 +349,7 @@ def onHeartbeat():
         alloc=_state.alloc,
         cfg=cfg,
         energy_wh=counter_wh,
+        metrics=metrics,
         **parts,
     )
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))

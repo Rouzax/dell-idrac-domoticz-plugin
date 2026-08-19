@@ -484,3 +484,84 @@ def test_system_health_falls_back_to_subsystem_names_without_faults():
         planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     )
     assert "PS" in got[planner.UNIT_HEALTH].svalue
+
+
+def _metrics():
+    return model.parse_metric_report(load("t550", "power_metrics"))
+
+
+def test_component_power_devices_are_created_from_telemetry():
+    """Dell's PowerMetrics report breaks system power down by subsystem.
+
+    Licence-gated in practice (Datacenter, or OME Advanced), so these devices exist only when
+    the report is readable.
+    """
+    parts = _parts("t550")
+    parts["metrics"] = _metrics()
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert got[planner.UNIT_CPU_POWER].svalue == "52.0"
+    assert got[planner.UNIT_CPU_POWER].name == "CPU Power"
+    assert got[planner.UNIT_CPU_POWER].type_name == "Usage"
+    assert got[planner.UNIT_MEMORY_POWER].svalue == "7.0"
+    assert got[planner.UNIT_STORAGE_POWER].svalue == "63.6"
+    assert got[planner.UNIT_FAN_POWER].svalue == "3.4"
+    # PCIe genuinely reads zero here. A reported zero is a value, not an absence.
+    assert got[planner.UNIT_PCIE_POWER].svalue == "0.0"
+
+
+def test_no_component_power_devices_without_telemetry():
+    """Most iDRACs cannot serve this, so the devices must simply not appear."""
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    for unit in (
+        planner.UNIT_CPU_POWER,
+        planner.UNIT_MEMORY_POWER,
+        planner.UNIT_STORAGE_POWER,
+        planner.UNIT_FAN_POWER,
+        planner.UNIT_PCIE_POWER,
+    ):
+        assert unit not in got
+
+
+def test_a_metric_the_server_omits_creates_no_device():
+    parts = _parts("t550")
+    parts["metrics"] = {"TotalCPUPower": 44.0}
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    assert planner.UNIT_CPU_POWER in got
+    assert planner.UNIT_MEMORY_POWER not in got
+
+
+def test_energy_prefers_wall_draw_when_telemetry_reports_it():
+    """SystemInputPower is what the wall socket delivers; the board sensor misses conversion loss.
+
+    Measured on a T550: input 158 to 174 W against a board figure of 144 W, roughly 6 percent.
+    """
+    parts = _parts("t550")
+    parts["metrics"] = _metrics()
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    watts = float(got[planner.UNIT_POWER].svalue.split(";")[0])
+    assert watts == 170.0
+
+
+def test_energy_falls_back_to_the_board_sensor_without_telemetry():
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    watts = float(got[planner.UNIT_POWER].svalue.split(";")[0])
+    assert watts == 144.0

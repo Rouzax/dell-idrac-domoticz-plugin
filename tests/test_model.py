@@ -193,3 +193,43 @@ def test_parse_redundancy_reads_a_populated_set():
 
 def test_parse_redundancy_skips_an_entry_with_no_name():
     assert model.parse_redundancy({"Redundancy": [{"Mode": "N+m"}]}) == []
+
+
+def test_parse_metric_report_takes_the_newest_sample_per_metric():
+    """A metric report is a TIME SERIES, not a snapshot.
+
+    The live PowerMetrics report carried 120 MetricValues: ten metrics sampled about every five
+    seconds. Reading it like a flat object would pick an arbitrary sample, so the newest one per
+    MetricId is taken.
+    """
+    metrics = model.parse_metric_report(load("t550", "power_metrics"))
+    assert metrics["TotalCPUPower"] == 52.0
+    assert metrics["TotalMemoryPower"] == 7.0
+    assert metrics["TotalFanPower"] == 3.4
+    assert metrics["SystemInputPower"] == 170.0
+    # PCIe genuinely reads zero on this machine; zero reported IS a value, unlike an absence.
+    assert metrics["TotalPciePower"] == 0.0
+
+
+def test_parse_metric_report_survives_an_empty_or_odd_payload():
+    assert model.parse_metric_report({}) == {}
+    assert model.parse_metric_report({"MetricValues": []}) == {}
+    assert model.parse_metric_report({"MetricValues": [{"MetricId": "X"}]}) == {}
+    assert model.parse_metric_report({"MetricValues": ["nope"]}) == {}
+    assert (
+        model.parse_metric_report(
+            {"MetricValues": [{"MetricId": "X", "MetricValue": "not-a-number"}]}
+        )
+        == {}
+    )
+
+
+def test_parse_metric_report_ignores_a_sample_with_no_timestamp_ordering():
+    """Timestamps are strings; ordering must not blow up when one is missing."""
+    payload = {
+        "MetricValues": [
+            {"MetricId": "P", "MetricValue": "1", "Timestamp": "2026-08-19T11:00:00.000Z"},
+            {"MetricId": "P", "MetricValue": "2"},
+        ]
+    }
+    assert model.parse_metric_report(payload)["P"] == 1.0

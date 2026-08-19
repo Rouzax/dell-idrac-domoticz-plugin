@@ -76,6 +76,12 @@ not describe, and a sensor that reports no reading produces no device at all rat
 | Chassis Intrusion | Alert | |
 | Power Redundancy | Alert | The redundancy group's own health, which can be Critical while every individual PSU still reads OK. Reads in plain English, for example `Redundant, 2 supplies (1 needed)`. Removing a supply makes the iDRAC drop the group entirely, which shows as a grey `Not reported` rather than a stale green tile. |
 
+**Where the iDRAC licence allows it**, five more devices break system power down by subsystem:
+CPU, memory, storage, fan and PCIe power. This comes from Dell's telemetry service, which needs an
+iDRAC Datacenter licence, or OpenManage Enterprise Advanced, and must be switched on. On any other
+machine the devices simply do not appear. When it is available, Server Power also reports actual
+wall draw instead of the mainboard sensor.
+
 **Per discovered component:** one temperature device per CPU, one for the hottest DIMM, one fan
 device per fan, one watts device per PSU, one alert per RAID volume, per NIC port and per physical
 drive.

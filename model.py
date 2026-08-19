@@ -328,3 +328,42 @@ def parse_redundancy(payload: dict) -> list:
             )
         )
     return out
+
+
+def parse_metric_report(payload: dict) -> dict:
+    """Newest value per MetricId from a Redfish metric report.
+
+    A metric report is a TIME SERIES, not a snapshot: the live PowerMetrics report carried 120
+    MetricValues, ten metrics sampled about every five seconds. Samples are ordered by their
+    Timestamp string, which is ISO 8601 and therefore sorts correctly as text, and a sample with
+    no timestamp loses to one that has it rather than winning by accident of position.
+    """
+    newest: dict = {}
+    stamps: dict = {}
+    for node in payload.get("MetricValues", []):
+        if not isinstance(node, dict):
+            continue
+        metric_id = node.get("MetricId")
+        if not metric_id:
+            continue
+        value = _number_from_text(node.get("MetricValue"))
+        if value is None:
+            continue
+        stamp = node.get("Timestamp") or ""
+        if metric_id in newest and stamp <= stamps[metric_id]:
+            continue
+        newest[metric_id] = value
+        stamps[metric_id] = stamp
+    return newest
+
+
+def _number_from_text(value) -> float | None:
+    """Metric values arrive as STRINGS ("44.0", "158"), unlike sensor readings which are numbers."""
+    if isinstance(value, bool) or value is None:
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    try:
+        return float(str(value).strip())
+    except (TypeError, ValueError):
+        return None

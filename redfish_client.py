@@ -59,6 +59,9 @@ class RedfishClient:
         self.ethernet = system + "/EthernetInterfaces"
         self.storage_collection = system + "/Storage"
         self.faults = manager + "/LogServices/FaultList/Entries"
+        # Telemetry hangs off the service root, not off a system or chassis, so it does not move
+        # with the resolved ids. Licence-gated in practice, so every read of it must be optional.
+        self.power_metrics = f"{ROOT}/TelemetryService/MetricReports/PowerMetrics"
         system_id = system.rstrip("/").rsplit("/", 1)[-1]
         self.dell_attributes = f"{manager}/Oem/Dell/DellAttributes/{system_id}"
 
