@@ -147,6 +147,53 @@ def test_backoff_grows_and_suppresses_polling(started):
     assert len(started.client.calls) == calls
 
 
+def _drain_backoff(state):
+    """Burn heartbeats until the backoff countdown lets the next poll through."""
+    for _ in range(int(plugin._BACKOFF_CAP // plugin._HEARTBEAT_SECONDS) + 2):
+        if state.backoff <= 0:
+            return
+        plugin.onHeartbeat()
+    raise AssertionError("backoff never drained")
+
+
+def test_backoff_actually_doubles_across_consecutive_failures(started):
+    """The countdown is consumed to exactly zero, so growth must not be read back off it.
+
+    Found live: the log said "backing off 20s" on every failure of a sustained outage. The
+    doubling branch was unreachable because _BACKOFF_INITIAL is an exact multiple of the
+    heartbeat, so the countdown always hit 0.0 and the falsy branch reset it to the initial
+    value. The 900 s cap was dead configuration.
+    """
+    started.client = FakeClient(fail_paths=("/Sensors",))
+    seen = []
+    for _ in range(4):
+        _drain_backoff(started)
+        _beat_once(started)
+        seen.append(started.backoff)
+    assert seen == [
+        plugin._BACKOFF_INITIAL,
+        plugin._BACKOFF_INITIAL * 2,
+        plugin._BACKOFF_INITIAL * 4,
+        plugin._BACKOFF_INITIAL * 8,
+    ]
+
+
+def test_backoff_resets_after_a_successful_poll(started):
+    started.client = FakeClient(fail_paths=("/Sensors",))
+    _beat_once(started)
+    _drain_backoff(started)
+    _beat_once(started)
+    assert started.backoff == plugin._BACKOFF_INITIAL * 2
+    started.client = FakeClient()
+    _drain_backoff(started)
+    _beat_once(started)
+    assert started.backoff == 0.0
+    # And the NEXT failure starts from the initial value again, not from where it left off.
+    started.client = FakeClient(fail_paths=("/Sensors",))
+    _beat_once(started)
+    assert started.backoff == plugin._BACKOFF_INITIAL
+
+
 def test_a_failing_storage_subcall_does_not_cost_the_rest_of_the_slow_tier(started):
     started.client = FakeClient(fail_paths=("/ctrl",))
     _beat_once(started)

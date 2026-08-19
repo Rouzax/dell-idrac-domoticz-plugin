@@ -218,9 +218,3 @@ def test_save_state_preserves_other_configuration_keys():
     Domoticz.Configuration({"other": "keep"})
     domoticz_api.save_state(domoticz_api.load_state())
     assert Domoticz.Configuration()["other"] == "keep"
-
-
-def test_log_redacted_replaces_the_secret():
-    seen = []
-    domoticz_api.log_redacted(seen.append, "password is hunter2", "hunter2")
-    assert "hunter2" not in seen[0]

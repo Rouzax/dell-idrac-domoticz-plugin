@@ -19,6 +19,12 @@ UNIT_BOOT = 11
 UNIT_INTRUSION = 12
 UNIT_REDUNDANCY = 13
 
+# Domoticz built-in icon ids. The plugin API's Image= sets the CustomImage column
+# (hardware/plugins/PythonObjectEx.cpp), and domoticz_api applies it only when a unit is CREATED,
+# so a user who later picks a different icon keeps it.
+IMAGE_FAN = 7
+IMAGE_CLOCK = 21
+
 BLOCK_TEMPS = 20
 BLOCK_FANS = 40
 BLOCK_PSUS = 60
@@ -190,13 +196,18 @@ def plan(
     )
 
     if system.power_state is not None:
+        # Read-only. onCommand handles only the control units, so a Switch here would be clickable
+        # and inert, and Domoticz has no read-only switch type: Contact reports Open/Closed, wording
+        # hardcoded in the core (main/RFXNames.cpp), which is wrong for a server. An Alert states
+        # the word Redfish reported and colours the tile. GREY when off, never red, because a
+        # server the user powered down deliberately is not a fault.
         out.append(
             DeviceUpdate(
                 unit=UNIT_POWER_STATE,
-                type_name="Switch",
+                type_name="Alert",
                 name="Power State",
-                nvalue=1 if system.power_state == "On" else 0,
-                svalue="",
+                nvalue=health.LEVEL_OK if system.power_state == "On" else health.LEVEL_GREY,
+                svalue=system.power_state,
             )
         )
 
@@ -238,6 +249,7 @@ def plan(
                 nvalue=0,
                 svalue=str(round(dell_attrs.powered_on_seconds / 3600.0, 1)),
                 options={"Custom": "1;h"},
+                image=IMAGE_CLOCK,
             )
         )
 
@@ -292,6 +304,7 @@ def plan(
                 nvalue=0,
                 svalue=_fmt_reading(sensor.reading),
                 options={"Custom": "1;RPM"},
+                image=IMAGE_FAN,
                 description=thresholds.describe(threshold_map.get(sensor.name), "RPM"),
             )
         )

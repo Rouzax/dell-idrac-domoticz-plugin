@@ -109,10 +109,3 @@ def save_state(state) -> None:
     cfg = Domoticz.Configuration()
     cfg["state"] = persistence.dumps(state)
     Domoticz.Configuration(cfg)
-
-
-def log_redacted(level_fn, message, secret) -> None:
-    text = str(message)
-    if secret:
-        text = text.replace(str(secret), "***")
-    level_fn(text)

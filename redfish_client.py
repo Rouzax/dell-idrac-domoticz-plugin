@@ -79,7 +79,16 @@ class RedfishClient:
         Returns True only when all three collections were readable. False means at least one id
         is a conventional fallback rather than something the server reported, so the caller can
         try again rather than treating a guess as settled.
+
+        Raises RedfishError when the service itself is unreachable, so the caller backs off after
+        ONE timeout instead of four. The collection probes below deliberately swallow errors to
+        fall back, which is right for a missing resource and disastrous for a dead transport:
+        measured live against a blackholed address, the three swallowed timeouts cost 90 s and the
+        following poll added a fourth, blocking a single onHeartbeat for 120 s. Domoticz's own
+        watchdog gives up at 60 s and logs the plugin thread as ended unexpectedly. Redfish
+        mandates the service root, so a failure reaching it is unambiguously transport.
         """
+        self.get(ROOT)
         system = self._first_member(f"{ROOT}/Systems", DEFAULT_SYSTEM)
         chassis = self._first_member(f"{ROOT}/Chassis", DEFAULT_CHASSIS)
         manager = self._first_member(f"{ROOT}/Managers", DEFAULT_MANAGER)
@@ -158,10 +167,6 @@ class RedfishClient:
     def get_expanded(self, path: str, levels: int = 1) -> dict:
         joiner = "&" if "?" in path else "?"
         return self._request(f"{path}{joiner}$expand=*($levels={levels})")
-
-    def select(self, path: str, attribute: str) -> dict:
-        joiner = "&" if "?" in path else "?"
-        return self._request(f"{path}{joiner}$select={attribute}")
 
     def post(self, path: str, body: dict) -> dict:
         return self._request(path, method="POST", body=body)

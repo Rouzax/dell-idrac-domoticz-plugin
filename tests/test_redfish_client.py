@@ -61,13 +61,6 @@ def test_get_expanded_appends_the_expand_query():
     assert "$expand=*($levels=1)" in opener.requests[0].full_url
 
 
-def test_select_appends_the_select_query():
-    opener = FakeOpener([{"Attributes": {}}])
-    client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
-    client.select("/redfish/v1/Managers/X", "Attributes/ServerPwrMon.1.AccumulativePower")
-    assert "$select=Attributes/ServerPwrMon.1.AccumulativePower" in opener.requests[0].full_url
-
-
 def test_patch_uses_the_patch_verb_and_sends_json():
     opener = FakeOpener([{}])
     client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
@@ -175,6 +168,7 @@ def test_paths_default_to_the_conventional_ids_before_resolve():
 def test_resolve_learns_non_conventional_resource_ids():
     client = _client(
         [
+            {"@odata.id": "/redfish/v1"},
             {"Members": [{"@odata.id": "/redfish/v1/Systems/Node1.Slot.3"}]},
             {"Members": [{"@odata.id": "/redfish/v1/Chassis/Node1.Slot.3"}]},
             {"Members": [{"@odata.id": "/redfish/v1/Managers/iDRAC.Modular.3"}]},
@@ -192,8 +186,53 @@ def test_resolve_learns_non_conventional_resource_ids():
 
 def test_resolve_falls_back_when_a_collection_is_empty_or_unreadable(monkeypatch):
     monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
-    client = _client([{"Members": []}, OSError("nope"), {"Members": []}])
+    client = _client(
+        [{"@odata.id": "/redfish/v1"}, {"Members": []}, OSError("nope"), {"Members": []}]
+    )
     client.resolve()
     assert client.system == redfish_client.DEFAULT_SYSTEM
     assert client.chassis == redfish_client.DEFAULT_CHASSIS
     assert client.manager == redfish_client.DEFAULT_MANAGER
+
+
+def test_resolve_gives_up_immediately_when_the_service_root_is_unreachable(monkeypatch):
+    """An unreachable iDRAC must cost ONE timeout, not four.
+
+    Measured live on a blackholed address: the per-collection fallback swallowed three full
+    RequestTimeouts inside resolve() before the poll added a fourth, blocking one onHeartbeat for
+    120 s. Domoticz's own 60 s watchdog then logged the plugin thread as ended unexpectedly.
+    Redfish mandates the service root, so a failure there is transport and must propagate.
+    """
+    monkeypatch.setattr(redfish_client.time, "sleep", lambda _s: None)
+    opener = FakeOpener(
+        [
+            urllib.error.URLError(TimeoutError()),
+            {"Members": [{"@odata.id": "/redfish/v1/Systems/NeverReached"}]},
+        ]
+    )
+    client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
+    with pytest.raises(redfish_client.RedfishError):
+        client.resolve()
+    assert len(opener.requests) == 1
+    assert opener.requests[0].full_url.endswith(redfish_client.ROOT)
+    # And nothing was learned, so the caller has not latched a guess.
+    assert client.system == redfish_client.DEFAULT_SYSTEM
+
+
+def test_resolve_probes_the_service_root_before_the_collections():
+    opener = FakeOpener(
+        [
+            {"@odata.id": "/redfish/v1"},
+            {"Members": [{"@odata.id": "/redfish/v1/Systems/S"}]},
+            {"Members": [{"@odata.id": "/redfish/v1/Chassis/C"}]},
+            {"Members": [{"@odata.id": "/redfish/v1/Managers/M"}]},
+        ]
+    )
+    client = redfish_client.RedfishClient("10.0.0.1", "root", "p", opener=opener)
+    assert client.resolve() is True
+    assert [r.full_url.rsplit("/redfish", 1)[-1] for r in opener.requests] == [
+        "/v1",
+        "/v1/Systems",
+        "/v1/Chassis",
+        "/v1/Managers",
+    ]

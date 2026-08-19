@@ -264,6 +264,48 @@ def test_a_nic_with_no_link_status_is_unknown_not_down():
     assert got[0].svalue == "Unknown"
 
 
+def test_power_state_is_a_read_only_alert_not_a_switch():
+    """onCommand handles only the control units, so a Switch here would be clickable and inert.
+
+    Alert states the word and colours the tile. GREY when off, not red: a server the user
+    powered down deliberately is not a fault. Domoticz has no read-only switch type, and the
+    Contact type's Open/Closed wording is hardcoded in the core (main/RFXNames.cpp).
+    """
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    on = got[planner.UNIT_POWER_STATE]
+    assert on.type_name == "Alert"
+    assert (on.nvalue, on.svalue) == (health.LEVEL_OK, "On")
+
+    parts["system"] = model.SystemInfo(
+        power_state="Off", health="OK", boot_state=None, model="X", cpu_count=1, rollups={}
+    )
+    off = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )[planner.UNIT_POWER_STATE]
+    assert (off.nvalue, off.svalue) == (health.LEVEL_GREY, "Off")
+
+
+def test_fans_and_uptime_get_their_icons():
+    """Icons chosen by the user on the live rig. Domoticz's plugin API maps Image to the
+    CustomImage column (PythonObjectEx.cpp), and apply_updates sets it only at CREATION, so a
+    user who later picks a different icon keeps it."""
+    parts = _parts("t550")
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    fans = [u for unit, u in got.items() if planner.BLOCK_FANS <= unit < planner.BLOCK_FANS + 20]
+    assert fans, "the t550 profile must have fans for this to mean anything"
+    assert all(u.image == planner.IMAGE_FAN for u in fans)
+    assert got[planner.UNIT_UPTIME].image == planner.IMAGE_CLOCK
+    # Nothing else is given an icon; Domoticz picks its own.
+    assert got[planner.UNIT_INLET].image == 0
+
+
 def test_a_missing_sensor_does_not_emit_a_zero_reading():
     parts = _parts("t550")
     parts["sensors"] = {k: v for k, v in parts["sensors"].items() if k != "InletTemp"}
