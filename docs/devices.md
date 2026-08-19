@@ -1,68 +1,105 @@
 # Monitoring devices
 
-The exact set of devices depends on what your server reports. Nothing is created for hardware the
-iDRAC does not describe, and **a sensor that reports no reading produces no device at all**,
-rather than a device reading zero.
+The exact set of devices depends on what your server reports. Nothing is created for hardware the iDRAC does not describe, and **a sensor that reports no reading produces no device at all**, rather than a device reading zero.
 
 !!! note
-    Screenshots here use the [Machinon theme](https://domoticz.github.io/Machinon/). Device names
-    and values are identical on the stock theme; only the presentation differs.
+    Screenshots here use the [Machinon theme](https://domoticz.github.io/Machinon/). Device names and values are identical on the stock theme; only the presentation differs.
 
-Every device the plugin creates on a 15G PowerEdge with three fans, two power supplies, three
-RAID volumes, two NIC ports and ten drives:
+Every non-temperature device the plugin created for one PowerEdge, on Domoticz's Utility tab:
 
-![Every device the plugin created for one server](assets/devices-overview.png)
+![The Utility tab, showing power, health, storage and network devices](assets/devices-overview.png)
 
-## Core devices
+## What you can expect to see
 
-These are created whenever the server reports the underlying value.
+The example values below come from that same machine: a tower PowerEdge with three fans, two power supplies, three RAID volumes, two NIC ports and ten drives. Yours will differ in the per-hardware rows, because those follow what your server has. Fans, drives, volumes and NICs are re-discovered on every slow poll, so hardware you add later appears on its own.
 
-| Device | Domoticz type | Notes |
+### Always, where the server reports the value
+
+| Device | Domoticz type | Example reading |
 |---|---|---|
-| Server Power | kWh | Live watts plus an energy counter. See [Energy](#energy). |
-| System Health | Alert | One tile for overall health, which names the reason. See [System Health](#system-health). |
-| Power State | Alert | `On` in green, `Off` in grey. Read-only. |
-| Inlet Temp | Temperature | Chassis air intake. |
-| Exhaust Temp | Temperature | Chassis air outlet. |
-| CPU Usage | Percentage | |
-| Memory Usage | Percentage | |
-| I/O Usage | Percentage | |
-| System Usage | Percentage | |
-| Uptime | Custom, hours | Time since the host was powered on. |
-| Boot Status | Text | For example `OSRunning`. |
-| Chassis Intrusion | Alert | Green while the cover reports `Normal`. |
-| Power Redundancy | Alert | See [Power redundancy](#power-redundancy). |
+| Server Power | kWh | `160 Watt`, plus a kWh counter such as `0.176 kWh` |
+| System Health | Alert | `OK` in green, or the iDRAC's own fault text such as `Power supply redundancy is lost.` in red |
+| Power State | Alert | `On` in green, `Off` in grey |
+| Inlet Temp | Temperature | `27.0 C` |
+| Exhaust Temp | Temperature | `34.0 C` |
+| CPU Usage | Percentage | `8%` |
+| Memory Usage | Percentage | `0%` |
+| I/O Usage | Percentage | `0%` |
+| System Usage | Percentage | `9%` |
+| Uptime | Custom, hours | `7.4 h` |
+| Boot Status | Text | `OSRunning` |
+| Chassis Intrusion | Alert | `Normal` in green |
+| Power Redundancy | Alert | `Redundant, 2 supplies (1 needed)` |
 
-## Per-component devices
+### One per piece of hardware found
 
-One device is created for each item the server reports:
+| Device | Domoticz type | Example name and reading |
+|---|---|---|
+| CPU temperature, one per socket | Temperature | `CPU1 Temp` reading `53.0 C` |
+| Hottest DIMM | Temperature | `Max DIMM Temp` reading `42.0 C` |
+| Fan speed, one per fan | Custom, RPM | `System Board Fan1` reading `1920 RPM` |
+| Power supply, one per PSU | Usage, watts | `PS1 Status` reading `150.5 Watt`, with its health in the description |
+| RAID volume, one per virtual disk | Alert | `Volume OS` reading `RAID1` |
+| Physical drive, one per disk | Alert | `SSD 0:2:0` reading `SSD, life 100%`, or `HDD 0:2:3` reading `HDD` |
+| NIC port, one per port | Alert | `NIC NIC.Embedded.1-1-1` reading `LinkUp 1000 Mb`, or `LinkDown` in amber |
 
-- **CPU temperature**, one per socket.
-- **Max DIMM temperature**, the hottest memory module the server tracks.
-- **Fan speed**, one per fan, in RPM.
-- **Power supply**, one per PSU, showing **input** watts.
-- **RAID volume**, one alert per virtual disk, showing the RAID type.
-- **NIC port**, one alert per port, showing link state and negotiated speed.
-- **Physical drive**, one alert per disk, showing media type and predicted life where the drive
-  reports it.
+### Optional, off by default
+
+| Device | Domoticz type | Example | Turned on by |
+|---|---|---|---|
+| Drive life, one per drive that reports it | Percentage | `SSD 0:2:0 Life` reading `100%` | [Drive life % devices](settings.md#drive-life-devices) |
+| Power Control | Selector switch | `Idle`, then the action you pick | [Allow Control](control.md) |
+| Identify LED | Switch | `Off` | [Allow Control](control.md) |
+
+### Only where the iDRAC licence allows it
+
+| Device | Domoticz type | Example reading |
+|---|---|---|
+| CPU Power | Usage, watts | `51 Watt` |
+| Memory Power | Usage, watts | `5 Watt` |
+| Storage Power | Usage, watts | `57.8 Watt` |
+| Fan Power | Usage, watts | `3.4 Watt` |
+| PCIe Power | Usage, watts | `0 Watt` |
+| FPGA Power | Usage, watts | `0 Watt` |
+| GPU power, one per card | Usage, watts | `GPU Video.Slot.10-1 Power` reading `39.1 Watt` |
+| GPU temperature, one per card | Temperature | `GPU Video.Slot.6-1 Temp` reading `40.0 C` |
+
+On a seven-card server that is fourteen GPU devices, named by the slot each card sits in. See [Per-component power](#per-component-power-needs-a-licence) for what unlocks these.
+
+### What it looks like when something is wrong
+
+Colour comes from the Domoticz alert level, so a problem is visible on the dashboard without opening anything:
+
+| Device | Reading | Colour | What it means |
+|---|---|---|---|
+| System Health | `Power supply redundancy is lost.` | red | The iDRAC has raised a fault and this is its own wording |
+| System Health | `Critical: PS, SEL` | red | A fault is raised but the iDRAC gave no message, so the affected subsystems are named instead |
+| System Health | `Unknown` | grey | Nothing is reporting health, which is normal while the host is powered off |
+| PS1 Status | `0 Watt`, description `Critical` | | A failed or unplugged supply. The watts alone mean nothing here, the description is the signal |
+| Power Redundancy | `Redundancy lost` | red | The group is present and unhealthy |
+| Power Redundancy | `Not reported` | grey | The iDRAC dropped the group entirely, which is what pulling a supply does |
+| HDD 0:2:5 | `HDD, failure predicted` | amber | The drive's own SMART prediction |
+| HDD 0:2:9 | `HDD, life 4%` | amber | Below your **Drive life warning (%)** setting |
+| NIC NIC.Embedded.2-1-1 | `LinkDown` | amber | The port is down. A port with no link state at all reads grey `Unknown` |
+| Power State | `Off` | grey | Deliberately grey, not red: a server you shut down is not a fault |
+
+## Storage device names and options
 
 ### Drive names
 
-Dell names drives differently depending on which controller they sit behind, which reads badly
-when both appear in one list: a PERC calls a drive `Solid State Disk 0:2:0` while a BOSS boot card
-calls its pair `SSD 0` and `SSD 1`. The plugin shortens the long form and marks the boot card, so
-you get `SSD 0:2:0`, `HDD 0:2:3` and `BOSS SSD 0`.
+Dell names drives differently depending on which controller they sit behind, which reads badly when both appear in one list: a PERC calls a drive `Solid State Disk 0:2:0` while a BOSS boot card calls its pair `SSD 0` and `SSD 1`. The plugin shortens the long form and marks the boot card, so you get `SSD 0:2:0`, `HDD 0:2:3` and `BOSS SSD 0`.
 
-The media type comes from the server, so a bay holding a mix stays correctly labelled. A drive
-whose name is not one Dell's two known forms is left exactly as the server reports it.
+The media type comes from the server, so a bay holding a mix stays correctly labelled. A drive whose name is not one of Dell's two known forms is left exactly as the server reports it.
 
-Fans, drives, volumes and NICs are re-discovered on every slow poll, so hardware added later
-appears without reinstalling anything.
+### Drive life devices
+
+Switching on **Drive life % devices** in [Settings](settings.md#drive-life-devices) adds a second device per drive, named after the drive with ` Life` appended, reporting predicted media life as a percentage. It exists because the drive's own tile is an Alert, and Domoticz will not graph an Alert, so without it the life figure is readable but never plotted.
+
+It is off by default, and only drives that report a life figure get one, which in practice means SSDs. Each one carries a [bar](#bar-graphs) that turns red below your **Drive life warning (%)** setting.
 
 ## Thresholds in the description
 
-Temperature and fan devices carry the server's own warning and critical thresholds in the device
-description, so you can see the limits without looking them up:
+Temperature and fan devices carry the server's own warning and critical thresholds in the device description, so you can see the limits without looking them up:
 
 ```
 Inlet Temp        warning below 3 C; critical below -7 C; warning above 33 C; critical above 42 C
@@ -70,19 +107,41 @@ System Board Fan1 warning below 840 RPM; critical below 480 RPM
 CPU1 Temp         critical below 3 C; warning above 83.3 C (estimated); critical above 98 C
 ```
 
-A threshold marked **`(estimated)`** was not reported by the server. The plugin derives it from
-the critical threshold so a warning band exists at all. Reported values are never labelled this
-way, so an estimate can never be mistaken for something the server actually said.
+A threshold marked **`(estimated)`** was not reported by the server. The plugin derives it from the critical threshold so a warning band exists at all. Reported values are never labelled this way, so an estimate can never be mistaken for something the server actually said.
 
-Domoticz graphs every temperature device automatically, so the thresholds above sit alongside
-real history:
+A sensor the server publishes no thresholds for gets no description at all, rather than an invented one. `Max DIMM Temp` is commonly one of those.
 
-![Temperature devices with history](assets/temperatures.png)
+![The four temperature devices, three of them carrying a threshold bar](assets/temperatures.png)
+
+`Max DIMM Temp` above is the one without a bar or a description: this server publishes no thresholds for it, so there is nothing to draw.
+
+## Bar graphs
+
+Where the server reports thresholds, they also become a coloured bar across the top of the device card, so the safe band is visible at a glance instead of being read out of the description text.
+
+![Fan devices with their threshold bars](assets/fan-bars.png)
+
+Three kinds of device get one:
+
+| Device | Bands drawn from |
+|---|---|
+| **Fans** | Red below the critical speed, amber up to the warning speed, green from there to the [fan bar maximum](settings.md#why-the-fan-bar-maximum-is-a-setting) you set. |
+| **Temperatures** | The server's own lower and upper critical limits, with amber warning bands where it reports them. Only sensors that report **both** critical limits get a bar, because those two define the axis. |
+| **Drive life** | Red below your **Drive life warning (%)** setting, green above it, on the 0 to 100 axis a percentage inherently has. |
+
+**Nothing else gets a bar.** Utilization percentages, power supply wattage, the per-component power devices and the energy counter carry no server-reported thresholds, so any bands there would be invented rather than measured.
+
+A **synthesized** threshold is never drawn. The description labels an estimated warning limit `(estimated)`, but a coloured band carries no label, so drawing one would present a guess as a reported limit. That is why the description and the bar can legitimately disagree on a sensor whose warning threshold the server omits.
+
+!!! note "Bar graphs need a recent Domoticz build"
+    They rely on a plugin being able to write the `Color` field ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026). On an older build Domoticz discards the value, so the cards show no bar and no error is logged. Everything else on this page is unaffected.
+
+!!! info "Your own bands are safe"
+    Bands are written when a device is created, and refreshed afterwards when the underlying thresholds or your settings change. That refresh only happens while the bands are still the ones the plugin last wrote. Edit a device's bar by hand and the plugin stops touching it, the same rule it follows for names and icons.
 
 ## Per-component power (needs a licence)
 
-Dell can break system power down by subsystem, and where it is available the plugin creates five
-more devices:
+Dell can break system power down by subsystem, and where it is available the plugin creates six more devices:
 
 | Device | Metric |
 |---|---|
@@ -93,143 +152,87 @@ more devices:
 | PCIe Power | `TotalPciePower` |
 | FPGA Power | `TotalFPGAPower` |
 
-Measured on a PowerEdge T550 at idle: CPU 44 W, storage 64 W, memory 5 W, fans 3.4 W. The
-storage figure is often the surprise, since a full drive bay can draw more than the processor.
+Typical idle figures on a well-populated tower server: CPU 51 W, storage 58 W, memory 5 W, fans 3.4 W. The storage figure is often the surprise, since a full drive bay can draw more than the processor.
 
-!!! warning "This needs an iDRAC licence, and most machines will not have it"
-    The data comes from Dell's telemetry service, which is licence-gated: an **iDRAC Datacenter**
-    licence unlocks all metrics, and **OpenManage Enterprise Advanced** unlocks these particular
-    ones. On any other iDRAC the devices simply do not appear, and everything else works exactly
-    as before.
+!!! warning "This needs a licence, and most machines will not have one"
+    The data comes from Dell's telemetry service, which is licence-gated. There are two routes to it, and the plugin supports both because it selects a report by its contents rather than by its name:
 
-    Telemetry must also be switched on. It is off by default. Both the master switch
-    (`Telemetry.1.EnableTelemetry`) and the individual report (`TelemetryPowerMetrics`) need to be
-    `Enabled`; the plugin never changes either, because it does not write configuration to your
-    server.
+    - **iDRAC Datacenter.** Unlocks Dell's own built-in telemetry reports, including `PowerMetrics`, directly on the iDRAC.
+    - **OpenManage Enterprise Advanced.** Unlocks the OpenManage Enterprise **Power Manager** features, and it is Power Manager's own reports (`OME-PMP-Power-A` and friends) that the plugin reads on such a machine. Dell's built-in reports stay locked there and answer with a licence error, which is exactly why the report is chosen by content.
 
-    The plugin asks once per start. If the answer is no, it stops asking and logs a single line
-    saying so, rather than wasting a request on every poll.
+    On an iDRAC with neither, the devices simply do not appear and everything else works exactly as before.
 
-When telemetry **is** available, the Server Power device also switches to reporting
-`SystemInputPower`, which is what the wall socket actually delivers, rather than the mainboard
-sensor. On the T550 that is roughly a 6% difference: about 160 W at the wall against 144 W at the
-board. Note that this makes a visible step in the energy graph at the point it switches over.
+    The plugin asks once per start. If the answer is no, it stops asking and logs a single line saying so, rather than wasting a request on every poll.
+
+### Switching telemetry on
+
+Telemetry also has to be enabled on the iDRAC, and it is off by default. Two attributes matter: the master switch `Telemetry.1.EnableTelemetry` and the report itself `TelemetryPowerMetrics.1.EnableTelemetry`, both set to `Enabled`.
+
+You can set them yourself from the iDRAC interface or with `racadm`, or you can switch on **Configure iDRAC telemetry** in [Settings](settings.md#configure-idrac-telemetry) and let the plugin do it. That setting is off by default and is the only thing in the plugin that writes configuration to your server; it acts only when per-component power was already found to be unavailable, so it will not disturb a machine where OpenManage already owns that configuration.
+
+### Which report the metrics come from
+
+Report names are **not** fixed. A Datacenter iDRAC serves Dell's built-in `PowerMetrics`, while a machine managed by OpenManage Enterprise carries the Power Manager Plugin's own reports, `OME-PMP-Power-A` and friends, and answers the built-in names with a licence error.
+
+So the plugin looks at what each report on your machine actually contains, rather than at what it is called, and uses the ones carrying the metrics it needs. You do not have to tell it which licence you have.
+
+When telemetry **is** available, the Server Power device also switches to reporting `SystemInputPower`, which is what the wall socket actually delivers, rather than the mainboard sensor. That is typically a few percent higher, for example 160 W at the wall against 144 W at the board. Note that this makes a visible step in the energy graph at the point it switches over.
 
 ### GPUs
 
-Where telemetry reports them, each GPU gets a power device and a temperature device. Power is
-reported in milliwatts and converted, so a card drawing 39100 mW shows as 39.1 W.
+Where telemetry reports them, each GPU gets a power device and a temperature device, named `GPU <slot> Power` and `GPU <slot> Temp`. Power is reported in milliwatts and converted, so a card drawing 39100 mW shows as 39.1 W.
 
-Cards are identified by the slot the server reports, including sub-indices, so a multi-GPU card
-occupying one slot appears as `Video.Slot.7-1` through `Video.Slot.7-4` rather than collapsing
-into one. A card that reports only a temperature gets only a temperature device.
+Cards are identified by the slot the server reports, including sub-indices, so a multi-GPU card occupying one slot appears as `Video.Slot.7-1` through `Video.Slot.7-4` rather than collapsing into one. A card that reports only one of the two figures gets only that device.
 
-This has been built and tested against real captures from GPU servers, but not yet run live
-against one. If you have such a machine, confirming it is welcome.
-
-## Bar graphs
-
-Where the server reports thresholds, they also become a coloured bar across the top of the device
-card, so the safe band is visible at a glance instead of being read out of the description text.
-
-Fan cards show red below the critical speed, amber up to the warning speed, and green from there
-to the [fan bar maximum](settings.md#devices) you set:
-
-![Fan devices with their threshold bars](assets/fan-bars.png)
-
-Temperature devices get bands too, drawn from the server's own warning and critical limits.
-
-**Nothing else gets a bar.** Percentages, power supply wattage and the energy counter carry no
-server-reported thresholds, so any bands there would be invented rather than measured.
-
-A **synthesized** threshold is never drawn. The description labels an estimated warning limit
-`(estimated)`, but a coloured band carries no label, so drawing one would present a guess as a
-reported limit. That is why the description and the bar can legitimately disagree on a sensor
-whose warning threshold the server omits.
+GPU support is built from real captures but has not yet been confirmed on a live GPU server. If you have one, a report either way is welcome.
 
 ## System Health
 
-This is deliberately a single tile rather than one per subsystem, because a wall of green tiles is
-not information.
+This is deliberately a single tile rather than one per subsystem, because a wall of green tiles is not information.
 
-Its level is the worst of the standard Redfish health rollup and Dell's own OEM rollups. Its text
-is the part that matters:
+Its level is the worst of the standard Redfish health rollup and Dell's own OEM rollups. Its text is the part that matters:
 
-- When the iDRAC has raised a fault, the tile shows **the iDRAC's own message**, for example
-  `Power supply redundancy is lost.`
+- When the iDRAC has raised a fault, the tile shows **the iDRAC's own message**, for example `Power supply redundancy is lost.`
 - When there is no fault message, it falls back to naming the unhappy subsystems.
 - When everything is healthy, it reads `OK`.
 
 !!! info "Why the fault text matters so much"
-    Dell's health rollups track **raised faults**, not instantaneous component state. During
-    development a real power supply fault left the rollup Critical for hours while every single
-    component, including both PSUs, reported `Status.Health: OK`. Without the fault text the tile
-    would have been a permanently red square with nothing behind it that a user could act on.
+    Dell's health rollups track **raised faults**, not instantaneous component state, so the tile can stay red for hours while every single component, both power supplies included, reports `Status.Health: OK`. Without the fault sentence you would be looking at a red square with nothing behind it that you could act on.
 
 ## Power redundancy
 
-Reports the health of the redundancy **group**, which is a different question from whether each
-PSU is healthy. On the development machine this device read Critical while both power supplies
-individually read OK, which is exactly the condition a per-component view cannot show you.
+Reports the health of the redundancy **group**, which is a different question from whether each PSU is healthy. It can read Critical while both power supplies individually read OK, which is exactly the condition a per-component view cannot show you.
 
-It reads in plain English rather than in Redfish terms, for example `Redundant, 2 supplies
-(1 needed)`. The mode, the number of supplies in the set and the number needed all come from the
-server. A fault reads `Redundancy lost` or `Redundancy degraded`.
+It reads in plain English rather than in Redfish terms, for example `Redundant, 2 supplies (1 needed)`. The mode, the number of supplies in the set and the number needed all come from the server. A fault reads `Redundancy lost` or `Redundancy degraded`.
 
-!!! note "When a supply is physically removed"
-    Pulling a power supply does not mark the group Critical: the iDRAC **removes the redundancy
-    group entirely**. The device then reads a grey `Not reported`, rather than keeping its last
-    value and claiming redundancy that no longer exists. It is grey rather than red because the
-    plugin cannot tell why the group vanished; look at System Health, which carries the iDRAC's
-    own fault text in that situation.
+!!! note "When a supply is removed"
+    Pulling a power supply does not mark the group Critical: the iDRAC **removes the redundancy group entirely**. The device then reads a grey `Not reported`, rather than keeping its last value and claiming redundancy that no longer exists. It is grey rather than red because the plugin cannot tell why the group vanished; look at System Health, which carries the iDRAC's own fault text in that situation.
 
-Only the first redundancy group is reported. Chassis that expose several groups will show only
-one.
+Only the first redundancy group is reported. Chassis that expose several groups will show only one. The device comes from the same payload as the power supplies, so it stops updating if you switch **Power supplies** off in [Settings](settings.md#devices).
 
 ## Energy
 
-The Server Power device carries both live watts and an accumulating kWh counter that the plugin
-integrates itself from the measured wattage.
+The Server Power device carries both live watts and an accumulating kWh counter that the plugin integrates itself from the measured wattage.
 
-It does **not** use the lifetime energy figure the iDRAC reports. That counter is in watt-hours,
-but it does not accumulate continuously: measured on two different servers it implied 17.6 W and
-17.0 W lifetime averages for machines that draw far more than that, meaning it pauses across
-power-off periods or resets. Wiring it to a Domoticz counter would produce a graph with invented
-plateaus and sudden jumps.
+It does **not** use the lifetime energy figure the iDRAC reports. That counter does not accumulate continuously: it works out to a lifetime average far below what the machine really draws, so it must pause across power-off periods or reset. Wiring it to a Domoticz counter would produce a graph with invented plateaus and sudden jumps.
 
-The trade-off is that energy accrued while Domoticz is not running is not recovered. The counter
-is guarded so it can only move forwards, and a implausibly large jump is held back and reported
-rather than accepted.
-
-All of the non-temperature devices appear under Domoticz's Utility tab:
-
-![The utility tab showing power, health, usage and storage devices](assets/utility.png)
+The trade-off is that energy accrued while Domoticz is not running is not recovered. The counter is guarded so it can only move forwards, and an implausibly large jump is held back and reported rather than accepted.
 
 ## Power supply devices show input watts
 
-A PSU device shows what the supply draws from the wall, which includes conversion loss, rather
-than what it delivers to the board.
+A PSU device shows what the supply draws from the wall, which includes conversion loss, rather than what it delivers to the board.
 
 !!! warning "A PSU reading near 0 W is often completely normal"
-    On a server configured for hot standby, one supply carries the load while the other idles near
-    zero. Wattage alone is therefore **not** a fault signal, and the plugin never treats it as
-    one. Health comes from the supply's reported status and from Power Redundancy.
+    On a server configured for hot standby, one supply carries the load while the other idles near zero. Wattage alone is therefore **not** a fault signal, and the plugin never treats it as one. Health comes from the supply's reported status and from Power Redundancy.
 
 ## Device naming and unit numbers
 
-Each device is created with a name derived from what the server calls the component. **If you
-rename a device yourself, the plugin leaves your name alone** from then on; it only renames
-devices whose name it still owns.
+Each device is created with a name derived from what the server calls the component. **If you rename a device yourself, the plugin leaves your name alone** from then on; it only renames devices whose name it still owns.
 
-Unit numbers are allocated once per piece of hardware and then persist. If you remove hardware,
-its device stays until you delete it, and its unit number is not handed to something else. This
-keeps scenes, timers and scripts pointing at the same thing across a drive replacement.
+Unit numbers are allocated once per piece of hardware and then persist. If you remove hardware, its device stays until you delete it, and its unit number is not handed to something else. This keeps scenes, timers and scripts pointing at the same thing across a drive replacement.
 
-The plugin creates **several Domoticz Devices**, one per family, rather than a single one. See
-[How it works](internals.md#one-domoticz-device-per-family). A unit number is unique only within
-its Device, so a script acting on one should match the Device as well as the number.
+The plugin creates **several Domoticz Devices**, one per family, rather than a single one. See [How it works](internals.md#one-domoticz-device-per-family). A unit number is unique only within its Device, so a script acting on one should match the Device as well as the number.
 
 ## Icons
 
-Fans get the Fan icon and Uptime the Clock icon when they are first created. If you pick a
-different icon afterwards, the plugin never overwrites your choice.
+Fans get the Fan icon, Uptime the Clock icon and drive-life devices the Hard Disk icon when they are first created. If you pick a different icon afterwards, the plugin never overwrites your choice.

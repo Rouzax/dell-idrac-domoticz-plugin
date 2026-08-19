@@ -30,3 +30,12 @@
   border: 1px solid var(--md-default-fg-color--lightest);
   border-radius: 4px;
 }
+
+/* The hero carries its own background and rounded cards, so the screenshot border above
+ * would draw a second frame around it. Let it run the full width instead. */
+.md-typeset img.hero {
+  border: 0;
+  border-radius: 8px;
+  width: 100%;
+  margin: 0 0 1.2rem;
+}

@@ -13,17 +13,20 @@
         </div>
         <p>Reads temperatures, fans, power, utilization, storage and health from a Dell iDRAC and creates devices for the hardware your server actually has.</p>
         <p><b>The iDRAC password is stored in cleartext in the Domoticz database. Treat database backups as secrets.</b></p>
+        <p><a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/" target="_blank">Documentation</a>: every setting, every device, and troubleshooting by symptom.</p>
     </description>
     <params>
         <param field="Address" label="iDRAC Address" width="200px" required="true">
-            <description>Hostname or IP of the iDRAC, without a scheme (for example 192.168.1.10).</description>
+            <description>Hostname or IP of the iDRAC, without a scheme (for example 192.168.1.10). (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/install/#step-4-add-the-hardware" target="_blank">setting it up</a>).</description>
         </param>
-        <param field="Username" label="Username" width="150px" required="true" default="root"/>
+        <param field="Username" label="Username" width="150px" required="true" default="root">
+            <description>A read-only iDRAC account is enough for monitoring; only power control needs Server Control privilege. Prefer a dedicated account over root. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/security/" target="_blank">why</a>).</description>
+        </param>
         <param field="Password" label="Password" width="200px" required="true" password="true">
-            <description>iDRAC password. Stored in cleartext in the Domoticz database and never written to the log.</description>
+            <description>iDRAC password. Stored in cleartext in the Domoticz database and never written to the log. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/security/#the-idrac-password-is-stored-in-cleartext" target="_blank">what that means</a>).</description>
         </param>
         <param field="AllowControl" label="Allow Control" width="150px">
-            <description>Off by default; the plugin stays strictly read-only until you turn it on. Once on, any Domoticz user, scene, timer or API client can power off the server. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/" target="_blank">Read this first</a>.</description>
+            <description>Off by default; the plugin stays strictly read-only until you turn it on. Once on, any Domoticz user, scene, timer or API client can power off the server. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/" target="_blank">read this first</a>).</description>
             <options>
                 <option label="No" value="false" default="true"/>
                 <option label="Yes" value="true"/>
@@ -31,42 +34,46 @@
         </param>
         <group label="Polling">
             <param field="PollInterval" type="number" label="Poll Interval (s)" min="20" max="600" step="10" default="30" width="100px">
-                <description>How often to read live sensors, in seconds. One request per poll.</description>
+                <description>How often to read live sensors, in seconds. One request per poll. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#polling" target="_blank">how the two tiers work</a>).</description>
             </param>
             <param field="SlowEvery" type="number" label="Slow Poll (every N polls)" min="1" max="60" step="1" default="10" width="100px">
-                <description>How often to refresh health, storage, NICs and re-run discovery, as a multiple of the poll interval. At the defaults this is every 5 minutes.</description>
+                <description>How often to refresh health, storage, NICs and re-run discovery, as a multiple of the poll interval. At the defaults this is every 5 minutes. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#polling" target="_blank">how the two tiers work</a>).</description>
             </param>
         </group>
         <group label="Devices">
             <param field="EnableDrives" type="boolean" label="Physical drives" default="true"/>
             <param field="EnableVolumes" type="boolean" label="RAID volumes" default="true"/>
-            <param field="EnablePSUs" type="boolean" label="Power supplies" default="true"/>
+            <param field="EnablePSUs" type="boolean" label="Power supplies" default="true">
+            <description>One wattage device per PSU. Also the source of the Power Redundancy device, which stops updating if you turn this off. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#power-redundancy" target="_blank">details</a>).</description>
+            </param>
             <param field="EnableNICs" type="boolean" label="Network interfaces" default="true"/>
             <param field="DriveLifeFloor" type="number" label="Drive life warning (%)" min="0" max="100" step="1" default="10" width="100px">
-                <description>Warn when a drive reports less than this much predicted media life remaining.</description>
+                <description>Warn when a drive reports less than this much predicted media life remaining. Also sets where the drive life bar turns red. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#drive-life-devices" target="_blank">details</a>).</description>
             </param>
             <param field="EnableDriveLife" type="boolean" label="Drive life % devices" default="false">
-                <description>Adds a second device per drive that reports predicted media life, showing it as a percentage with a bar. Off by default: the life figure is already on the drive's own tile, so this duplicates it for the sake of the graph. Only drives that report life get one, which in practice means SSDs.</description>
+                <description>Adds a second device per drive that reports predicted media life, showing it as a percentage with a bar. Off by default: the life figure is already on the drive's own tile, so this duplicates it for the sake of the graph. Only drives that report life get one, which in practice means SSDs. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#drive-life-devices" target="_blank">details</a>).</description>
             </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
-                <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">Choosing a value</a>.</description>
+                <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">choosing a value</a>).</description>
             </param>
         </group>
         <group label="Control">
             <param field="AllowHardPowerActions" type="boolean" label="Allow Force Off and Power Cycle" default="false">
-                <description>Adds Force Off and Power Cycle, which cut power with no warning and can lose data. Graceful actions are always offered. No effect while Allow Control is No. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/#graceful-versus-hard" target="_blank">Details</a>.</description>
+                <description>Adds Force Off and Power Cycle, which cut power with no warning and can lose data. Graceful actions are always offered. No effect while Allow Control is No. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/#graceful-versus-hard" target="_blank">details</a>).</description>
             </param>
         </group>
         <group label="Advanced">
             <param field="VerifyTLS" type="boolean" label="Verify TLS certificate" default="false">
-                <description>Off because iDRAC ships a self-signed certificate. While off the connection is encrypted but NOT authenticated. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/security/" target="_blank">What that means</a>.</description>
+                <description>Off because iDRAC ships a self-signed certificate. While off the connection is encrypted but NOT authenticated. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/security/" target="_blank">what that means</a>).</description>
             </param>
             <param field="SetupTelemetry" type="boolean" label="Configure iDRAC telemetry" default="false">
-                <description>The ONLY setting that writes configuration to your server. Enables Dell telemetry for per-component power, and only if that is found unavailable. Needs a Datacenter or OME Advanced licence. Leave off if OpenManage manages this server. <a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#per-component-power-needs-a-licence" target="_blank">Details, and how to do it by hand</a>.</description>
+                <description>The ONLY setting that writes configuration to your server. Enables Dell telemetry for per-component power, and only if that is found unavailable. Needs a Datacenter or OME Advanced licence. Leave off if OpenManage manages this server. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#configure-idrac-telemetry" target="_blank">details, and how to do it by hand</a>).</description>
             </param>
-            <param field="RequestTimeout" type="number" label="Request Timeout (s)" min="5" max="120" step="5" default="30" width="100px"/>
+            <param field="RequestTimeout" type="number" label="Request Timeout (s)" min="5" max="120" step="5" default="30" width="100px">
+                <description>Per-request timeout. Do not lower it much: a recovering iDRAC can take several seconds to answer its first request, so a short timeout turns a normal recovery into a failed poll. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#advanced" target="_blank">why 30 is the default</a>).</description>
+            </param>
             <param field="DebugLevel" label="Debug Level" width="150px">
-                <description>Logging verbosity. The iDRAC password is never written to the log at any level.</description>
+                <description>Logging verbosity. The iDRAC password is never written to the log at any level. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/faq/" target="_blank">troubleshooting by symptom</a>).</description>
                 <options>
                     <option label="None" value="0" default="true"/>
                     <option label="Basic" value="1"/>
