@@ -92,6 +92,38 @@ def test_parse_nics_reads_link_status():
     assert nics[1].link_status == "LinkDown"
 
 
+def test_a_sentinel_temperature_is_not_a_reading():
+    """Measured on a powered-off PowerEdge R6515: DIMM_MAX reports -128.0, a signed-byte
+    sentinel meaning "no reading". Writing it would put a permanent false value in the history."""
+    s = model.parse_sensors(
+        {
+            "Members": [
+                {
+                    "Id": "Temperature.DIMM_MAX",
+                    "Name": "Max DIMM Temperature",
+                    "ReadingUnits": "Cel",
+                    "Reading": -128.0,
+                    "PhysicalContext": "MemorySubsystem",
+                },
+                {"Id": "InletTemp", "Name": "Inlet", "ReadingUnits": "Cel", "Reading": 30.0},
+                {"Id": "Watts", "Name": "W", "ReadingUnits": "W", "Reading": -128.0},
+            ]
+        }
+    )
+    assert s["Temperature.DIMM_MAX"].reading is None
+    assert s["InletTemp"].reading == 30.0
+    # The sentinel rule applies to temperatures only; a negative watt reading is not our business.
+    assert s["Watts"].reading == -128.0
+
+
+def test_boot_progress_none_string_is_an_absence():
+    """A powered-off host reports the STRING "None", which must not become device text."""
+    assert model.parse_system({"BootProgress": {"LastState": "None"}}).boot_state is None
+    assert (
+        model.parse_system({"BootProgress": {"LastState": "OSRunning"}}).boot_state == "OSRunning"
+    )
+
+
 def test_parse_chassis_reads_intrusion_and_identify():
     info = model.parse_chassis(load("t550", "chassis"))
     assert info.intrusion == "Normal"

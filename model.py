@@ -107,6 +107,23 @@ def _int(value) -> int | None:
     return None
 
 
+# A powered-off host reports -128 for a temperature that has no reading, which is the classic
+# signed-byte sentinel rather than a measurement. Measured on a PowerEdge R6515 with the host off:
+# Temperature.DIMM_MAX returned -128.0 with Status.Health null. Writing that into a Domoticz
+# temperature device would put a permanent false reading into its history.
+_TEMP_SENTINEL_BELOW = -100.0
+_TEMP_SENTINEL_ABOVE = 250.0
+
+
+def _reading(value, units: str) -> float | None:
+    number = _number(value)
+    if number is None:
+        return None
+    if units == "Cel" and not (_TEMP_SENTINEL_BELOW < number < _TEMP_SENTINEL_ABOVE):
+        return None
+    return number
+
+
 def parse_sensors(payload: dict) -> dict:
     out = {}
     for member in payload.get("Members", []):
@@ -114,11 +131,12 @@ def parse_sensors(payload: dict) -> dict:
         if not sensor_id:
             # An unexpanded collection member is a link with no Id.
             continue
+        units = member.get("ReadingUnits", "")
         out[sensor_id] = Sensor(
             id=sensor_id,
             name=member.get("Name", sensor_id),
-            reading=_number(member.get("Reading")),
-            units=member.get("ReadingUnits", ""),
+            reading=_reading(member.get("Reading"), units),
+            units=units,
             health=_health(member),
             physical_context=member.get("PhysicalContext"),
         )
@@ -156,11 +174,15 @@ def parse_system(payload: dict) -> SystemInfo:
         ):
             rollups[key] = value
     boot = payload.get("BootProgress") or {}
+    # A powered-off host reports the STRING "None" here, which is an absence, not a boot state.
+    boot_state = boot.get("LastState")
+    if boot_state == "None":
+        boot_state = None
     processors = payload.get("ProcessorSummary") or {}
     return SystemInfo(
         power_state=payload.get("PowerState"),
         health=_health(payload),
-        boot_state=boot.get("LastState"),
+        boot_state=boot_state,
         model=payload.get("Model"),
         cpu_count=_int(processors.get("Count")) or 0,
         rollups=rollups,

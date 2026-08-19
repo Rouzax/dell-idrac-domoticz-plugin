@@ -104,10 +104,21 @@ _PCT_UNITS = {
     UNIT_SYS_USAGE: ("SystemBoardSYSUsage", "System Usage"),
 }
 
+# The sensor Id for the same physical probe DIFFERS BETWEEN MODELS. Measured: a PowerEdge T550
+# calls it "InletTemp" while an R6515 calls it "SystemBoardInletTemp". A single hardcoded id
+# silently loses the reading on half the fleet, so each slot accepts the known aliases in order.
 _TEMP_UNITS = {
-    UNIT_INLET: ("InletTemp", "Inlet Temp"),
-    UNIT_EXHAUST: ("SystemBoardExhaustTemp", "Exhaust Temp"),
+    UNIT_INLET: (("InletTemp", "SystemBoardInletTemp"), "Inlet Temp"),
+    UNIT_EXHAUST: (("SystemBoardExhaustTemp", "ExhaustTemp"), "Exhaust Temp"),
 }
+
+
+def _first_present(sensors, ids):
+    for sensor_id in ids:
+        sensor = sensors.get(sensor_id)
+        if sensor is not None and sensor.reading is not None:
+            return sensor
+    return None
 
 
 def _fmt_reading(value: float) -> str:
@@ -189,9 +200,9 @@ def plan(
             )
         )
 
-    for unit, (sensor_id, name) in _TEMP_UNITS.items():
-        sensor = sensors.get(sensor_id)
-        if sensor is not None and sensor.reading is not None:
+    for unit, (sensor_ids, name) in _TEMP_UNITS.items():
+        sensor = _first_present(sensors, sensor_ids)
+        if sensor is not None:
             out.append(_temp_update(unit, sensor, name, threshold_map))
 
     for unit, (sensor_id, name) in _PCT_UNITS.items():
@@ -323,14 +334,19 @@ def plan(
             unit = alloc.get(nic.id)
             if unit is None:
                 continue
-            up = nic.link_status == "LinkUp"
-            text = f"{nic.link_status} {nic.speed_mbps} Mb" if up else str(nic.link_status)
+            if nic.link_status is None:
+                # A powered-off host reports LinkStatus null, which is unknown rather than down.
+                level, text = health.LEVEL_GREY, "Unknown"
+            elif nic.link_status == "LinkUp":
+                level, text = health.LEVEL_OK, f"LinkUp {nic.speed_mbps} Mb"
+            else:
+                level, text = health.LEVEL_YELLOW, str(nic.link_status)
             out.append(
                 DeviceUpdate(
                     unit=unit,
                     type_name="Alert",
                     name=f"NIC {nic.id}",
-                    nvalue=health.LEVEL_OK if up else health.LEVEL_YELLOW,
+                    nvalue=level,
                     svalue=text,
                 )
             )

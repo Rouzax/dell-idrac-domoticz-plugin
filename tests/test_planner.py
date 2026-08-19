@@ -226,6 +226,44 @@ def test_uptime_and_intrusion_are_omitted_when_not_reported():
     assert planner.UNIT_INTRUSION not in got
 
 
+def test_the_inlet_sensor_is_found_under_either_model_name():
+    """A T550 calls it InletTemp, an R6515 calls it SystemBoardInletTemp. Both must work."""
+    for sensor_id in ("InletTemp", "SystemBoardInletTemp"):
+        parts = _parts("t550")
+        parts["sensors"] = dict(parts["sensors"])
+        parts["sensors"].pop("InletTemp", None)
+        parts["sensors"][sensor_id] = model.Sensor(
+            id=sensor_id,
+            name="Inlet",
+            reading=25.0,
+            units="Cel",
+            health="OK",
+            physical_context="SystemBoard",
+        )
+        inv = _inventory(parts)
+        got = _by_unit(
+            planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+        )
+        assert planner.UNIT_INLET in got, f"inlet lost when the id is {sensor_id}"
+        assert got[planner.UNIT_INLET].svalue == "25.0"
+
+
+def test_a_nic_with_no_link_status_is_unknown_not_down():
+    """A powered-off host reports LinkStatus null. Unknown must not read as a fault."""
+    parts = _parts("t550")
+    parts["nics"] = [model.Nic(id="NIC.Embedded.1-1-1", link_status=None, speed_mbps=0)]
+    inv = _inventory(parts)
+    got = [
+        u
+        for u in planner.plan(
+            inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts
+        )
+        if planner.BLOCK_NICS <= u.unit < planner.BLOCK_NICS + 20
+    ]
+    assert got[0].nvalue == health.LEVEL_GREY
+    assert got[0].svalue == "Unknown"
+
+
 def test_a_missing_sensor_does_not_emit_a_zero_reading():
     parts = _parts("t550")
     parts["sensors"] = {k: v for k, v in parts["sensors"].items() if k != "InletTemp"}
