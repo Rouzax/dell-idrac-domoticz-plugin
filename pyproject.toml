@@ -11,7 +11,9 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "SIM", "UP"]
 # plugin.py's docstring is the XML manifest; its lines are exact per the spec.
-per-file-ignores = { "plugin.py" = ["E501"] }
+# plugin.py: the docstring is the XML manifest so its lines are exact (E501), and
+# Domoticz injects Parameters and Devices into module globals at runtime (F821).
+per-file-ignores = { "plugin.py" = ["E501", "F821"] }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
