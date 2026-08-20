@@ -1,6 +1,6 @@
 # pyright: reportMissingImports=false, reportUndefinedVariable=false, reportAttributeAccessIssue=false
 """\
-<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.1.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
+<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.2.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
     <description>
         <!-- Inlined as a data URI so no asset has to be web-served from the plugin folder.
              A PNG rather than an inline SVG deliberately: an inline SVG style block is DOCUMENT
