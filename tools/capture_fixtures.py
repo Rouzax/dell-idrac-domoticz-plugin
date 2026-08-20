@@ -45,6 +45,7 @@ SCRUB_KEYS = (
     "ManagerMACAddress",
     "PlatformGUID",
     "smbiosGUID",
+    "ExpressServiceCode",
 )
 PLACEHOLDERS = {
     "SerialNumber": "SERIAL0000000",
@@ -64,6 +65,9 @@ PLACEHOLDERS = {
     "ManagerMACAddress": "00:11:22:33:44:55",
     "PlatformGUID": "00000000-0000-0000-0000-000000000000",
     "smbiosGUID": "00000000-0000-0000-0000-000000000000",
+    # Dell encodes the Service Tag in base 36; this is the same value in base 10, so it
+    # reveals the tag even with every ServiceTag key above already replaced.
+    "ExpressServiceCode": "00000000000",
 }
 
 

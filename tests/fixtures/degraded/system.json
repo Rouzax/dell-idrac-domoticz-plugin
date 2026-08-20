@@ -235,7 +235,7 @@
     "CurrentRollupStatus": "OK",
     "EstimatedExhaustTemperatureCelsius": 255,
     "EstimatedSystemAirflowCFM": 255,
-    "ExpressServiceCode": "41730243051",
+    "ExpressServiceCode": "00000000000",
     "FanRollupStatus": "OK",
     "IDSDMRedundancyStatus": null,
     "IDSDMRollupStatus": null,
