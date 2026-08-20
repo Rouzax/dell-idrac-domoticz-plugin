@@ -82,6 +82,17 @@ Colour comes from the Domoticz alert level, so a problem is visible on the dashb
 | HDD 0:2:9 | `HDD, life 4%` | amber | Below your **Drive life warning (%)** setting |
 | NIC NIC.Embedded.2-1-1 | `LinkDown` | amber | The port is down. A port with no link state at all reads grey `Unknown` |
 | Power State | `Off` | grey | Deliberately grey, not red: a server you shut down is not a fault |
+| Power Redundancy | `Not redundant (configured)` | grey | Redundancy is switched off on the server, so the missing group is intended rather than a fault |
+
+Four of those, as they actually appear:
+
+![System Health showing a raised fault, red](assets/cards/system-health-critical.png)
+
+![A failed power supply reading 0 Watt](assets/cards/psu-failed.png)
+
+![A drive whose own SMART prediction has flagged it](assets/cards/drive-failure-predicted.png)
+
+![A drive below the drive life warning threshold](assets/cards/drive-life-low.png)
 
 ## Storage device names and options
 
@@ -89,7 +100,13 @@ Colour comes from the Domoticz alert level, so a problem is visible on the dashb
 
 Dell names drives differently depending on which controller they sit behind, which reads badly when both appear in one list: a PERC calls a drive `Solid State Disk 0:2:0` while a BOSS boot card calls its pair `SSD 0` and `SSD 1`. The plugin shortens the long form and marks the boot card, so you get `SSD 0:2:0`, `HDD 0:2:3` and `BOSS SSD 0`.
 
-The media type comes from the server, so a bay holding a mix stays correctly labelled. A drive whose name is not one of Dell's two known forms is left exactly as the server reports it.
+A drive in pass-through mode keeps that qualifier, because it says something real about how the disk is attached: `NonRAID Solid State Disk 0:1:0` becomes `NonRAID SSD 0:1:0` rather than losing the word.
+
+**NVMe drives are named as such.** Dell reports one with `MediaType: SSD`, exactly like a SATA disk, and calls it `PCIe SSD in Slot 23 in Bay 2`; only the bus protocol distinguishes the two. Where the server reports a PCIe or NVMe protocol, the plugin uses `NVMe in Slot 23 in Bay 2` instead. The rename is driven by the reported protocol and never by the name, so a drive that merely reads like a PCIe device but is attached by SAS keeps the name the server gave it.
+
+![An NVMe drive device](assets/cards/drive-nvme.png)
+
+The media type comes from the server, so a bay holding a mix stays correctly labelled. A drive whose name is not one of Dell's known forms is left exactly as the server reports it.
 
 ### Drive life devices
 
@@ -178,13 +195,41 @@ So the plugin looks at what each report on your machine actually contains, rathe
 
 When telemetry **is** available, the Server Power device also switches to reporting `SystemInputPower`, which is what the wall socket actually delivers, rather than the mainboard sensor. That is typically a few percent higher, for example 160 W at the wall against 144 W at the board. Note that this makes a visible step in the energy graph at the point it switches over.
 
+### Power supply efficiency
+
+Where a supply reports both the AC it draws and the DC it delivers, the plugin adds a `PS1 Efficiency` device showing the ratio as a percentage. One per supply that reports both figures.
+
+This is real conversion loss, not an estimate. Measured across a fleet: a PowerEdge R750 under load ran at 93.3%, while an R440 idling at 32 W managed only 75.0%. That drop is expected and is the reason the device is interesting: a switching supply is least efficient when barely loaded, so a lightly used server wastes a larger share of what it draws than a busy one.
+
+No device appears when the figure would be meaningless, and nothing is written rather than a zero recorded:
+
+- **A supply on standby.** On a grid-redundant pair the idle feed reads a few watts in and zero out. That supply is doing nothing; it is not 0% efficient.
+- **Too light a load.** Below 25 W of input the ratio is mostly measurement granularity, because input is reported in whole watts and output in quarter watts.
+- **More output than input**, which cannot happen and means the sensor is wrong.
+
+A supply that never carries meaningful load therefore never gets an efficiency device at all, rather than getting one that sits empty.
+
+![A power supply efficiency device](assets/cards/psu-efficiency.png)
+
 ### GPUs
 
 Where telemetry reports them, each GPU gets a power device and a temperature device, named `GPU <slot> Power` and `GPU <slot> Temp`. Power is reported in milliwatts and converted, so a card drawing 39100 mW shows as 39.1 W.
 
 Cards are identified by the slot the server reports, including sub-indices, so a multi-GPU card occupying one slot appears as `Video.Slot.7-1` through `Video.Slot.7-4` rather than collapsing into one. A card that reports only one of the two figures gets only that device.
 
-GPU support is built from real captures but has not yet been confirmed on a live GPU server. If you have one, a report either way is welcome.
+![The power and temperature devices for one GPU](assets/cards/gpu-power.png)
+
+![The matching temperature device for the same card](assets/cards/gpu-temp.png)
+
+#### Without a telemetry licence
+
+Telemetry is licence-gated, but a GPU's temperature is usually also in the ordinary sensor list, where it costs nothing. When telemetry reports no cards, the plugin falls back to any sensor the server tags with the Redfish physical context `GPU` and creates a temperature device from it, under the name the server gives it, such as `GPU Temp 8` or `System Board SLOT5 Temp`.
+
+This is a fallback, never an addition: where telemetry does report cards, these sensors describe the same hardware again, so they are ignored rather than doubling every card's temperature device.
+
+It is temperature only. Per-card wattage still needs telemetry, because the sensor that carries GPU board power is not tagged with a physical context and could only be found by matching Dell-specific sensor ids, which would break on any other vendor.
+
+Measured on a PowerEdge R750 whose telemetry reported no GPU at all: the fallback found a card running at 74 °C that was previously invisible.
 
 ## System Health
 
@@ -207,6 +252,13 @@ It reads in plain English rather than in Redfish terms, for example `Redundant, 
 
 !!! note "When a supply is removed"
     Pulling a power supply does not mark the group Critical: the iDRAC **removes the redundancy group entirely**. The device then reads a grey `Not reported`, rather than keeping its last value and claiming redundancy that no longer exists. It is grey rather than red because the plugin cannot tell why the group vanished; look at System Health, which carries the iDRAC's own fault text in that situation.
+
+!!! note "When redundancy is switched off"
+    An empty redundancy group has a second, entirely benign cause: the server is **configured** not to be redundant, which is common on machines that need every supply delivering at once. The plugin reads Dell's own policy attribute to tell the two apart, and says so rather than leaving you to guess:
+
+    ![Power Redundancy reading Not redundant (configured)](assets/cards/power-redundancy-not-redundant.png)
+
+    Still grey rather than green. Not redundant is an intended state, not a healthy one to advertise.
 
 Only the first redundancy group is reported. Chassis that expose several groups will show only one. The device comes from the same payload as the power supplies, so it stops updating if you switch **Power supplies** off in [Settings](settings.md#devices).
 

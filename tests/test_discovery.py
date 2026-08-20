@@ -61,3 +61,60 @@ def test_order_is_deterministic_across_repeated_discovery():
     first, second = _inventory("dual"), _inventory("dual")
     assert first.drives == second.drives
     assert first.fans == second.fans
+
+
+def _sensor(sid, units, ctx, reading=40.0, name=None):
+    return model.Sensor(
+        id=sid, name=name or sid, reading=reading, units=units, health="OK", physical_context=ctx
+    )
+
+
+def test_gpu_temperature_sensors_are_discovered_by_physical_context():
+    """Telemetry is licence-gated, but a GPU's temperature is also in the plain Sensors
+    collection tagged PhysicalContext "GPU". A real PowerEdge R750 reports a card at 74 C there
+    while its telemetry reports no GPU at all.
+
+    Matched on the Redfish PhysicalContext enum rather than an id prefix, for the same reason
+    fans are matched on their unit: an id rule works on one vendor's naming and no other.
+    """
+    sensors = {
+        "GPUTemp8": _sensor("GPUTemp8", "Cel", "GPU", 74.0),
+        "SystemBoardSLOT5Temp": _sensor("SystemBoardSLOT5Temp", "Cel", "GPU", 35.0),
+        "CPU1Temp": _sensor("CPU1Temp", "Cel", "CPU"),
+        "Fan.Embedded.1": _sensor("Fan.Embedded.1", "RPM", "SystemBoard", 6000.0),
+    }
+    inv = discovery.discover(sensors=sensors, psus=[], drives=[], volumes=[], nics=[])
+    assert inv.gpu_temps == ("GPUTemp8", "SystemBoardSLOT5Temp")
+    # And they must not be mistaken for CPU temperatures.
+    assert inv.cpu_temps == ("CPU1Temp",)
+
+
+def test_a_gpu_sensor_that_is_not_a_temperature_is_not_a_gpu_temp():
+    sensors = {"GPUPower1": _sensor("GPUPower1", "W", "GPU", 44.0)}
+    inv = discovery.discover(sensors=sensors, psus=[], drives=[], volumes=[], nics=[])
+    assert inv.gpu_temps == ()
+
+
+def _psu_sensor(sid, reading):
+    return model.Sensor(
+        id=sid, name=sid, reading=reading, units="W", health="OK", physical_context="PowerSupply"
+    )
+
+
+def test_power_supplies_reporting_both_sides_are_discovered_as_efficiency_pairs():
+    """A supply that reports AC in and DC out lets efficiency be computed. Both halves must be
+    present: one alone says nothing about the conversion loss."""
+    sensors = {
+        "PSU.Slot.1_InputPower": _psu_sensor("PSU.Slot.1_InputPower", 464.5),
+        "PSU.Slot.1_OutputPower": _psu_sensor("PSU.Slot.1_OutputPower", 433.5),
+        "PSU.Slot.2_InputPower": _psu_sensor("PSU.Slot.2_InputPower", 5.0),
+        "PSU.Slot.2_OutputPower": _psu_sensor("PSU.Slot.2_OutputPower", 0.0),
+    }
+    inv = discovery.discover(sensors=sensors, psus=[], drives=[], volumes=[], nics=[])
+    assert inv.psu_efficiency == ("PSU.Slot.1", "PSU.Slot.2")
+
+
+def test_a_supply_reporting_only_one_side_is_not_an_efficiency_pair():
+    sensors = {"PSU.Slot.1_InputPower": _psu_sensor("PSU.Slot.1_InputPower", 100.0)}
+    inv = discovery.discover(sensors=sensors, psus=[], drives=[], volumes=[], nics=[])
+    assert inv.psu_efficiency == ()

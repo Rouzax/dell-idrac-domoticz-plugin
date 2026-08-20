@@ -550,3 +550,167 @@ def test_the_identify_switch_responds_immediately(started):
 
     plugin.onCommand(_control_id(), control.UNIT_IDENTIFY, "Off", 0, "")
     assert unit.nValue == 0
+
+
+class ManyReportsClient(FakeClient):
+    """A machine advertising far more metric reports than the plugin's read budget.
+
+    Modelled on a real PowerEdge R440: it lists 39 reports and the only one carrying
+    SystemInputPower, "PowerMetrics", sits at position 23. Reading the list in the order the
+    server happens to return it means never seeing it.
+    """
+
+    def __init__(self, *args, power_at=22, total=39, **kwargs):
+        super().__init__(*args, telemetry_available=True, **kwargs)
+        names = [f"Filler{i}" for i in range(total)]
+        names[power_at] = "PowerMetrics"
+        self.report_names = names
+
+    def get(self, path):
+        if path == self.metric_reports:
+            self._maybe_fail(path)
+            return {
+                "Members": [{"@odata.id": f"{self.metric_reports}/{n}"} for n in self.report_names]
+            }
+        return super().get(path)
+
+
+def test_a_power_report_beyond_the_read_budget_is_still_found(started):
+    """The read budget must not be able to hide the one report that matters.
+
+    Measured on a real R440: with the reports read in server order, SystemInputPower and
+    TotalPciePower were both lost and the plugin fell back to the board power sensor without
+    saying so. The board sensor misses the power supplies' own conversion loss, so the figure
+    is quietly wrong rather than absent.
+    """
+    started.client = ManyReportsClient()
+    _beat_once(started)
+    assert started.telemetry is True
+    assert started.metric_paths == (f"{started.client.metric_reports}/PowerMetrics",)
+
+
+def test_a_report_is_still_chosen_by_content_and_never_by_its_name(started):
+    """Names only decide the ORDER reports are read in. A report called "...Power..." that
+    carries no power metric must still be rejected, or the ordering hint would have quietly
+    become a selection rule."""
+    client = ManyReportsClient()
+    # A decoy that sorts to the front on name but holds nothing the plugin wants.
+    client.report_names[0] = "OME-PMP-Power-Decoy"
+    started.client = client
+    _beat_once(started)
+    assert "Decoy" not in " ".join(started.metric_paths)
+    assert started.metric_paths == (f"{client.metric_reports}/PowerMetrics",)
+
+
+@pytest.fixture
+def started_with_affix(monkeypatch, request):
+    """A plugin started with a name prefix and/or suffix already configured."""
+    params = dict(_PARAMS)
+    params.update(getattr(request, "param", {}))
+    monkeypatch.setattr(plugin, "Parameters", params, raising=False)
+    monkeypatch.setattr(plugin, "Devices", domoticz_stub.Devices, raising=False)
+    plugin.onStart()
+    plugin._state.client = FakeClient()
+    return plugin._state
+
+
+@pytest.mark.parametrize("started_with_affix", [{"NamePrefix": "R750 - "}], indirect=True)
+def test_a_name_prefix_is_applied_to_every_created_device(started_with_affix):
+    """Two installs monitoring two servers otherwise produce identical device names, and a
+    dzVents lookup by name then silently picks whichever it finds first."""
+    _beat_once(started_with_affix)
+    names = [u.Name for u in _units().values()]
+    assert names, "no devices created"
+    assert all(n.startswith("R750 - ") for n in names), names
+
+
+@pytest.mark.parametrize("started_with_affix", [{"NameSuffix": "_TESTSRV"}], indirect=True)
+def test_a_name_suffix_reaches_the_control_devices_too(started_with_affix):
+    """The affix is applied after the control devices are appended, so nothing is missed."""
+    started_with_affix.cfg = plugin.dataclasses.replace(started_with_affix.cfg, allow_control=True)
+    _beat_once(started_with_affix)
+    control_names = [u.Name for u in _units(plugin.planner.DEVICE_CONTROL).values()]
+    assert control_names, "no control devices created"
+    assert all(n.endswith("_TESTSRV") for n in control_names), control_names
+
+
+@pytest.mark.parametrize("started_with_affix", [{"NamePrefix": "{servicetag} - "}], indirect=True)
+def test_a_token_prefix_is_expanded_from_the_machine_itself(started_with_affix):
+    """The whole point of the tokens: the user does not have to know or type the identifier."""
+    _beat_once(started_with_affix)
+    names = [u.Name for u in _units().values()]
+    assert names
+    assert not any("{servicetag}" in n for n in names), "token was not expanded"
+    # The t550 fixture is sanitized, so the tag is the scrubber's placeholder, not a real one.
+    assert all(n.startswith("SVCTAG0 - ") for n in names), names
+
+
+@pytest.mark.parametrize("started_with_affix", [{"NamePrefix": "{servicetag} - "}], indirect=True)
+def test_the_resolved_affix_is_shown_once_as_a_worked_example(started_with_affix):
+    """A trailing space is invisible in the settings form, and a token is not what the user
+    typed. Printing one finished name is the only way they can check it is what they meant."""
+    import DomoticzEx
+
+    DomoticzEx._log.clear()
+    _beat_once(started_with_affix)
+    examples = [line for line in DomoticzEx._log if "device names look like" in line]
+    assert len(examples) == 1, DomoticzEx._log
+    assert "SVCTAG0 - " in examples[0]
+    # And it is not repeated on every poll.
+    _beat_once(started_with_affix)
+    assert sum("device names look like" in line for line in DomoticzEx._log) == 1
+
+
+def test_no_worked_example_is_logged_when_no_affix_is_configured(started):
+    import DomoticzEx
+
+    DomoticzEx._log.clear()
+    _beat_once(started)
+    assert not [line for line in DomoticzEx._log if "device names look like" in line]
+
+
+def _seed_domoticz_db(tmp_path, owned_names, owner_hardware_id=1):
+    import sqlite3
+
+    path = tmp_path / "domoticz.db"
+    con = sqlite3.connect(path)
+    con.execute("CREATE TABLE Hardware ([ID] INTEGER PRIMARY KEY, [Name] VARCHAR(200) NOT NULL)")
+    con.execute(
+        "CREATE TABLE DeviceStatus ([ID] INTEGER PRIMARY KEY, [HardwareID] INTEGER NOT NULL, "
+        "[Name] VARCHAR(100) DEFAULT Unknown)"
+    )
+    con.execute("INSERT INTO Hardware VALUES (?, 'iDRAC T550')", (owner_hardware_id,))
+    for name in owned_names:
+        con.execute(
+            "INSERT INTO DeviceStatus (HardwareID, Name) VALUES (?, ?)", (owner_hardware_id, name)
+        )
+    con.commit()
+    con.close()
+    return str(path)
+
+
+def test_names_already_owned_by_another_install_are_reported_once(monkeypatch, tmp_path, started):
+    """The motivating case: a second install with no prefix, colliding with the first. The
+    plugin API cannot see the other install's devices, so this reads the database read-only."""
+    import DomoticzEx
+
+    db = _seed_domoticz_db(tmp_path, ["System Health", "Inlet Temp"])
+    plugin.Parameters["Database"] = db
+    DomoticzEx._log.clear()
+    _beat_once(started)
+    warnings = [line for line in DomoticzEx._log if "already exist under hardware" in line]
+    assert len(warnings) == 1, DomoticzEx._log
+    assert "iDRAC T550" in warnings[0]
+    assert "System Health" in warnings[0]
+    # Checked once per plugin start, not on every poll.
+    _beat_once(started)
+    assert sum("already exist under hardware" in line for line in DomoticzEx._log) == 1
+
+
+def test_no_collision_warning_when_the_names_are_free(monkeypatch, tmp_path, started):
+    import DomoticzEx
+
+    plugin.Parameters["Database"] = _seed_domoticz_db(tmp_path, ["Something Else"])
+    DomoticzEx._log.clear()
+    _beat_once(started)
+    assert not [line for line in DomoticzEx._log if "already exist under hardware" in line]

@@ -1,9 +1,14 @@
 # pyright: reportMissingImports=false
 """Thin adapter over the DomoticzEx device API. The ONLY module importing Domoticz."""
 
+import sqlite3
+
 import DomoticzEx as Domoticz
 
 import persistence
+
+# The heartbeat is on a 60 s watchdog, so a busy writer must never hold this up for long.
+_DB_TIMEOUT_SECONDS = 2.0
 
 
 def device_id(hardware_id, family: str) -> str:
@@ -121,6 +126,43 @@ def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow
 # So when the iDRAC is unreachable the correct action is to write NOTHING: the last good value
 # stays on screen, LastUpdate goes stale, and Domoticz flags the device itself. Writing nothing
 # is also what keeps a zero out of the recorded history.
+
+
+def names_used_by_other_hardware(db_path: str, hardware_id, names) -> tuple:
+    """Device names already owned by a DIFFERENT hardware entry, paired with the entry owning it.
+
+    The plugin API cannot answer this. Every device query Domoticz exposes to a plugin is scoped
+    to its own hardware id (`WHERE (HardwareID==%d)` throughout hardware/plugins/PythonObjects.cpp),
+    so a second install of this plugin, or any other device that happens to be called
+    "System Health", is structurally invisible. Domoticz does hand the plugin its database path in
+    Parameters["Database"], so this opens it READ-ONLY to warn about a collision that would
+    otherwise stay silent until a dzVents lookup acted on the wrong device.
+
+    Read-only, one query, never a write. Anything going wrong at all returns nothing: this is
+    called from the heartbeat, so a locked or unexpected database must cost a debug line rather
+    than the poll.
+    """
+    wanted = [str(name) for name in names]
+    if not db_path or not wanted:
+        return ()
+    placeholders = ",".join("?" * len(wanted))
+    try:
+        connection = sqlite3.connect(
+            f"file:{db_path}?mode=ro", uri=True, timeout=_DB_TIMEOUT_SECONDS
+        )
+        try:
+            rows = connection.execute(
+                "SELECT d.Name, h.Name FROM DeviceStatus d "
+                "JOIN Hardware h ON h.ID = d.HardwareID "
+                f"WHERE d.HardwareID != ? AND d.Name IN ({placeholders})",
+                [hardware_id, *wanted],
+            ).fetchall()
+        finally:
+            connection.close()
+    except Exception as exc:
+        Domoticz.Debug(f"could not check for duplicate device names: {exc}")
+        return ()
+    return tuple(sorted({(str(name), str(owner)) for name, owner in rows}))
 
 
 def read_prev_counter_wh(devices, dev_id, unit_no):

@@ -113,3 +113,22 @@ def test_no_mac_addresses(path):
         if m.lower() not in _scrubber_mac_placeholders()
     }
     assert not found, f"{path.name} leaks MAC addresses: {sorted(found)}"
+
+
+@pytest.mark.parametrize("path", _fixture_files(), ids=lambda p: p.name)
+def test_no_express_service_code(path):
+    """Dell's Express Service Code is the Service Tag in base 10, so a real one publishes the
+    tag even though the tag itself never appears in the file.
+
+    That is exactly why the forbidden-literals sweep above cannot catch it: the sweep matches
+    strings, and the tag is present only as its base-36 encoding. A class check is the only
+    thing that can see it, the same reasoning as the MAC and private-address tests.
+    """
+    text = path.read_text(encoding="utf-8")
+    found = [
+        code for code in re.findall(r'"ExpressServiceCode"\s*:\s*"(\d+)"', text) if int(code) != 0
+    ]
+    assert not found, (
+        f"{path.name} carries a real Express Service Code, which decodes directly to the "
+        "machine's Service Tag. Scrub it to zeros."
+    )

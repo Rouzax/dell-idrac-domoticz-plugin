@@ -1,7 +1,9 @@
 """Unit allocation and the ordered list of device updates. Pure."""
 
 import json
-from dataclasses import dataclass, field
+import re
+from collections import Counter
+from dataclasses import dataclass, field, replace
 
 import health
 import model
@@ -66,6 +68,7 @@ DEVICE_FAMILIES = (
 BLOCK_TEMPS = 1
 BLOCK_FANS = 40
 BLOCK_PSUS = 1
+BLOCK_PSU_EFFICIENCY = 40
 BLOCK_VOLUMES = 1
 BLOCK_DRIVES = 40
 BLOCK_DRIVE_LIFE = 150
@@ -80,6 +83,7 @@ _BLOCK_LIMITS = {
     (DEVICE_THERMAL, BLOCK_TEMPS): 20,
     (DEVICE_THERMAL, BLOCK_FANS): 20,
     (DEVICE_POWER, BLOCK_PSUS): 20,
+    (DEVICE_POWER, BLOCK_PSU_EFFICIENCY): 20,
     (DEVICE_STORAGE, BLOCK_VOLUMES): 20,
     (DEVICE_STORAGE, BLOCK_DRIVES): 100,
     (DEVICE_STORAGE, BLOCK_DRIVE_LIFE): 100,
@@ -135,6 +139,62 @@ def unassigned(inventory, alloc: dict) -> tuple:
     return tuple(rid for rid in wanted if rid not in alloc)
 
 
+_INPUT_SUFFIX = "_InputPower"
+_OUTPUT_SUFFIX = "_OutputPower"
+
+
+# Below this the ratio is mostly measurement granularity: Dell reports PSU input in whole watts
+# and output in quarter watts, so a supply drawing a trickle produces suspiciously round figures
+# (a real R440 idling gave exactly 32 W in and 24 W out). Reporting that as an efficiency reading
+# would be inventing precision the numbers do not have.
+_MIN_EFFICIENCY_INPUT_W = 25.0
+
+
+def psu_efficiency_percent(sensors: dict, base: str) -> float | None:
+    """Conversion efficiency of one supply, or None when the figure would not be meaningful.
+
+    None covers three real cases, all seen on live hardware: a supply on standby (a redundant
+    grid feed reading 5 W in and 0 W out is doing nothing, not running at 0% efficiency), a
+    supply under a load too light to measure, and a reading that claims more output than input,
+    which cannot happen and means the sensor is wrong.
+    """
+    watts_in = (
+        sensors[f"{base}{_INPUT_SUFFIX}"].reading if f"{base}{_INPUT_SUFFIX}" in sensors else None
+    )
+    watts_out = (
+        sensors[f"{base}{_OUTPUT_SUFFIX}"].reading if f"{base}{_OUTPUT_SUFFIX}" in sensors else None
+    )
+    if watts_in is None or watts_out is None:
+        return None
+    if watts_out <= 0 or watts_in < _MIN_EFFICIENCY_INPUT_W or watts_out > watts_in:
+        return None
+    return 100.0 * watts_out / watts_in
+
+
+def psu_efficiency_name(base: str) -> str:
+    """ "PSU.Slot.1" -> "PS1 Efficiency", matching the "PS1 Status" the PowerSupplies list gives.
+
+    Built from the sensor's OWN slot number rather than by pairing with that list, which numbers
+    supplies from zero while these sensors number them from one.
+    """
+    digits = "".join(character for character in base.rsplit(".", 1)[-1] if character.isdigit())
+    return f"PS{digits} Efficiency" if digits else f"{base} Efficiency"
+
+
+def sensor_gpu_temps(inventory) -> list:
+    """Sensor-derived GPU temperatures, which are a FALLBACK and never an addition.
+
+    Telemetry carries power as well as temperature and names each card by its slot, so where it
+    reports cards these sensors describe the same hardware again. A DSS8440 offers seven of each,
+    and using both would put fourteen temperature devices on screen for seven cards.
+
+    Used by allocation and by plan() alike, so the two can never disagree about which set is live.
+    """
+    if inventory.gpus:
+        return []
+    return list(inventory.gpu_temps)
+
+
 def _block_members(inventory) -> tuple:
     """Every block, in allocation order, as (device, base, resource ids)."""
     temps = list(inventory.cpu_temps)
@@ -144,14 +204,21 @@ def _block_members(inventory) -> tuple:
         (DEVICE_THERMAL, BLOCK_TEMPS, temps),
         (DEVICE_THERMAL, BLOCK_FANS, list(inventory.fans)),
         (DEVICE_POWER, BLOCK_PSUS, list(inventory.psus)),
+        (DEVICE_POWER, BLOCK_PSU_EFFICIENCY, list(inventory.psu_efficiency)),
         (DEVICE_STORAGE, BLOCK_VOLUMES, list(inventory.volumes)),
         (DEVICE_STORAGE, BLOCK_DRIVES, list(inventory.drives)),
         # A second, optional device per drive, keyed by a suffixed id to stay unique.
         (DEVICE_STORAGE, BLOCK_DRIVE_LIFE, [f"{d}#life" for d in inventory.drives]),
         (DEVICE_NETWORK, BLOCK_NICS, list(inventory.nics)),
-        # Two devices per card, so two blocks.
+        # Two devices per card, so two blocks. Telemetry cards and sensor-derived GPU
+        # temperatures share the temperature block: only one of the two is ever populated, so
+        # they cannot collide, and a machine that later gains a licence keeps its unit numbers.
         (DEVICE_GPU, BLOCK_GPU_POWER, [f"{g}#power" for g in inventory.gpus]),
-        (DEVICE_GPU, BLOCK_GPU_TEMP, [f"{g}#temp" for g in inventory.gpus]),
+        (
+            DEVICE_GPU,
+            BLOCK_GPU_TEMP,
+            [f"{g}#temp" for g in inventory.gpus] + sensor_gpu_temps(inventory),
+        ),
     )
 
 
@@ -244,19 +311,110 @@ def gpu_readings(samples) -> dict:
     return out
 
 
+# Device names are what dzVents scripts look devices up by, so two installs monitoring two
+# servers must not produce the same names. These tokens let a name affix carry the machine's own
+# identity instead of something typed by hand and forgotten.
+_TOKEN_PATTERN = re.compile(r"\{([a-z]+)\}")
+
+
+def name_tokens(system, idrac_name: str | None = None) -> dict:
+    """What each {token} in a name affix expands to for THIS machine.
+
+    {hostname} is truncated at the first dot deliberately. A fleet reports host names
+    inconsistently, some bare and some fully qualified, so passing the value straight through
+    would give "web01" on one server and "web01.some.long.domain" on the next. {fqdn} is there
+    for anyone who wants the whole thing.
+    """
+    hostname = (system.hostname or "").strip()
+    return {
+        "servicetag": (system.service_tag or "").strip(),
+        "hostname": hostname.split(".")[0],
+        "fqdn": hostname,
+        "model": (system.model or "").strip(),
+        "idrac": (idrac_name or "").strip(),
+    }
+
+
+def expand_affix(text: str, tokens: dict) -> tuple:
+    """Expand {tokens} in a name affix. Returns (expanded text, tokens that did not resolve).
+
+    Text outside the tokens is used EXACTLY as typed, whitespace included: a user writing
+    "SERVER1 - " needs that trailing space, and Domoticz stores custom settings as JSON, which
+    preserves it byte for byte.
+
+    An affix that ends up with no alphanumeric character left is dropped completely. Otherwise a
+    machine reporting no host name would turn "{hostname} - " into " - " and put half a separator
+    in front of every device on the dashboard, which is worse than no affix at all.
+    """
+    if not text:
+        return "", ()
+    missing = []
+
+    def _replace(match):
+        key = match.group(1)
+        value = tokens.get(key)
+        if not value:
+            missing.append(key)
+            return ""
+        return value
+
+    out = _TOKEN_PATTERN.sub(_replace, text)
+    if not any(character.isalnum() for character in out):
+        return "", tuple(missing)
+    return out, tuple(missing)
+
+
+def decorate_names(updates: list, prefix: str = "", suffix: str = "") -> list:
+    """Wrap every planned device name in the user's prefix and suffix.
+
+    Applied at ONE point, after the control devices have been added, so every device the plugin
+    owns is affected and no name can be missed by a new caller forgetting to do it.
+    """
+    if not prefix and not suffix:
+        return updates
+    return [replace(update, name=f"{prefix}{update.name}{suffix}") for update in updates]
+
+
+def duplicate_names(updates: list) -> tuple:
+    """Names this plan would give to more than one device.
+
+    Domoticz allows duplicate names, and a dzVents lookup by name then silently picks one of
+    them. No fleet machine has ever produced one of these, so this is a guard against a future
+    firmware naming two components identically rather than a fix for a known fault.
+    """
+    counts = Counter(update.name for update in updates)
+    return tuple(sorted(name for name, count in counts.items() if count > 1))
+
+
 # Dell's own drive names, which differ by controller and read poorly next to each other:
-# "Solid State Disk 0:2:0" from a PERC, "SSD 0" from a BOSS boot card. Only these two prefixes
+# "Solid State Disk 0:2:0" from a PERC, "SSD 0" from a BOSS boot card. Only these two phrases
 # are rewritten; any other name the server reports is left exactly as it is.
-_DRIVE_PREFIXES = {"Solid State Disk": "SSD", "Physical Disk": "HDD"}
+#
+# Matched ANYWHERE in the name rather than only at the start: Dell prefixes a pass-through disk
+# with its RAID state, giving "NonRAID Solid State Disk 0:1:0". That qualifier says the disk is
+# in HBA mode rather than part of an array, which is worth keeping, so only the noun is shortened.
+_DRIVE_PHRASES = {"Solid State Disk": "SSD", "Physical Disk": "HDD"}
+
+# An NVMe drive is reported with MediaType "SSD", exactly like a SATA one, and named
+# "PCIe SSD in Slot 23 in Bay 2". The bus protocol is the ONLY field that distinguishes the two,
+# so the rename is gated on what the server reports and never on the name: a drive that merely
+# reads like a PCIe device but is attached by SAS keeps the name the server gave it. Dell
+# currently reports "PCIe"; the Redfish enum also allows "NVMe", so both take this branch.
+_NVME_PROTOCOLS = frozenset({"pcie", "nvme"})
+_NVME_PHRASE = "PCIe SSD"
 
 
 def drive_name(drive) -> str:
     """A short, consistent name: media type then location, with a boot card marked as such."""
     name = drive.name
-    if drive.media_type:
-        for verbose, short in _DRIVE_PREFIXES.items():
-            if name.startswith(verbose):
-                name = short + name[len(verbose) :]
+    protocol = (drive.protocol or "").strip().lower()
+    if protocol in _NVME_PROTOCOLS and _NVME_PHRASE in name:
+        # "SSD" is dropped rather than kept: NVMe already implies solid state.
+        name = name.replace(_NVME_PHRASE, "NVMe", 1)
+    elif drive.media_type:
+        for verbose, short in _DRIVE_PHRASES.items():
+            if verbose in name:
+                name = name.replace(verbose, short, 1)
                 break
     if drive.is_boot_card and not name.upper().startswith("BOSS"):
         name = f"BOSS {name}"
@@ -303,6 +461,17 @@ def _temp_update(unit, sensor, name, threshold_map, device=DEVICE_SYSTEM) -> Dev
         color=_temp_bar(threshold),
         device=device,
     )
+
+
+# Dell spells the non-redundant policy "Not Redundant". Matched loosely because the exact
+# wording is Dell's and could gain a qualifier; anything else is treated as "should be redundant",
+# which is the safe direction: an unrecognised policy keeps the neutral "Not reported" wording
+# rather than telling the user a redundancy loss was intentional.
+_NOT_REDUNDANT = "not redundant"
+
+
+def _is_not_redundant(policy: str | None) -> bool:
+    return bool(policy) and _NOT_REDUNDANT in str(policy).strip().lower()
 
 
 # Dell reports the intrusion sensor as a plain string, not a Status block.
@@ -381,6 +550,42 @@ def plan(
                         svalue=_fmt_reading(round(celsius, 1)),
                     )
                 )
+
+    # GPU temperatures read from the ordinary Sensors collection, for machines whose telemetry
+    # licence does not cover GPU metrics. discover() only fills this when telemetry found no
+    # cards, so a card never gets two temperature devices.
+    for sensor_id in sensor_gpu_temps(inventory):
+        sensor = sensors.get(sensor_id)
+        unit = alloc.get(sensor_id)
+        if sensor is None or sensor.reading is None or unit is None:
+            continue
+        out.append(
+            DeviceUpdate(
+                unit=unit,
+                type_name="Temperature",
+                name=sensor.name,
+                device=DEVICE_GPU,
+                nvalue=0,
+                svalue=_fmt_reading(sensor.reading),
+            )
+        )
+
+    if cfg.enable_psus:
+        for base in inventory.psu_efficiency:
+            unit = alloc.get(base)
+            percent = psu_efficiency_percent(sensors, base)
+            if unit is None or percent is None:
+                continue
+            out.append(
+                DeviceUpdate(
+                    unit=unit,
+                    type_name="Percentage",
+                    name=psu_efficiency_name(base),
+                    device=DEVICE_POWER,
+                    nvalue=0,
+                    svalue=_fmt_reading(round(percent, 1)),
+                )
+            )
 
     for unit, metric_id, name in _POWER_METRIC_UNITS:
         value = metrics.get(metric_id)
@@ -492,7 +697,18 @@ def plan(
         # hardware. Emitting nothing left the tile showing its last value, so it sat green
         # claiming redundancy at the moment redundancy was lost. Grey rather than red because
         # the plugin cannot know WHY the group vanished; System Health carries the fault text.
-        redundancy_state = (health.LEVEL_GREY, "Not reported")
+        #
+        # Dell's own policy attribute separates the two reasons the list can be empty. Measured
+        # across six servers, the correlation was exact: every machine set to a redundant policy
+        # reported a group, and every machine set to Not Redundant reported none. A four-supply
+        # DSS8440 is deliberately non-redundant so all four feed its GPUs, and calling that
+        # "Not reported" suggests the server is withholding something rather than obeying its
+        # configuration. Still grey, never green: not redundant is not a healthy state to
+        # advertise, it is simply an intended one.
+        if _is_not_redundant(dell_attrs.redundancy_policy):
+            redundancy_state = (health.LEVEL_GREY, "Not redundant (configured)")
+        else:
+            redundancy_state = (health.LEVEL_GREY, "Not reported")
     if redundancy_state is not None:
         level, text = redundancy_state
         out.append(

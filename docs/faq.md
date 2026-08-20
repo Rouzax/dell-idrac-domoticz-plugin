@@ -165,7 +165,7 @@ If neither appears, the plugin never got as far as trying. If the error appears,
 
 ### My GPUs do not appear
 
-GPU figures come from telemetry as well, so everything above applies first. Beyond that, GPU support is built and tested against sanitized captures from real GPU servers but has not yet been run live against one, so if you have the licence and the cards and still see nothing, that is worth reporting.
+GPU figures come from telemetry as well, so everything above applies first. GPU power and temperature have now been read live from two GPU servers, a 7-card Dell DSS8440 and a 4-card PowerEdge R7525. Cards that report temperature but no power, which both machines had, produce a temperature device on their own. If you have the licence and the cards and still see nothing, that is worth reporting.
 
 ## Control
 

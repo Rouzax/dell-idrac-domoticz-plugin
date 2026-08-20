@@ -85,3 +85,31 @@ def test_unreadable_numeric_is_reported():
 
 def test_a_clean_config_reports_no_warnings():
     assert config.parse_config(_params()).warnings == ()
+
+
+def test_name_affixes_are_taken_exactly_as_typed():
+    """Whitespace is load-bearing here: "SERVER1 - " needs its trailing space, and stripping it
+    would glue the prefix to the device name."""
+    cfg = config.parse_config({"NamePrefix": "SERVER1 - ", "NameSuffix": "_TESTSRV"})
+    assert cfg.name_prefix == "SERVER1 - "
+    assert cfg.name_suffix == "_TESTSRV"
+
+
+def test_missing_name_affixes_default_to_empty():
+    cfg = config.parse_config({})
+    assert cfg.name_prefix == ""
+    assert cfg.name_suffix == ""
+
+
+def test_an_overlong_affix_is_clamped_and_reported():
+    """Domoticz stores a device name in a VARCHAR(100) and the longest name the plugin
+    generates is already 35 characters, so an unbounded affix could truncate a real name."""
+    cfg = config.parse_config({"NamePrefix": "x" * 40})
+    assert len(cfg.name_prefix) == config.MAX_AFFIX
+    assert any("NamePrefix" in note for note in cfg.warnings)
+
+
+def test_an_affix_at_the_limit_is_not_reported():
+    cfg = config.parse_config({"NameSuffix": "y" * config.MAX_AFFIX})
+    assert cfg.name_suffix == "y" * config.MAX_AFFIX
+    assert not any("NameSuffix" in note for note in cfg.warnings)

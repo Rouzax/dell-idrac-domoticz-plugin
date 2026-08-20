@@ -154,7 +154,6 @@ Two things worth knowing before you enable control:
 - The lifetime energy counter the iDRAC reports is not continuous across power-off periods, so the plugin integrates energy itself rather than trusting it. Energy accrued while Domoticz is not running is not recovered.
 - Only the first power redundancy group is reported.
 - Turning Allow Control back off leaves the two control devices in place. They are refused at the guard so no power action can get through, but they stay visible until you delete them.
-- GPU support is built and tested against sanitized captures from real GPU servers, but has not yet been run live against one.
 
 ## Contributing
 
@@ -166,6 +165,12 @@ python3 -m pytest
 ```
 
 Please keep new code covered and run `ruff check .` and `pyright` before opening a pull request.
+
+## Support
+
+Building tools that solve my own problems and sharing them in the hope they solve yours too. This one means you find out your server has a failing drive from your own dashboard, instead of the next time you happen to log into the iDRAC.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/O0W221GBUG)
 
 ## License
 

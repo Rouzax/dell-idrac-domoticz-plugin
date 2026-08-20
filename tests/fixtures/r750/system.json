@@ -11,7 +11,7 @@
  },
  "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
  "@odata.id": "/redfish/v1/Systems/System.Embedded.1",
- "@odata.type": "#ComputerSystem.v1_25_0.ComputerSystem",
+ "@odata.type": "#ComputerSystem.v1_22_1.ComputerSystem",
  "Actions": {
   "#ComputerSystem.Reset": {
    "ResetType@Redfish.AllowableValues": [
@@ -31,15 +31,24 @@
  "Bios": {
   "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Bios"
  },
- "BiosVersion": "1.21.1",
+ "BiosVersion": "1.4.4",
  "Boot": {
   "BootOptions": {
    "@odata.id": "/redfish/v1/Systems/System.Embedded.1/BootOptions"
   },
   "BootOrder": [
-   "Boot0003"
+   "Boot000C",
+   "Boot0008",
+   "Boot0007",
+   "Boot0006",
+   "Boot0005",
+   "Boot0003",
+   "Boot0004",
+   "Boot0000",
+   "Boot0001",
+   "Boot000B"
   ],
-  "BootOrder@odata.count": 1,
+  "BootOrder@odata.count": 10,
   "BootSourceOverrideEnabled": "Disabled",
   "BootSourceOverrideMode": "UEFI",
   "BootSourceOverrideTarget": "None",
@@ -62,8 +71,7 @@
   "UefiTargetBootSourceOverride": null
  },
  "BootProgress": {
-  "LastState": "OSRunning",
-  "LastStateTime": "2026-08-18T20:44:45+02:00"
+  "LastState": "OSRunning"
  },
  "Description": "Computer System which represents a machine (physical or virtual) and the local resources such as memory, cpu and other devices that can be accessed from that machine.",
  "EthernetInterfaces": {
@@ -90,12 +98,7 @@
  "Id": "System.Embedded.1",
  "IndicatorLED": "Lit",
  "IndicatorLED@Redfish.Deprecated": "Please migrate to use LocationIndicatorActive property",
- "KeyManagement": {
-  "KMIPCertificates": {
-   "@odata.id": "/redfish/v1/Systems/System.Embedded.1/KeyManagement/KMIPCertificates"
-  }
- },
- "LastResetTime": "2026-08-18T20:44:48+02:00",
+ "LastResetTime": "2026-07-23T16:27:03+02:00",
  "Links": {
   "Chassis": [
    {
@@ -112,9 +115,18 @@
    },
    {
     "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Thermal#/Fans/2"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Thermal#/Fans/3"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Thermal#/Fans/4"
+   },
+   {
+    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/Thermal#/Fans/5"
    }
   ],
-  "CooledBy@odata.count": 3,
+  "CooledBy@odata.count": 6,
   "ManagedBy": [
    {
     "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1"
@@ -186,12 +198,8 @@
    }
   ],
   "PoweredBy@odata.count": 2,
-  "TrustedComponents": [
-   {
-    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/TrustedComponents/TPM"
-   }
-  ],
-  "TrustedComponents@odata.count": 1
+  "TrustedComponents": [],
+  "TrustedComponents@odata.count": 0
  },
  "LocationIndicatorActive": false,
  "Manufacturer": "Dell Inc.",
@@ -206,9 +214,9 @@
    "State": "Enabled"
   },
   "Status@Redfish.Deprecated": "Please migrate to use Status in the individual Memory resources",
-  "TotalSystemMemoryGiB": 128
+  "TotalSystemMemoryGiB": 1024
  },
- "Model": "PowerEdge T550",
+ "Model": "PowerEdge R750",
  "Name": "System",
  "NetworkInterfaces": {
   "@odata.id": "/redfish/v1/Systems/System.Embedded.1/NetworkInterfaces"
@@ -220,7 +228,7 @@
     "@odata.context": "/redfish/v1/$metadata#DellSystem.DellSystem",
     "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1",
     "@odata.type": "#DellSystem.v1_4_0.DellSystem",
-    "BIOSReleaseDate": "04/07/2026",
+    "BIOSReleaseDate": "10/07/2021",
     "BaseBoardChassisSlot": "NA",
     "BatteryRollupStatus": "OK",
     "BladeGeometry": "NotApplicable",
@@ -230,11 +238,11 @@
     "ChassisModel": null,
     "ChassisName": "Main System Chassis",
     "ChassisServiceTag": "SVCTAG0",
-    "ChassisSystemHeightUnit": 5,
+    "ChassisSystemHeightUnit": 2,
     "CoolingRollupStatus": "OK",
     "CurrentRollupStatus": "OK",
-    "EstimatedExhaustTemperatureCelsius": 255,
-    "EstimatedSystemAirflowCFM": 255,
+    "EstimatedExhaustTemperatureCelsius": 38,
+    "EstimatedSystemAirflowCFM": 99,
     "ExpressServiceCode": "00000000000",
     "FanRollupStatus": "OK",
     "IDSDMRedundancyStatus": null,
@@ -242,21 +250,21 @@
     "Id": "System.Embedded.1",
     "IntrusionRollupStatus": "OK",
     "IsOEMBranded": "False",
-    "LastSystemInventoryTime": "2026-08-18T18:44:39+00:00",
-    "LastUpdateTime": "2026-05-04T19:07:32+00:00",
+    "LastSystemInventoryTime": "2026-07-23T14:26:55+00:00",
+    "LastUpdateTime": "2026-05-21T08:38:33+00:00",
     "LicensingRollupStatus": "OK",
-    "ManagedSystemSize": "4.5 U",
+    "ManagedSystemSize": "2 U",
     "MaxCPUSockets": 2,
-    "MaxDIMMSlots": 16,
-    "MaxPCIeSlots": 6,
-    "MaxSystemMemoryMiB": 4194304,
+    "MaxDIMMSlots": 32,
+    "MaxPCIeSlots": 8,
+    "MaxSystemMemoryMiB": 12582912,
     "MemoryOperationMode": "OptimizerMode",
     "Name": "DellSystem",
     "NodeID": "SVCTAG0",
-    "PSRollupStatus": "Error",
+    "PSRollupStatus": "OK",
     "PlatformGUID": "00000000-0000-0000-0000-000000000000",
-    "PopulatedDIMMSlots": 8,
-    "PopulatedPCIeSlots": 0,
+    "PopulatedDIMMSlots": 16,
+    "PopulatedPCIeSlots": 3,
     "PowerCapEnabledState": "Disabled",
     "SDCardRollupStatus": null,
     "SELRollupStatus": "Error",
@@ -268,7 +276,7 @@
     "SysMemPrimaryStatus": "OK",
     "SystemGeneration": "15G Monolithic",
     "SystemHealthRollupStatus": "Error",
-    "SystemID": 2587,
+    "SystemID": 2318,
     "SystemRevision": "I",
     "TempRollupStatus": "OK",
     "TempStatisticsRollupStatus": "OK",
@@ -280,10 +288,13 @@
  },
  "PCIeDevices": [
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-31"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/209-0"
   },
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/3-0"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/212-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-23"
   },
   {
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/4-0"
@@ -292,40 +303,43 @@
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-28"
   },
   {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/202-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/49-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/51-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/152-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/3-0"
+  },
+  {
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-17"
   },
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/195-0"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-31"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/103-0"
   },
   {
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/5-0"
-  },
-  {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-23"
   }
  ],
- "PCIeDevices@odata.count": 8,
+ "PCIeDevices@odata.count": 14,
  "PCIeFunctions": [
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-31/PCIeFunctions/0-31-0"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/209-0/PCIeFunctions/209-0-0"
   },
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/3-0/PCIeFunctions/3-0-0"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/212-0/PCIeFunctions/212-0-0"
   },
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/4-0/PCIeFunctions/4-0-0"
-  },
-  {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-28/PCIeFunctions/0-28-0"
-  },
-  {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-17/PCIeFunctions/0-17-5"
-  },
-  {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/195-0/PCIeFunctions/195-0-0"
-  },
-  {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/5-0/PCIeFunctions/5-0-0"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-23/PCIeFunctions/0-23-0"
   },
   {
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/4-0/PCIeFunctions/4-0-1"
@@ -334,27 +348,66 @@
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-28/PCIeFunctions/0-28-4"
   },
   {
-   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-23/PCIeFunctions/0-23-0"
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/202-0/PCIeFunctions/202-0-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/202-0/PCIeFunctions/202-0-1"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/49-0/PCIeFunctions/49-0-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/51-0/PCIeFunctions/51-0-1"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/51-0/PCIeFunctions/51-0-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/152-0/PCIeFunctions/152-0-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/152-0/PCIeFunctions/152-0-1"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/3-0/PCIeFunctions/3-0-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-17/PCIeFunctions/0-17-5"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/4-0/PCIeFunctions/4-0-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-28/PCIeFunctions/0-28-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-31/PCIeFunctions/0-31-0"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/103-0/PCIeFunctions/103-0-0"
   },
   {
    "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/0-31/PCIeFunctions/0-31-4"
+  },
+  {
+   "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PCIeDevices/5-0/PCIeFunctions/5-0-0"
   }
  ],
- "PCIeFunctions@odata.count": 11,
+ "PCIeFunctions@odata.count": 20,
  "PartNumber": "0PARTNO00000",
  "PowerState": "On",
  "ProcessorSummary": {
-  "CoreCount": 20,
-  "Count": 1,
-  "LogicalProcessorCount": 40,
-  "Model": "Intel(R) Xeon(R) Silver 4316 CPU @ 2.30GHz",
+  "CoreCount": 56,
+  "Count": 2,
+  "LogicalProcessorCount": 56,
+  "Model": "Intel(R) Xeon(R) Gold 6330 CPU @ 2.00GHz",
   "Status": {
    "Health": "OK",
    "HealthRollup": "OK",
    "State": "Enabled"
   },
   "Status@Redfish.Deprecated": "Please migrate to use Status in the individual Processor resources",
-  "ThreadingEnabled": true
+  "ThreadingEnabled": false
  },
  "Processors": {
   "@odata.id": "/redfish/v1/Systems/System.Embedded.1/Processors"
@@ -378,10 +431,10 @@
  "SystemType": "Physical",
  "TrustedModules": [
   {
-   "FirmwareVersion": "NotAvailable",
-   "InterfaceType": "TPM2_0",
+   "FirmwareVersion": "Unknown",
+   "InterfaceType": null,
    "Status": {
-    "State": "Disabled"
+    "State": "Absent"
    }
   }
  ],
