@@ -6,12 +6,17 @@ A Domoticz plugin that monitors Dell PowerEdge servers through the iDRAC's Redfi
 
 It is **not affiliated with, endorsed by, or supported by Dell Technologies.** "Dell", "PowerEdge" and "iDRAC" are trademarks of their respective owners and are used here only to describe what the plugin talks to.
 
+## What it has been tested against
+
+Read live from a fleet of Dell PowerEdge machines spanning two generations: R440, R740xd2, DSS8440 (14G) and R750, R7525, R7515 (15G), on iDRAC firmware 7.00 and 7.20, both standalone and OpenManage-managed.
+
+That run covered several states a single test machine cannot produce: GPU power and temperature from a 7-card DSS8440 and a 4-card R7525, servers reporting Critical health from a latched event log with no fault text behind it, NVMe drives, drives in pass-through mode, and machines advertising 39 telemetry reports.
+
 ## What it has not been tested against
 
-- **GPU servers.** GPU power and temperature devices are built from real captures but have never run live against a machine with cards in it.
 - **iDRAC 7 and 8, and non-Dell Redfish.** Untested rather than known broken. The plugin discovers what a server offers instead of assuming it, so a missing endpoint should cost you that one subsystem rather than the whole poll.
 
-If you have either, a report saying it worked is as useful as one saying it did not.
+If you have one, a report saying it worked is as useful as one saying it did not.
 
 ## Requirements recap
 

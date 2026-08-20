@@ -52,6 +52,18 @@ exclude_docs: |
 extra_css:
   - stylesheets/extra.css
 
+# Renders a small icon row in the footer of every page. Icon names resolve against the sets
+# Material bundles under templates/.icons. fontawesome/brands/ko-fi is not in the installed
+# version, so this uses the simple-icons fallback, which is present.
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Rouzax/dell-idrac-domoticz-plugin
+      name: Dell iDRAC Monitor on GitHub
+    - icon: simple/kofi
+      link: https://ko-fi.com/O0W221GBUG
+      name: Support Dell iDRAC Monitor on Ko-fi
+
 markdown_extensions:
   - admonition
   - attr_list

@@ -68,6 +68,83 @@ A fan spinning faster than this setting is not a problem: the bar simply reads f
 
 Changing this value updates the bars on the next poll, unless you have edited a fan's bands by hand, in which case your version is left alone.
 
+## Device names
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Name prefix** | empty | Text put in front of every device name this plugin creates. |
+| **Name suffix** | empty | Text appended to every device name this plugin creates. |
+
+Both are empty by default, so an existing install is unaffected until you set one.
+
+### Why you would want this
+
+Device names are how dzVents looks devices up. The plugin names devices after the hardware, not after the server, so **two installs monitoring two servers produce the same names**: both create a device called `System Health`, both create `Inlet Temp`, both create `Server Power`. A dzVents lookup by name then silently picks one of them, and which one it picks is not something you can rely on.
+
+Measured across six PowerEdge servers, **59 of the 186 distinct device names collided**, including nearly every headline tile. If you monitor more than one server, set a prefix or a suffix on at least all but one of them.
+
+### The text is used exactly as you type it
+
+Nothing is added and nothing is trimmed, so **include your own separator**, and the trailing space if you want one:
+
+| You type | You get |
+|---|---|
+| `SERVER1 - ` | `SERVER1 - System Health` |
+| `SERVER1` | `SERVER1System Health` |
+| `_TESTSRV` (as suffix) | `System Health_TESTSRV` |
+
+The trailing space in the first row is doing real work and is invisible in the settings form. To let you check it, the plugin writes one finished example to the Domoticz log the first time it applies an affix:
+
+```
+device names look like "SERVER1 - System Health"
+```
+
+Each field accepts up to 24 characters. A longer value is cut to 24 and the plugin says so in the log.
+
+### Filling the name in from the server
+
+Rather than typing the server's name, you can use a token and let the plugin read it from the machine:
+
+| Token | What it expands to | Typical length |
+|---|---|---|
+| `{servicetag}` | Dell service tag, for example `65CBFV2` | 7 |
+| `{hostname}` | OS host name, **cut at the first dot** | 10-15 |
+| `{fqdn}` | OS host name exactly as reported | 12-27 |
+| `{idrac}` | The iDRAC's own DNS name | 13-20 |
+| `{model}` | Model, for example `PowerEdge R750` | 7-21 |
+
+So a prefix of `{servicetag} - ` gives `65CBFV2 - System Health`, and a suffix of ` [{model}]` gives `System Health [PowerEdge R750]`. Tokens and plain text mix freely: `{model} {servicetag} - ` works.
+
+`{hostname}` is cut at the first dot on purpose. Servers report host names inconsistently, some bare and some fully qualified, so passing the value straight through would give you `web01` on one machine and `web01.example.lan` on the next. Use `{fqdn}` if you genuinely want the whole thing.
+
+Two things to know before choosing one:
+
+- **`{model}` does not guarantee uniqueness.** Two identical servers report the same model. If your goal is to keep installs apart, `{servicetag}` is the only token that is unique per machine.
+- **`{hostname}` needs the iDRAC Service Module** installed on the server. Without it the iDRAC does not know the OS host name.
+
+If a token cannot be resolved, it expands to nothing and the plugin logs an error naming it. If that leaves the affix with no letters or digits at all, for example `{hostname} - ` on a machine that reports no host name, the affix is dropped completely rather than putting a stray ` - ` in front of every device.
+
+### What happens when you change it
+
+!!! warning "Changing this renames existing devices"
+    On the next poll the plugin renames every device it still owns, so **any dzVents script that looks those devices up by name stops finding them**. Update your scripts in the same sitting. Devices you renamed by hand are never touched, because the plugin only renames names it set itself.
+
+Setting a prefix on an install that already has devices is therefore a deliberate, one-off disruption, not a cosmetic change. Doing it before you write any automation is much easier than doing it after.
+
+### Duplicate name warnings
+
+The plugin warns you in the Domoticz log when the names it is about to use are already taken:
+
+```
+3 planned device name(s) already exist under hardware 'iDRAC T550': System Health,
+Inlet Temp, Server Power. A dzVents lookup by name cannot tell them apart; set a
+Name Prefix or Name Suffix.
+```
+
+This is checked once per plugin start, before any device is created, so the warning arrives on the first poll rather than after a full set of duplicates exists. It looks at **every** device in your Domoticz install, so it catches a second copy of this plugin, an unrelated piece of hardware that happens to own the name, and a dummy device you made yourself.
+
+The plugin only warns. It does not rename anything automatically to dodge a collision, because the name it invented would depend on which install happened to poll first, and an unpredictable name is no more useful to a script than a duplicate one.
+
 ## Control
 
 | Setting | Default | What it does |

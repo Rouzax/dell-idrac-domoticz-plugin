@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Device name prefix and suffix settings.** Two servers monitored by two installs otherwise produce identical device names, which makes a dzVents lookup by name ambiguous. The text is used exactly as typed, so it carries its own separator, and it may contain `{servicetag}`, `{hostname}`, `{fqdn}`, `{idrac}` or `{model}` tokens that the plugin fills in from the server. See [Device names](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#device-names).
+- **A Ko-fi support link**, on the GitHub sponsor button, in the README and in the documentation footer. Documentation only: nothing about running the plugin changes, and it never prompts you.
+- **GPU temperature without a telemetry licence.** GPU metrics are licence-gated, but a card's temperature is usually also present in the ordinary sensor list. When telemetry reports no cards, the plugin now creates a temperature device from any sensor the server tags with the Redfish physical context `GPU`. It is a fallback, not an addition: where telemetry does report cards, these sensors are ignored so no card gets two temperature devices. Found a card running at 74 °C on a PowerEdge R750 whose telemetry reported no GPU at all.
+- **Power supply efficiency devices.** Where a supply reports both the AC it draws and the DC it delivers, a percentage device now shows the conversion efficiency. Measured across a fleet: 93.3% on a loaded R750, 75.0% on an idling R440. Nothing is written when the figure would be meaningless, so a supply on standby, a supply below 25 W of input, or a reading claiming more output than input produces no device rather than a misleading zero.
+- **Duplicate device name warnings.** The plugin now checks, once per start and before creating anything, whether the names it plans to use are already owned by another hardware entry, and names the owner in the log. It only warns; it never renames anything automatically to dodge a collision.
+
+### Changed
+
+- **Drives attached by PCIe are now named `NVMe`.** Dell reports an NVMe drive with `MediaType: SSD`, identical to a SATA disk, and names it `PCIe SSD in Slot 23 in Bay 2`; only the bus protocol distinguishes the two. The rename is driven by the protocol the server reports, never by the name, so a drive that merely reads like a PCIe device is untouched. `PCIe SSD in Slot 23 in Bay 2` becomes `NVMe in Slot 23 in Bay 2`.
+- **A RAID-state qualifier now survives the media-type shortening.** `NonRAID Solid State Disk 0:1:0` becomes `NonRAID SSD 0:1:0` rather than being left in full. The qualifier is kept because it says the disk is in pass-through mode rather than part of an array.
+
+  Both drive changes rename existing devices on the first poll after the update, for the drives concerned, unless you renamed them by hand. Any dzVents script that looks those drives up by name needs updating.
+
+- **Power Redundancy now distinguishes "switched off" from "not reported".** The Redfish redundancy list is empty both when a supply has been pulled and when the operator configured redundancy off, and the device said `Not reported` either way. It now reads `Not redundant (configured)` when Dell's own policy attribute says so. Verified across six servers, where the correlation was exact. Still grey rather than green: not redundant is an intended state, not a healthy one to advertise.
+
+### Fixed
+
+- **Wall-socket power could be silently missed on a server advertising many telemetry reports.** Reports were read in the order the server returned them, up to a fixed budget. A PowerEdge R440 lists 39 reports and puts `PowerMetrics`, the only one carrying `SystemInputPower`, at position 23, so it was never read: the Server Power device fell back to the mainboard sensor, which excludes the power supplies' own conversion loss, and nothing said so. Reports whose name suggests power are now read first. Which report is *used* is still decided by the metrics it actually contains, never by its name.
+
 ## [0.1.0] - 2026-08-19
 
 First release.
