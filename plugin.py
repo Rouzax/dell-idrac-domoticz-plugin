@@ -1,6 +1,6 @@
 # pyright: reportMissingImports=false, reportUndefinedVariable=false, reportAttributeAccessIssue=false
 """\
-<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.1.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
+<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.2.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
     <description>
         <!-- Inlined as a data URI so no asset has to be web-served from the plugin folder.
              A PNG rather than an inline SVG deliberately: an inline SVG style block is DOCUMENT
@@ -55,6 +55,14 @@
             </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
                 <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">choosing a value</a>).</description>
+            </param>
+        </group>
+        <group label="Device names">
+            <param field="NamePrefix" label="Name prefix" width="200px">
+                <description>Put in front of every device name, exactly as typed, so include your own separator and any trailing space. Leave empty to keep the current names. Use it when you monitor more than one server, because otherwise both installs create a device called System Health and a dzVents lookup by name cannot tell them apart. May contain {servicetag}, {hostname}, {fqdn}, {model} or {idrac}, which are filled in from the server itself. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#device-names" target="_blank">examples, and what changing it renames</a>).</description>
+            </param>
+            <param field="NameSuffix" label="Name suffix" width="200px">
+                <description>The same, appended instead. Example: _TESTSRV. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#device-names" target="_blank">examples</a>).</description>
             </param>
         </group>
         <group label="Control">
@@ -132,6 +140,14 @@ class _PluginState:
         self.alloc = {}
         self.resolved = False
         self.orphaned_reported = ()
+        # The iDRAC's own DNS name, for the {idrac} token. It lives on a different resource from
+        # everything else the poll reads, so it is fetched once and only when an affix asks for
+        # it. None means "not looked up yet"; "" means looked up and unavailable.
+        self.idrac_name = None
+        self.affix_warned = ()
+        self.affix_logged = None
+        self.duplicates_reported = ()
+        self.collisions_checked = False
         self.reset_slow()
 
     def reset_slow(self):
@@ -210,7 +226,21 @@ _WANTED_METRICS = frozenset(
 )
 # A machine managed by OpenManage can expose a dozen reports, several of them large (SMART data,
 # NIC statistics). Discovery reads them once; this caps the damage if a server offers many more.
+# The budget cannot simply be lifted: a real R440 advertises 39 reports, and reading all of them
+# in one heartbeat risks the 60 s watchdog that Domoticz applies to a plugin thread.
 _MAX_METRIC_REPORTS = 16
+
+# ORDERING ONLY, never selection. Reports whose id hints at power are read first so the budget
+# above cannot hide the one that matters; what a report actually contains still decides whether
+# it is used. Measured on an R440: "PowerMetrics" is the only report carrying SystemInputPower
+# and the server lists it 23rd, so in server order it was never read, and the plugin silently
+# fell back to the board sensor, which misses the power supplies' own conversion loss.
+_POWER_NAME_HINTS = ("power", "pmp", "psu")
+
+
+def _power_first(path: str) -> tuple:
+    name = path.rsplit("/", 1)[-1].lower()
+    return (0 if any(hint in name for hint in _POWER_NAME_HINTS) else 1, name)
 
 
 def discover_metric_paths(client, state) -> tuple:
@@ -222,16 +252,32 @@ def discover_metric_paths(client, state) -> tuple:
     licence error. Both were seen on real hardware, so the report is selected by the metric ids it
     actually contains rather than by its name.
     """
+    every = sorted(client.metric_report_ids(), key=_power_first)
+    considered = every[:_MAX_METRIC_REPORTS]
     paths = []
-    for path in client.metric_report_ids()[:_MAX_METRIC_REPORTS]:
+    seen = set()
+    for path in considered:
         try:
             found = model.parse_metric_report(client.get(path))
         except redfish_client.RedfishError as exc:
             # One unreadable report, licence-gated or otherwise, must not hide the others.
             Domoticz.Debug(f"metric report {path} unreadable: {exc}")
             continue
-        if _WANTED_METRICS & {sample.metric_id for sample in found}:
+        carried = _WANTED_METRICS & {sample.metric_id for sample in found}
+        if carried:
             paths.append(path)
+            seen |= carried
+    # Deliberately NOT stopping as soon as every wanted metric has been seen. metric_value()
+    # reduces across the samples of every selected report at once, because a metric id repeats
+    # per aggregation and per device, so cutting the search short would change which sample wins
+    # rather than merely saving a request.
+    skipped = len(every) - len(considered)
+    if skipped and seen < _WANTED_METRICS:
+        # Never truncate silently: say what was not read and what is missing because of it.
+        Domoticz.Debug(
+            f"{skipped} further metric report(s) not read (budget {_MAX_METRIC_REPORTS}); "
+            f"still missing {', '.join(sorted(_WANTED_METRICS - seen))}"
+        )
     state.metric_paths = tuple(paths)
     return state.metric_paths
 
@@ -323,6 +369,54 @@ def poll_metrics(client, state) -> dict:
     return metrics
 
 
+def idrac_dns_name(client, state) -> str:
+    """The iDRAC's own DNS name, read once per plugin start.
+
+    It sits on the iDRAC attribute resource rather than on the system, so reading it costs an
+    extra request. That is only worth paying when a name affix actually uses {idrac}, and the
+    answer does not change while the plugin runs, so it is cached either way.
+    """
+    if state.idrac_name is not None:
+        return state.idrac_name
+    try:
+        attributes = client.get(client.idrac_attributes).get("Attributes") or {}
+    except redfish_client.RedfishError as exc:
+        # Not fatal: the token simply does not resolve and expand_affix reports it.
+        Domoticz.Debug(f"iDRAC DNS name unavailable: {exc}")
+        state.idrac_name = ""
+        return state.idrac_name
+    state.idrac_name = str(attributes.get("NIC.1.DNSRacName") or "")
+    return state.idrac_name
+
+
+def resolve_affixes(cfg, state, system) -> tuple:
+    """The user's prefix and suffix with their {tokens} expanded for this machine."""
+    wants_idrac = "{idrac}" in cfg.name_prefix or "{idrac}" in cfg.name_suffix
+    tokens = planner.name_tokens(
+        system, idrac_dns_name(state.client, state) if wants_idrac else None
+    )
+    prefix, missing_prefix = planner.expand_affix(cfg.name_prefix, tokens)
+    suffix, missing_suffix = planner.expand_affix(cfg.name_suffix, tokens)
+    unresolved = tuple(sorted(set(missing_prefix + missing_suffix)))
+    if unresolved != state.affix_warned:
+        # Report only on CHANGE: this runs every poll and the condition persists until the
+        # hardware or the setting changes, so logging each time would bury the message.
+        if unresolved:
+            Domoticz.Error(
+                "device name token(s) this server does not report, so they expand to nothing: "
+                + ", ".join(f"{{{name}}}" for name in unresolved)
+            )
+        state.affix_warned = unresolved
+    if (prefix, suffix) != state.affix_logged:
+        # Show ONE finished name. A trailing space is invisible in the settings form and a token
+        # is not what the user typed, so this is the only place they can confirm the result is
+        # what they meant. Logged on change only, never every poll.
+        if prefix or suffix:
+            Domoticz.Status(f'device names look like "{prefix}System Health{suffix}"')
+        state.affix_logged = (prefix, suffix)
+    return prefix, suffix
+
+
 def poll_slow(client, cfg) -> dict:
     system_payload = client.get(client.system)
     reset_action = (system_payload.get("Actions") or {}).get("#ComputerSystem.Reset") or {}
@@ -370,6 +464,58 @@ def poll_slow(client, cfg) -> dict:
         except redfish_client.RedfishError as exc:
             Domoticz.Error(f"storage poll failed: {exc}")
     return parts
+
+
+# Enough names to make the problem obvious without writing a wall of text to the log.
+_MAX_LISTED_COLLISIONS = 8
+
+
+def report_name_collisions(updates) -> None:
+    """Warn once when another hardware entry already owns names this install plans to use.
+
+    Checked BEFORE the devices are created, so the warning arrives on the first poll rather than
+    after a full set of duplicates already exists.
+    """
+    if _state.collisions_checked:
+        return
+    _state.collisions_checked = True
+    found = domoticz_api.names_used_by_other_hardware(
+        str(Parameters.get("Database", "")),
+        Parameters.get("HardwareID"),
+        [update.name for update in updates],
+    )
+    if not found:
+        return
+    names = [name for name, _ in found]
+    owners = sorted({owner for _, owner in found})
+    listed = ", ".join(names[:_MAX_LISTED_COLLISIONS])
+    if len(names) > _MAX_LISTED_COLLISIONS:
+        listed += f", and {len(names) - _MAX_LISTED_COLLISIONS} more"
+    Domoticz.Error(
+        f"{len(names)} planned device name(s) already exist under hardware "
+        f"{', '.join(repr(owner) for owner in owners)}: {listed}. "
+        "A dzVents lookup by name cannot tell them apart; set a Name Prefix or Name Suffix."
+    )
+
+
+def report_duplicate_names(updates) -> None:
+    """Warn when this plan would give two devices the same name.
+
+    Domoticz permits duplicate names and a dzVents lookup by name then silently picks one of
+    them, so a collision is invisible until a script acts on the wrong device.
+    """
+    duplicates = planner.duplicate_names(updates)
+    if duplicates == _state.duplicates_reported:
+        return
+    # Report only on CHANGE, the same rule as the orphaned-unit message below.
+    if duplicates:
+        Domoticz.Error(
+            f"{len(duplicates)} device name(s) used more than once, which makes a dzVents "
+            f"lookup by name ambiguous: {', '.join(duplicates)}"
+        )
+    elif _state.duplicates_reported:
+        Domoticz.Status("device names are unique again")
+    _state.duplicates_reported = duplicates
 
 
 def onHeartbeat():
@@ -483,6 +629,11 @@ def onHeartbeat():
         **parts,
     )
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
+    # ONE choke point for naming, after the control devices are appended so nothing is missed.
+    prefix, suffix = resolve_affixes(cfg, _state, parts["system"])
+    updates = planner.decorate_names(updates, prefix, suffix)
+    report_duplicate_names(updates)
+    report_name_collisions(updates)
     updates.sort(key=lambda u: u.unit)
     names, colors = domoticz_api.apply_updates(
         devices, _state.dev_ids, updates, saved.auto_names, saved.auto_colors, allow_create=True

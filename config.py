@@ -5,6 +5,11 @@ from dataclasses import dataclass, field
 _TRUE = {"true", "yes", "1", "on"}
 _FALSE = {"false", "no", "0", "off"}
 
+# Longest affix accepted on either side. Domoticz stores a device name in a VARCHAR(100) and the
+# longest name this plugin generates is 35 characters, so two affixes at this limit still leave
+# real slack. A longer value is far more likely to be a mistake than an intention.
+MAX_AFFIX = 24
+
 
 @dataclass(frozen=True)
 class PluginConfig:
@@ -26,6 +31,11 @@ class PluginConfig:
     verify_tls: bool
     request_timeout: int
     debug_level: int
+    # Wrapped around every device name. Empty by default, so an existing install is untouched
+    # until the user asks for it. May contain {servicetag}, {hostname}, {fqdn}, {model} and
+    # {idrac} tokens, which planner expands once the machine has been read.
+    name_prefix: str = ""
+    name_suffix: str = ""
     # Every value this module quietly changed from what the user typed. The module is pure and
     # cannot log, so it reports instead and the caller logs at onStart. A silently rewritten
     # setting the user never sees is worse than a wrong one they can spot.
@@ -60,6 +70,23 @@ def _int(params: dict, key: str, default: int, low: int, high: int, notes: list)
     return clamped
 
 
+def _affix(params: dict, key: str, notes: list) -> str:
+    """A name prefix or suffix, used EXACTLY as typed apart from a length clamp.
+
+    Deliberately not stripped: "SERVER1 - " needs its trailing space to keep the separator off
+    the device name, and Domoticz keeps custom settings in a JSON blob, which preserves it. Only
+    Username and Password are trimmed on the way in (main/WebServerCmds.cpp), not this.
+    """
+    raw = params.get(key)
+    if raw is None:
+        return ""
+    text = str(raw)
+    if len(text) > MAX_AFFIX:
+        notes.append(f"{key}: longer than {MAX_AFFIX} characters, using the first {MAX_AFFIX}")
+        return text[:MAX_AFFIX]
+    return text
+
+
 def _address(raw: str) -> str:
     text = str(raw).strip()
     for scheme in ("https://", "http://"):
@@ -89,5 +116,7 @@ def parse_config(parameters: dict) -> PluginConfig:
         verify_tls=_bool(parameters, "VerifyTLS", False, notes),
         request_timeout=_int(parameters, "RequestTimeout", 30, 5, 120, notes),
         debug_level=_int(parameters, "DebugLevel", 0, 0, 2, notes),
+        name_prefix=_affix(parameters, "NamePrefix", notes),
+        name_suffix=_affix(parameters, "NameSuffix", notes),
         warnings=tuple(notes),
     )
