@@ -351,3 +351,49 @@ def test_a_controller_with_no_name_does_not_break_drive_parsing():
     drive = model.parse_drives({"Drives": [{"Id": "X", "Name": "X"}]})[0]
     assert drive.controller is None
     assert drive.is_boot_card is False
+
+
+def test_drives_carry_the_bus_protocol_they_are_attached_by():
+    """The protocol is what separates an NVMe drive from a SATA one: Dell reports both with
+    MediaType "SSD" and only Protocol tells them apart."""
+    drives = model.parse_drives(
+        {
+            "Drives": [
+                {"Id": "A", "MediaType": "SSD", "Protocol": "PCIe"},
+                {"Id": "B", "MediaType": "SSD", "Protocol": "SATA"},
+                {"Id": "C", "MediaType": "HDD"},
+            ]
+        }
+    )
+    by_id = {d.id: d for d in drives}
+    assert by_id["A"].protocol == "PCIe"
+    assert by_id["B"].protocol == "SATA"
+    assert by_id["C"].protocol is None
+
+
+def test_the_system_carries_the_identifiers_used_for_device_naming():
+    """Service tag and host name are what let two installs be told apart on a dashboard."""
+    info = model.parse_system(
+        {"SKU": "ABC1234", "HostName": "web01.example.lan", "Model": "PowerEdge R750"}
+    )
+    assert info.service_tag == "ABC1234"
+    assert info.hostname == "web01.example.lan"
+    assert info.model == "PowerEdge R750"
+
+
+def test_missing_identifiers_are_none_rather_than_empty_text():
+    """A machine with no iDRAC Service Module reports no host name at all. None keeps that
+    distinguishable from a name that is genuinely an empty string."""
+    info = model.parse_system({})
+    assert info.service_tag is None
+    assert info.hostname is None
+
+
+def test_dell_attributes_carry_the_power_redundancy_policy():
+    """An empty Redfish Redundancy list has two very different causes, and this is what tells
+    them apart: a policy of "Not Redundant" means the empty list is expected."""
+    attrs = model.parse_dell_attributes(
+        {"Attributes": {"ServerPwr.1.PSRedPolicy": "A/B Grid Redundant"}}
+    )
+    assert attrs.redundancy_policy == "A/B Grid Redundant"
+    assert model.parse_dell_attributes({"Attributes": {}}).redundancy_policy is None

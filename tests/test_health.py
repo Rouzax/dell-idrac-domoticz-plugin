@@ -187,3 +187,17 @@ def test_redundancy_with_an_unknown_status_is_grey():
     level, text = health.redundancy_health(_red(status=None))
     assert level == health.LEVEL_GREY
     assert "Unknown" in text
+
+
+def test_a_latched_rollup_with_no_fault_text_still_names_the_subsystem():
+    """From a real PowerEdge R750 reporting Critical with an EMPTY fault list.
+
+    Dell rollups latch, so a machine can be red with nothing currently wrong and no message to
+    show. The tile must still say WHY it is red, or the user sees a red device and no reason.
+    """
+    system = model.parse_system(load("r750", "system"))
+    assert system.health == "Critical"
+    assert model.parse_faults(load("r750", "faults")) == []
+    level, text = health.system_health(system.health, system.rollups)
+    assert level == health.LEVEL_RED
+    assert text == "Critical: SEL"

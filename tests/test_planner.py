@@ -1,3 +1,4 @@
+import dataclasses
 import json
 
 import config
@@ -360,6 +361,13 @@ def test_a_vanished_redundancy_group_is_reported_not_left_stale():
     """
     parts = _parts("t550")
     parts["redundancy"] = []
+    # The policy has to be a REDUNDANT one for this to be the pulled-supply case at all. The
+    # captured profile is configured Not Redundant, which now legitimately reads differently, so
+    # without this the test would be exercising the configured case while claiming to cover a
+    # redundancy loss.
+    parts["dell_attrs"] = dataclasses.replace(
+        parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
+    )
     assert parts["psus"], "the profile must have PSUs for this to mean anything"
     inv = _inventory(parts)
     got = _by_unit(
@@ -776,9 +784,9 @@ def test_blocks_may_share_numbers_across_devices_but_never_within_one():
         ordered = sorted(spans)
         for i, (lo, hi) in enumerate(ordered):
             for other_lo, other_hi in ordered[i + 1 :]:
-                assert hi < other_lo or other_hi < lo, (
-                    f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
-                )
+                assert (
+                    hi < other_lo or other_hi < lo
+                ), f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
     # And the split is actually being used: at least one number appears on more than one device.
     bases = [base for _, base in planner._BLOCK_LIMITS]
     assert len(bases) > len(set(bases))
@@ -790,7 +798,7 @@ def test_the_system_device_carries_fixed_core_units_and_no_block():
     assert not [b for (d, b) in planner._BLOCK_LIMITS if d == planner.DEVICE_SYSTEM]
 
 
-def _drive(name, media="SSD", boot=False, ident="X"):
+def _drive(name, media="SSD", boot=False, ident="X", proto=None):
     return model.Drive(
         id=ident,
         name=name,
@@ -801,6 +809,7 @@ def _drive(name, media="SSD", boot=False, ident="X"):
         life_left_pct=None,
         controller="c",
         is_boot_card=boot,
+        protocol=proto,
     )
 
 
@@ -835,3 +844,285 @@ def test_the_planned_drive_devices_use_the_new_names():
     assert "HDD 0:2:3" in names
     assert not [n for n in names if n.startswith("Solid State Disk")]
     assert not [n for n in names if n.startswith("Physical Disk")]
+
+
+def test_a_raid_state_qualifier_survives_the_media_shortening():
+    """Dell prefixes a pass-through disk with its RAID state, giving names like
+    "NonRAID Solid State Disk 0:1:0". The qualifier is real information (the disk is in HBA
+    mode, not part of an array) so it is kept; only the verbose noun is shortened."""
+    assert planner.drive_name(_drive("NonRAID Solid State Disk 0:1:0")) == "NonRAID SSD 0:1:0"
+    assert planner.drive_name(_drive("NonRAID Physical Disk 0:1:4", media="HDD")) == (
+        "NonRAID HDD 0:1:4"
+    )
+
+
+def test_a_pcie_attached_ssd_is_named_nvme():
+    """Dell calls these "PCIe SSD in Slot 23 in Bay 2" and reports MediaType "SSD", which is
+    indistinguishable from a SATA disk. Protocol is what makes it an NVMe drive."""
+    drive = _drive("PCIe SSD in Slot 23 in Bay 2", proto="PCIe")
+    assert planner.drive_name(drive) == "NVMe in Slot 23 in Bay 2"
+
+
+def test_a_protocol_of_nvme_is_named_nvme_too():
+    """A firmware that reports the Redfish "NVMe" enum directly must take the same branch as
+    Dell's current "PCIe", so the rule does not quietly stop working on newer hardware."""
+    drive = _drive("PCIe SSD in Slot 3 in Bay 1", proto="NVMe")
+    assert planner.drive_name(drive) == "NVMe in Slot 3 in Bay 1"
+
+
+def test_a_pcie_named_drive_that_is_not_pcie_attached_keeps_its_name():
+    """The rename is driven by what the server reports, never by the name alone: a drive that
+    merely reads like a PCIe device but is attached by SAS must not be relabelled NVMe."""
+    drive = _drive("PCIe SSD in Slot 3 in Bay 1", proto="SAS")
+    assert planner.drive_name(drive) == "PCIe SSD in Slot 3 in Bay 1"
+
+
+def _sysinfo(tag="ABC1234", host="web01.example.lan", mdl="PowerEdge R750"):
+    return model.SystemInfo(
+        power_state="On",
+        health="OK",
+        boot_state=None,
+        model=mdl,
+        cpu_count=1,
+        rollups={},
+        service_tag=tag,
+        hostname=host,
+    )
+
+
+def test_an_affix_with_no_tokens_is_used_exactly_as_typed():
+    """Trailing and leading spaces are load-bearing: a user writing "SERVER1 - " needs the
+    space to survive, and Domoticz stores custom settings as JSON, which preserves it."""
+    tokens = planner.name_tokens(_sysinfo())
+    assert planner.expand_affix("SERVER1 - ", tokens) == ("SERVER1 - ", ())
+    assert planner.expand_affix("_TESTSRV", tokens) == ("_TESTSRV", ())
+
+
+def test_the_hostname_token_is_the_short_name_and_fqdn_keeps_the_domain():
+    """A fleet reports host names inconsistently: some machines return a bare name and some a
+    fully qualified one. Truncating at the first dot keeps prefixes uniform across the fleet."""
+    tokens = planner.name_tokens(_sysinfo(host="web01.example.lan"))
+    assert planner.expand_affix("{hostname} - ", tokens)[0] == "web01 - "
+    assert planner.expand_affix("{fqdn} - ", tokens)[0] == "web01.example.lan - "
+
+
+def test_a_bare_hostname_is_unchanged_by_the_short_name_rule():
+    tokens = planner.name_tokens(_sysinfo(host="web01"))
+    assert planner.expand_affix("{hostname} - ", tokens)[0] == "web01 - "
+
+
+def test_every_documented_token_expands():
+    tokens = planner.name_tokens(_sysinfo(), idrac_name="idrac-web01")
+    got = planner.expand_affix("{servicetag}|{hostname}|{fqdn}|{model}|{idrac}", tokens)[0]
+    assert got == "ABC1234|web01|web01.example.lan|PowerEdge R750|idrac-web01"
+
+
+def test_an_affix_that_loses_its_only_token_is_dropped_entirely():
+    """A machine with no iDRAC Service Module reports no host name. Expanding "{hostname} - "
+    to " - " would put half a separator in front of every device on the dashboard, which is
+    worse than having no affix at all. The unresolved token is reported so it can be logged."""
+    tokens = planner.name_tokens(_sysinfo(host=None))
+    assert planner.expand_affix("{hostname} - ", tokens) == ("", ("hostname",))
+
+
+def test_an_affix_keeps_whatever_still_carries_meaning():
+    """Only a wholly meaningless affix is dropped; real text beside a dead token survives."""
+    tokens = planner.name_tokens(_sysinfo(host=None))
+    assert planner.expand_affix("RACK1 {hostname} - ", tokens) == ("RACK1  - ", ("hostname",))
+
+
+def test_decorate_names_wraps_every_device_name():
+    updates = [
+        planner.DeviceUpdate(unit=1, type_name="Alert", name="System Health", nvalue=1, svalue=""),
+        planner.DeviceUpdate(
+            unit=2, type_name="Temperature", name="Inlet Temp", nvalue=0, svalue=""
+        ),
+    ]
+    got = planner.decorate_names(updates, "R750 - ", "")
+    assert [u.name for u in got] == ["R750 - System Health", "R750 - Inlet Temp"]
+    # Everything else about the update is untouched.
+    assert [u.unit for u in got] == [1, 2]
+
+
+def test_decorate_names_returns_the_updates_untouched_when_no_affix_is_set():
+    updates = [
+        planner.DeviceUpdate(unit=1, type_name="Alert", name="System Health", nvalue=1, svalue="")
+    ]
+    assert planner.decorate_names(updates, "", "") is updates
+
+
+def test_duplicate_names_reports_names_planned_more_than_once():
+    updates = [
+        planner.DeviceUpdate(unit=1, type_name="Alert", name="Disk A", nvalue=1, svalue=""),
+        planner.DeviceUpdate(unit=2, type_name="Alert", name="Disk A", nvalue=1, svalue=""),
+        planner.DeviceUpdate(unit=3, type_name="Alert", name="Disk B", nvalue=1, svalue=""),
+    ]
+    assert planner.duplicate_names(updates) == ("Disk A",)
+    assert planner.duplicate_names(updates[1:]) == ()
+
+
+def test_a_real_nvme_drive_is_named_from_its_reported_protocol():
+    """End to end over a capture from a PowerEdge R750, not a hand-built Drive.
+
+    Every other committed storage fixture holds SAS disks only, so without this the NVMe path
+    is exercised by synthetic objects alone and a parsing change could break it unnoticed.
+    """
+    drives = model.parse_drives(load("r750", "storage_expanded"))
+    assert [d.protocol for d in drives] == ["PCIe"]
+    assert [planner.drive_name(d) for d in drives] == ["NVMe in Slot 23 in Bay 2"]
+
+
+def _gpu_sensor(sid, reading, name):
+    return model.Sensor(
+        id=sid, name=name, reading=reading, units="Cel", health="OK", physical_context="GPU"
+    )
+
+
+def test_gpu_temperatures_from_sensors_become_devices_without_telemetry():
+    """A real PowerEdge R750 reports a GPU at 74 C in the Sensors collection while telemetry
+    reports no card at all, so without this the machine shows no GPU device whatsoever."""
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    parts["gpus"] = {}
+    parts["sensors"] = dict(parts["sensors"])
+    parts["sensors"]["GPUTemp8"] = _gpu_sensor("GPUTemp8", 74.0, "GPU Temp 8")
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    temps = [u for u in updates if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_TEMP)]
+    assert [(u.name, u.svalue) for u in temps] == [("GPU Temp 8", "74.0")]
+    assert temps[0].type_name == "Temperature"
+
+
+def test_a_gpu_sensor_with_no_reading_creates_no_device():
+    """A real R7525 reports GPUTemp2 with a null reading. Writing 0 would be a permanent lie in
+    the device's history, the same rule every other sensor follows."""
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    parts["gpus"] = {}
+    parts["sensors"] = dict(parts["sensors"])
+    parts["sensors"]["GPUTemp2"] = _gpu_sensor("GPUTemp2", None, "GPU Temp 2")
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    assert not [u for u in updates if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_TEMP)]
+
+
+def test_telemetry_cards_win_over_sensor_gpu_temperatures():
+    """A DSS8440 reports seven cards through telemetry AND seven slot temperatures tagged
+    PhysicalContext "GPU". Using both would give fourteen temperature devices for seven cards.
+
+    Telemetry wins because it carries power as well as temperature and names the card by its
+    slot id, so the sensor-derived reading is the fallback, never an addition.
+    """
+    parts = _parts("t550")
+    parts["metrics"] = {}
+    parts["gpus"] = {"Video.Slot.5-1": (40.0, 35.0)}
+    parts["sensors"] = dict(parts["sensors"])
+    parts["sensors"]["SystemBoardSLOT5Temp"] = _gpu_sensor(
+        "SystemBoardSLOT5Temp", 35.0, "System Board SLOT5 Temp"
+    )
+    inv = _inventory(parts)
+    inv = discovery.Inventory(**{**inv.__dict__, "gpus": ("Video.Slot.5-1",)})
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    temps = [u for u in updates if _in_block(u, planner.DEVICE_GPU, planner.BLOCK_GPU_TEMP)]
+    assert [u.name for u in temps] == ["GPU Video.Slot.5-1 Temp"]
+
+
+def _psu_pair(slot, watts_in, watts_out):
+    def make(sid, reading):
+        return model.Sensor(
+            id=sid,
+            name=sid,
+            reading=reading,
+            units="W",
+            health="OK",
+            physical_context="PowerSupply",
+        )
+
+    return {
+        f"PSU.Slot.{slot}_InputPower": make(f"PSU.Slot.{slot}_InputPower", watts_in),
+        f"PSU.Slot.{slot}_OutputPower": make(f"PSU.Slot.{slot}_OutputPower", watts_out),
+    }
+
+
+def _only_psu_pair(parts, pair):
+    """Replace any PSU power sensors the fixture already carries with just the pair under test.
+
+    The t550 capture has a real supply reporting both sides, so without this every case here
+    would also see that one and the assertions would be about the fixture, not the input.
+    """
+    kept = {
+        sid: sensor
+        for sid, sensor in parts["sensors"].items()
+        if not (sid.endswith("_InputPower") or sid.endswith("_OutputPower"))
+    }
+    return {**parts, "sensors": {**kept, **pair}}
+
+
+def _efficiency_devices(parts):
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    return [u for u in updates if _in_block(u, planner.DEVICE_POWER, planner.BLOCK_PSU_EFFICIENCY)]
+
+
+def test_psu_efficiency_is_the_ratio_of_output_to_input():
+    """Measured on a real PowerEdge R750 under load: 464.5 W drawn, 433.5 W delivered."""
+    parts = _parts("t550")
+    parts = _only_psu_pair(parts, _psu_pair(1, 464.5, 433.5))
+    devices = _efficiency_devices(parts)
+    assert [(u.name, u.svalue, u.type_name) for u in devices] == [
+        ("PS1 Efficiency", "93.3", "Percentage")
+    ]
+
+
+def test_a_supply_on_standby_gets_no_efficiency_device():
+    """A real R750 idle grid feed reads 5.0 W in and 0.0 W out. That is a supply doing nothing,
+    not a supply that is 0% efficient, and writing 0 would be permanent in the device history."""
+    parts = _parts("t550")
+    parts = _only_psu_pair(parts, _psu_pair(2, 5.0, 0.0))
+    assert _efficiency_devices(parts) == []
+
+
+def test_efficiency_is_not_reported_below_a_meaningful_load():
+    """Dell reports input in whole watts and output in quarter watts, so at a trickle the ratio
+    is mostly quantization. A real R440 idling produced exactly 32 -> 24, i.e. 75.0%."""
+    parts = _parts("t550")
+    parts = _only_psu_pair(parts, _psu_pair(1, 24.0, 18.0))
+    assert _efficiency_devices(parts) == []
+
+
+def test_an_impossible_efficiency_is_rejected_rather_than_shown():
+    """More out than in cannot happen; if a server says so, the reading is wrong."""
+    parts = _parts("t550")
+    parts = _only_psu_pair(parts, _psu_pair(1, 100.0, 140.0))
+    assert _efficiency_devices(parts) == []
+
+
+def _redundancy_device(parts):
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    return next(u for u in updates if u.unit == planner.UNIT_REDUNDANCY)
+
+
+def test_a_deliberately_non_redundant_supply_set_says_so():
+    """A real DSS8440 with four supplies reports an EMPTY redundancy list because its policy is
+    set to Not Redundant, so all four feed the GPUs. Saying "Not reported" there suggests the
+    server is withholding something when it is simply configured that way."""
+    parts = _parts("t550")
+    parts["redundancy"] = []
+    parts["dell_attrs"] = dataclasses.replace(
+        parts["dell_attrs"], redundancy_policy="Not Redundant"
+    )
+    device = _redundancy_device(parts)
+    assert device.svalue == "Not redundant (configured)"
+    assert device.nvalue == planner.health.LEVEL_GREY
+
+
+def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
+    """Pulling a supply EMPTIES the list rather than marking it Critical. That must stay
+    distinguishable from the configured case, or a real redundancy loss reads as intentional."""
+    parts = _parts("t550")
+    parts["redundancy"] = []
+    parts["dell_attrs"] = dataclasses.replace(
+        parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
+    )
+    assert _redundancy_device(parts).svalue == "Not reported"

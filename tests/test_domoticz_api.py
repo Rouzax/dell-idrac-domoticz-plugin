@@ -288,7 +288,7 @@ def _ids(dev_id):
     return dict.fromkeys(planner.DEVICE_FAMILIES, dev_id)
 
 
-def _life(color, floor=10):
+def _life(color):
     return planner.DeviceUpdate(
         unit=4, type_name="Percentage", name="SSD Life", nvalue=0, svalue="100", color=color
     )
@@ -338,3 +338,63 @@ def test_unchanged_bands_are_not_rewritten_every_poll():
         domoticz_stub.Devices, _ids("dev"), [_life('{"a":1}')], names, colors
     )
     assert not [c for c in calls if c.get("UpdateProperties")]
+
+
+def _domoticz_db(tmp_path, rows):
+    """A stand-in for domoticz.db carrying just the two tables and columns we read.
+
+    Built with real sqlite rather than a mock: the point of the check is that it survives
+    contact with an actual database file, including being opened read-only.
+    """
+    import sqlite3
+
+    path = tmp_path / "domoticz.db"
+    con = sqlite3.connect(path)
+    con.execute("CREATE TABLE Hardware ([ID] INTEGER PRIMARY KEY, [Name] VARCHAR(200) NOT NULL)")
+    con.execute(
+        "CREATE TABLE DeviceStatus ([ID] INTEGER PRIMARY KEY, [HardwareID] INTEGER NOT NULL, "
+        "[Name] VARCHAR(100) DEFAULT Unknown)"
+    )
+    con.execute("INSERT INTO Hardware VALUES (1, 'iDRAC T550')")
+    con.execute("INSERT INTO Hardware VALUES (2, 'iDRAC R750')")
+    for hardware_id, name in rows:
+        con.execute(
+            "INSERT INTO DeviceStatus (HardwareID, Name) VALUES (?, ?)", (hardware_id, name)
+        )
+    con.commit()
+    con.close()
+    return str(path)
+
+
+def test_a_name_owned_by_another_hardware_entry_is_reported(tmp_path):
+    """The collision that motivated the whole feature: a second install of this plugin, with no
+    prefix set, planning the same names as the first."""
+    db = _domoticz_db(tmp_path, [(1, "System Health"), (1, "Inlet Temp"), (1, "Fan1")])
+    found = domoticz_api.names_used_by_other_hardware(db, 2, ["System Health", "Inlet Temp", "New"])
+    assert found == (("Inlet Temp", "iDRAC T550"), ("System Health", "iDRAC T550"))
+
+
+def test_our_own_devices_are_never_reported_as_a_collision(tmp_path):
+    """On every poll after the first, our own names are in the table. Matching them would make
+    the plugin warn about itself forever."""
+    db = _domoticz_db(tmp_path, [(2, "System Health"), (2, "Inlet Temp")])
+    assert domoticz_api.names_used_by_other_hardware(db, 2, ["System Health"]) == ()
+
+
+def test_a_collision_with_unrelated_hardware_is_reported_too(tmp_path):
+    """Not just a second copy of this plugin: any device in the install can own the name."""
+    db = _domoticz_db(tmp_path, [(1, "Uptime")])
+    found = domoticz_api.names_used_by_other_hardware(db, 9, ["Uptime"])
+    assert found == (("Uptime", "iDRAC T550"),)
+
+
+def test_an_unreadable_database_reports_nothing_instead_of_failing(tmp_path):
+    """This runs inside the heartbeat. A locked or missing database must cost a debug line, not
+    the poll."""
+    assert domoticz_api.names_used_by_other_hardware(str(tmp_path / "nope.db"), 1, ["X"]) == ()
+    assert domoticz_api.names_used_by_other_hardware("", 1, ["X"]) == ()
+
+
+def test_no_query_is_made_for_an_empty_name_list(tmp_path):
+    db = _domoticz_db(tmp_path, [(1, "System Health")])
+    assert domoticz_api.names_used_by_other_hardware(db, 2, []) == ()

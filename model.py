@@ -50,6 +50,9 @@ class Drive:
     # what lets a boot card's "SSD 0" be told apart from a PERC's "Solid State Disk 0:2:0".
     controller: str | None = None
     is_boot_card: bool = False
+    # How the drive is attached. Dell reports an NVMe drive as MediaType "SSD" exactly like a
+    # SATA one, so this is the only field that tells them apart.
+    protocol: str | None = None
 
 
 @dataclass(frozen=True)
@@ -75,6 +78,11 @@ class SystemInfo:
     model: str | None
     cpu_count: int
     rollups: dict
+    # Identity, used to build device names that stay distinct across two installs. Dell puts the
+    # service tag in SKU; HostName is the OS name and needs the iDRAC Service Module to be
+    # populated, so it is absent on plenty of machines.
+    service_tag: str | None = None
+    hostname: str | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +96,10 @@ class DellAttrs:
     accumulative_power: float | None
     peak_watts: float | None
     powered_on_seconds: int | None
+    # Dell's configured power redundancy policy. The Redfish Redundancy list is EMPTY both when
+    # a supply has been pulled and when the operator turned redundancy off; this is what tells
+    # those two apart.
+    redundancy_policy: str | None = None
 
 
 def _health(node: dict) -> str | None:
@@ -190,6 +202,8 @@ def parse_system(payload: dict) -> SystemInfo:
         model=payload.get("Model"),
         cpu_count=_int(processors.get("Count")) or 0,
         rollups=rollups,
+        service_tag=payload.get("SKU"),
+        hostname=payload.get("HostName"),
     )
 
 
@@ -244,6 +258,7 @@ def parse_drives(payload: dict) -> list:
                 life_left_pct=_int(node.get("PredictedMediaLifeLeftPercent")),
                 controller=controller,
                 is_boot_card=is_boot,
+                protocol=node.get("Protocol"),
             )
         )
     return out
@@ -294,6 +309,7 @@ def parse_dell_attributes(payload: dict) -> DellAttrs:
         accumulative_power=_number(attrs.get("ServerPwrMon.1.AccumulativePower")),
         peak_watts=_number(attrs.get("ServerPwrMon.1.PeakPowerWatts")),
         powered_on_seconds=_int(attrs.get("ServerOS.1.ServerPoweredOnTime")),
+        redundancy_policy=attrs.get("ServerPwr.1.PSRedPolicy"),
     )
 
 
