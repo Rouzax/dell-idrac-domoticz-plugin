@@ -46,7 +46,7 @@ def test_apply_creates_units_in_ascending_order():
 
 
 def test_apply_returns_auto_names_for_created_units():
-    names, _ = domoticz_api.apply_updates(
+    names, _, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, name="Server Power")], {}
     )
     assert names[domoticz_api.name_key("dellidrac_1", 1)] == "Server Power"
@@ -80,7 +80,7 @@ def test_a_user_rename_is_never_overwritten():
     )
     unit = domoticz_stub.Devices["dellidrac_1"].Units[1]
     unit.Name = "My Server"
-    names, _ = domoticz_api.apply_updates(
+    names, _, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices,
         _ids("dellidrac_1"),
         [_update(1, name="Auto2")],
@@ -94,7 +94,7 @@ def test_an_owned_name_is_renamed_when_the_plugin_changes_it():
     domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, name="Auto")], {}
     )
-    names, _ = domoticz_api.apply_updates(
+    names, _, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices,
         _ids("dellidrac_1"),
         [_update(1, name="Auto2")],
@@ -276,7 +276,7 @@ def test_bar_ranges_are_never_rewritten_on_an_existing_device():
         svalue="27.0",
         color='{"temp":[{"from":0,"to":40,"color":"#66bb6a"}]}',
     )
-    names, _ = domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [update], {})
+    names, _, _ = domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [update], {})
     unit = domoticz_stub.Devices["dev"].Units[4]
     unit.Color = '{"temp":[{"from":0,"to":99,"color":"#123456"}]}'
     domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dev"), [update], names)
@@ -302,7 +302,7 @@ def test_bands_follow_a_changed_setting():
     """
     domoticz_stub.Devices.clear()
     first = '{"a":1}'
-    names, colors = domoticz_api.apply_updates(
+    names, colors, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dev"), [_life(first)], {}, {}
     )
     unit = domoticz_stub.Devices["dev"].Units[4]
@@ -315,7 +315,7 @@ def test_bands_follow_a_changed_setting():
 def test_bands_a_user_edited_are_never_overwritten():
     """Same ownership rule as device names: once you change it, it is yours."""
     domoticz_stub.Devices.clear()
-    names, colors = domoticz_api.apply_updates(
+    names, colors, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dev"), [_life('{"a":1}')], {}, {}
     )
     unit = domoticz_stub.Devices["dev"].Units[4]
@@ -328,7 +328,7 @@ def test_bands_a_user_edited_are_never_overwritten():
 
 def test_unchanged_bands_are_not_rewritten_every_poll():
     domoticz_stub.Devices.clear()
-    names, colors = domoticz_api.apply_updates(
+    names, colors, _ = domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dev"), [_life('{"a":1}')], {}, {}
     )
     unit = domoticz_stub.Devices["dev"].Units[4]
@@ -398,3 +398,108 @@ def test_an_unreadable_database_reports_nothing_instead_of_failing(tmp_path):
 def test_no_query_is_made_for_an_empty_name_list(tmp_path):
     db = _domoticz_db(tmp_path, [(1, "System Health")])
     assert domoticz_api.names_used_by_other_hardware(db, 2, []) == ()
+
+
+def _stored_unit(dev_id, unit):
+    return domoticz_stub.Devices[dev_id].Units[unit]
+
+
+def test_a_changed_description_is_actually_persisted():
+    """A PSU is a Usage device, so its DESCRIPTION is the only place its health can appear.
+    Written once at creation and never again, a supply that failed after the device existed read
+    "OK" for ever. Verified on live hardware: the iDRAC reported PS1 Critical at 0 W while
+    Domoticz still stored OK.
+
+    Asserted against `stored`, not against the attribute: assigning Unit.Description does
+    nothing on its own, the core persists it only under UpdateProperties.
+    """
+    names, colors, descriptions = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, description="OK")], {}
+    )
+    unit = _stored_unit("dellidrac_1", 1)
+    assert unit.stored["Description"] == "OK"
+
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1"),
+        [_update(1, description="Critical")],
+        names,
+        colors,
+        descriptions,
+    )
+    assert unit.stored["Description"] == "Critical"
+
+
+def test_a_user_edited_description_is_never_overwritten():
+    """The same rule names and bar bands already follow: what the user typed survives."""
+    names, colors, descriptions = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, description="OK")], {}
+    )
+    unit = _stored_unit("dellidrac_1", 1)
+    unit.Description = "feeds the rack PDU on the left"
+    unit.stored["Description"] = unit.Description
+
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1"),
+        [_update(1, description="Critical")],
+        names,
+        colors,
+        descriptions,
+    )
+    assert unit.stored["Description"] == "feeds the rack PDU on the left"
+
+
+def test_an_unchanged_description_is_not_rewritten_every_poll():
+    """This runs on every unit on every heartbeat, so it must not write when nothing moved."""
+    names, colors, descriptions = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, description="OK")], {}
+    )
+    unit = _stored_unit("dellidrac_1", 1)
+    unit.updates.clear()
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1"),
+        [_update(1, description="OK")],
+        names,
+        colors,
+        descriptions,
+    )
+    assert not any(call.get("UpdateProperties") for call in unit.updates)
+
+
+def test_a_device_with_no_description_is_left_alone():
+    """Most devices carry no description at all; an empty one must not clear a user's note."""
+    names, colors, descriptions = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, description="")], {}
+    )
+    unit = _stored_unit("dellidrac_1", 1)
+    unit.Description = "hand written"
+    unit.stored["Description"] = unit.Description
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1"),
+        [_update(1, description="")],
+        names,
+        colors,
+        descriptions,
+    )
+    assert unit.stored["Description"] == "hand written"
+
+
+def test_a_description_from_before_ownership_tracking_is_adopted_not_frozen():
+    """The upgrade path. An install created its devices under a version that wrote descriptions
+    only at creation, so the health text is stale AND there is no ownership record for it.
+    Treating "no record" as "the user's" would leave that text frozen for ever.
+    """
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, description="OK")], {}
+    )
+    unit = _stored_unit("dellidrac_1", 1)
+    # Simulate the upgrade: the device exists and carries a description, the map is empty.
+    _, _, descriptions = domoticz_api.apply_updates(
+        domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, description="Critical")], {}
+    )
+    assert unit.stored["Description"] == "Critical"
+    # And it is recorded from now on, so the next edit by the user does survive.
+    assert descriptions[domoticz_api.name_key("dellidrac_1", 1)] == "Critical"

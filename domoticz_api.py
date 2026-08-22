@@ -32,7 +32,15 @@ def _existing_unit(devices, dev_id, unit):
     return dev.Units.get(unit)
 
 
-def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow_create=True):
+def apply_updates(
+    devices,
+    dev_ids,
+    updates,
+    auto_names,
+    auto_colors=None,
+    auto_descriptions=None,
+    allow_create=True,
+):
     """Apply updates across every Device the plan touches.
 
     `dev_ids` maps a planner family name to its DeviceID. Domoticz creates each Device implicitly
@@ -40,9 +48,11 @@ def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow
     """
     names = dict(auto_names)
     colors = dict(auto_colors or {})
+    descriptions = dict(auto_descriptions or {})
     created = 0
     renamed = 0
     recoloured = 0
+    redescribed = 0
     # Create in ascending device then unit order: Domoticz lists devices in creation order, so
     # this keeps the on-disk layout matching the logical numbering.
     for up in sorted(updates, key=lambda u: (u.device, u.unit)):
@@ -77,6 +87,8 @@ def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow
             unit.sValue = up.svalue
             unit.Update(Log=False)
             names[key] = up.name
+            if up.description:
+                descriptions[key] = up.description
             created += 1
             continue
 
@@ -99,6 +111,29 @@ def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow
                 colors[key] = up.color
                 recoloured += 1
 
+        # A PSU is a Usage device, so its description is the ONLY channel its health has, and
+        # it has to follow the hardware rather than being frozen at creation like the name and
+        # the bands. Ownership is still respected the same way: a description the user typed is
+        # not ours to overwrite. Skipped entirely when the plan carries no description, so an
+        # empty one never clears a note on a device that has nothing to say.
+        if up.description and unit.Description != up.description:
+            # An unrecorded description is CLAIMED rather than treated as the user's. Until this
+            # map existed the plugin was the only writer of these, so on an install upgrading
+            # from an earlier version every description on a device it owns came from it, and
+            # refusing to touch them would leave the health text frozen for ever on precisely
+            # the installs that have the problem. It costs a note typed before the upgrade,
+            # once. From here on the map is authoritative and an edit survives.
+            owns_description = (
+                not unit.Description
+                or key not in descriptions
+                or unit.Description == descriptions.get(key)
+            )
+            if owns_description:
+                unit.Description = up.description
+                unit.Update(Log=False, UpdateProperties=True)
+                descriptions[key] = up.description
+                redescribed += 1
+
         owned = unit.Name == names.get(key)
         if owned and unit.Name != up.name:
             unit.Name = up.name
@@ -110,9 +145,9 @@ def apply_updates(devices, dev_ids, updates, auto_names, auto_colors=None, allow
     if updates:
         Domoticz.Debug(
             f"apply units={len(updates)} created={created} renamed={renamed} "
-            f"recoloured={recoloured}"
+            f"recoloured={recoloured} redescribed={redescribed}"
         )
-    return names, colors
+    return names, colors, descriptions
 
 
 # There is deliberately NO mark_timed_out here. Checked against the Domoticz core:

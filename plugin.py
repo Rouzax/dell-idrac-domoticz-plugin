@@ -635,11 +635,18 @@ def onHeartbeat():
     report_duplicate_names(updates)
     report_name_collisions(updates)
     updates.sort(key=lambda u: u.unit)
-    names, colors = domoticz_api.apply_updates(
-        devices, _state.dev_ids, updates, saved.auto_names, saved.auto_colors, allow_create=True
+    names, colors, descriptions = domoticz_api.apply_updates(
+        devices,
+        _state.dev_ids,
+        updates,
+        saved.auto_names,
+        saved.auto_colors,
+        saved.auto_descriptions,
+        allow_create=True,
     )
     saved.auto_names = names
     saved.auto_colors = colors
+    saved.auto_descriptions = descriptions
     saved.unit_alloc = _state.alloc
     domoticz_api.save_state(saved)
 

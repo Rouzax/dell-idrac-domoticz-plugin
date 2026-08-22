@@ -24,6 +24,10 @@ class PluginState:
     auto_names: dict[str, str] = field(default_factory=dict)
     # Bar-range payloads the plugin last wrote, so it can tell its own bands from a user's edit.
     auto_colors: dict[str, str] = field(default_factory=dict)
+    # Descriptions the plugin last wrote, same purpose. A PSU's health lives in its description,
+    # so unlike names and bands this one has to follow the hardware on every poll; the map is
+    # what keeps it from trampling a note the user typed there.
+    auto_descriptions: dict[str, str] = field(default_factory=dict)
     base_wh: dict[str, float] = field(default_factory=dict)
     control_shown: bool = False
     energy_scale: float | None = None
@@ -36,6 +40,7 @@ def migrate(raw: dict) -> dict:
     raw.setdefault("unit_alloc", {})
     raw.setdefault("auto_names", {})
     raw.setdefault("auto_colors", {})
+    raw.setdefault("auto_descriptions", {})
     raw.setdefault("base_wh", {})
     raw.setdefault("control_shown", False)
     raw.setdefault("energy_scale", None)
@@ -50,6 +55,7 @@ def dumps(state: PluginState) -> str:
             "unit_alloc": state.unit_alloc,
             "auto_names": state.auto_names,
             "auto_colors": state.auto_colors,
+            "auto_descriptions": state.auto_descriptions,
             "base_wh": state.base_wh,
             "control_shown": state.control_shown,
             "energy_scale": state.energy_scale,
@@ -102,6 +108,7 @@ def loads(text: str) -> PluginState:
         unit_alloc=_str_keyed(raw.get("unit_alloc"), int),
         auto_names=_str_keyed(raw.get("auto_names"), str),
         auto_colors=_str_keyed(raw.get("auto_colors"), str),
+        auto_descriptions=_str_keyed(raw.get("auto_descriptions"), str),
         base_wh={k: float(v) for k, v in _str_keyed(raw.get("base_wh"), int | float).items()},
         control_shown=raw.get("control_shown") is True,
         energy_scale=_number(raw.get("energy_scale")),

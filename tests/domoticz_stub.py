@@ -34,12 +34,42 @@ class Unit:
         # because it is not one in the core either: CUnitEx's init kwlist has no "color", so
         # Domoticz.Unit(Color=...) is silently dropped. Assign it on the object before Create().
         self.Color = ""
+        # What Domoticz would actually have PERSISTED, as opposed to what has merely been
+        # assigned to this object. The two are not the same, and a stub that ignores the
+        # difference passes tests for code that can never work against real Domoticz: the core
+        # writes Name, Description, Color and CustomImage only when Update() is passed
+        # UpdateProperties=True, and Options only under UpdateOptions=True
+        # (hardware/plugins/PythonObjectEx.cpp, CUnitEx_update). A missing flag is silently
+        # dropped, which is exactly how a Description that never updated shipped.
+        self.stored = {}
+        # Every Update() call's keyword arguments, in order, so a test can assert the flags.
+        self.updates = []
 
     def Create(self):
         dev = Devices.setdefault(self.DeviceID, _FakeDevice(self.DeviceID))
         dev.Units[self.Unit] = self
+        self.stored = {
+            "Name": self.Name,
+            "Description": self.Description,
+            "Color": self.Color,
+            "Image": self.Image,
+            "Options": dict(self.Options),
+            "nValue": self.nValue,
+            "sValue": self.sValue,
+        }
 
-    def Update(self, **_kw):
+    def Update(self, **kw):
+        self.updates.append(kw)
+        # Values always persist; that is what Update is for.
+        self.stored["nValue"] = self.nValue
+        self.stored["sValue"] = self.sValue
+        if kw.get("UpdateProperties"):
+            self.stored["Name"] = self.Name
+            self.stored["Description"] = self.Description
+            self.stored["Color"] = self.Color
+            self.stored["Image"] = self.Image
+        if kw.get("UpdateOptions"):
+            self.stored["Options"] = dict(self.Options)
         return None
 
 

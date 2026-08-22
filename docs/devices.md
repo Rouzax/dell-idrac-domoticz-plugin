@@ -38,7 +38,7 @@ The example values below come from that same machine: a tower PowerEdge with thr
 | CPU temperature, one per socket | Temperature | `CPU1 Temp` reading `53.0 C` |
 | Hottest DIMM | Temperature | `Max DIMM Temp` reading `42.0 C` |
 | Fan speed, one per fan | Custom, RPM | `System Board Fan1` reading `1920 RPM` |
-| Power supply, one per PSU | Usage, watts | `PS1 Status` reading `150.5 Watt`, with its health in the description |
+| Power supply, one per PSU | Usage, watts | `PS1 Status` reading `150.5 Watt`, with the health the server reports in its description, `OK` or `Critical` |
 | RAID volume, one per virtual disk | Alert | `Volume OS` reading `RAID1` |
 | Physical drive, one per disk | Alert | `SSD 0:2:0` reading `SSD, life 100%`, or `HDD 0:2:3` reading `HDD` |
 | NIC port, one per port | Alert | `NIC NIC.Embedded.1-1-1` reading `LinkUp 1000 Mb`, or `LinkDown` in amber |
@@ -296,7 +296,11 @@ The trade-off is that energy accrued while Domoticz is not running is not recove
 A PSU device shows what the supply draws from the wall, which includes conversion loss, rather than what it delivers to the board.
 
 !!! warning "A PSU reading near 0 W is often completely normal"
-    On a server configured for hot standby, one supply carries the load while the other idles near zero. Wattage alone is therefore **not** a fault signal, and the plugin never treats it as one. Health comes from the supply's reported status and from Power Redundancy.
+    On a server with **Hot Spare** switched on, one supply carries the load while the other idles near zero. Wattage alone is therefore **not** a fault signal, and the plugin never treats it as one. Health comes from the supply's reported status and from Power Redundancy, which names the standby supply so you can tell this apart from a failure at a glance.
+
+    What tells you a supply has actually failed is **System Health**, which turns red and carries the iDRAC's own sentence, for example `The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.` The supply's own **description** also carries the health the server reports and follows it on every poll, `OK` while the supply is fine and `Critical` when it is not. Note that Domoticz does not draw the description on the card: you see it in the device's edit dialog, in Setup then Devices, in the JSON API and from dzVents as `device.description`.
+
+    The idle supply also loses its **PSU efficiency** device while it is on standby. A supply drawing 5 W and delivering 0 W has no meaningful conversion efficiency, so the plugin reports none rather than inventing a figure.
 
 ## Device naming and unit numbers
 

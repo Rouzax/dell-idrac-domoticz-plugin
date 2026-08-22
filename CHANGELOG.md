@@ -12,6 +12,14 @@ All notable changes to this project are documented here. The format is based on 
 
 ### Fixed
 
+- **A power supply's health text never changed after its device was created.** A PSU is a Domoticz `Usage` device, so the only place the health the server reports can appear is its **description**, and the plugin wrote that description once at creation and never again. A supply that failed later therefore read `OK` for ever. Verified on live hardware: with a mains cord pulled, the iDRAC reported PS1 `Critical` at 0 W while Domoticz still stored `OK`.
+
+  Domoticz does not draw a description on the device card, so this is not a new card signal: it is what you see in the device's edit dialog, in Setup then Devices, in the JSON API, and from dzVents as `device.description`. On the card itself a failed supply still shows as System Health turning red with the iDRAC's own sentence.
+
+  The cause was in the write, not the reading: Domoticz persists `Description` only when `Unit.Update()` is passed `UpdateProperties=True`, which the plugin did for names and bar bands but never for descriptions. Descriptions now follow the hardware on every poll, while still respecting a description you edited yourself, the same rule names and bands already follow.
+
+  **On upgrade, a description you typed by hand on one of these devices is overwritten once.** The plugin has never recorded which descriptions were its own, so it cannot tell yours from its own on the first poll after updating, and it claims them. From that poll on your edits are tracked and survive.
+
 - **Documentation: a lost power supply has two readings, not one.** The docs said that pulling a supply always makes the iDRAC drop the redundancy group, so the device reads a grey `Not reported`. That is only true when the supply is taken out of its bay. Pulling the mains cord while the supply stays seated keeps the group and marks it Critical, so the device reads a red `Redundancy lost`. Both are now documented, both verified on a live T550, and both pinned by a captured fixture. No behaviour changed; the plugin already handled both, and only the description of them was wrong.
 
 - **The fixture capture tool now scrubs Dell attribute identifiers.** Dell names attributes `<group>.<instance>.<Field>`, so the DellAttributes payload spells the Service Tag `ServerInfo.1.ServiceTag`. The scrubber matched whole key names only and therefore skipped every identifier in the largest payload it captures. Dev tooling only; no committed fixture was affected, and nothing about running the plugin changes.

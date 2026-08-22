@@ -73,3 +73,18 @@ def test_realistic_redfish_ids_survive_two_round_trips():
     twice = persistence.loads(persistence.dumps(once))
     assert once == state
     assert twice == state
+
+
+def test_auto_descriptions_round_trip():
+    state = persistence.PluginState()
+    state.auto_descriptions = {"dellidrac_1:5": "OK"}
+    assert persistence.loads(persistence.dumps(state)).auto_descriptions == {"dellidrac_1:5": "OK"}
+
+
+def test_a_payload_written_before_auto_descriptions_existed_still_loads():
+    """Additive field: an install upgrading from an earlier version has no such key, and must
+    come back with an empty mapping rather than failing to load its unit allocation."""
+    old = '{"version":1,"unit_alloc":{"PSU.Slot.1":5},"auto_names":{},"base_wh":{}}'
+    state = persistence.loads(old)
+    assert state.auto_descriptions == {}
+    assert state.unit_alloc == {"PSU.Slot.1": 5}
