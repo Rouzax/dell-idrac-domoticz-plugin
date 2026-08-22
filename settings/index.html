@@ -1,0 +1,1394 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A read-only-by-default Domoticz plugin for Dell PowerEdge servers: temperatures, fans, power, utilization, storage and health read from the iDRAC over Redfish, with opt-in power control.">
+      
+      
+        <meta name="author" content="Rouzax">
+      
+      
+        <link rel="canonical" href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/">
+      
+      
+        <link rel="prev" href="../install/">
+      
+      
+        <link rel="next" href="../devices/">
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>Settings - Dell iDRAC Monitor for Domoticz</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#settings" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Dell iDRAC Monitor for Domoticz" class="md-header__button md-logo" aria-label="Dell iDRAC Monitor for Domoticz" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9zm0 8h1v-2H9zm0 8h1v-2H9zM5 3v2h2V3zm0 8v2h2v-2zm0 8v2h2v-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Dell iDRAC Monitor for Domoticz
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Settings
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rouzax/dell-idrac-domoticz-plugin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Dell iDRAC Monitor for Domoticz" class="md-nav__button md-logo" aria-label="Dell iDRAC Monitor for Domoticz" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9zm0 8h1v-2H9zm0 8h1v-2H9zM5 3v2h2V3zm0 8v2h2v-2zm0 8v2h2v-2z"/></svg>
+
+    </a>
+    Dell iDRAC Monitor for Domoticz
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rouzax/dell-idrac-domoticz-plugin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Settings
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Settings
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connection
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Devices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Devices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drive-life-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drive life % devices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formatted-card-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      Formatted card text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#energy-counters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Energy counters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-fan-bar-maximum-is-a-setting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why the fan bar maximum is a setting
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Device names
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Device names">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-you-would-want-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why you would want this
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-text-is-used-exactly-as-you-type-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      The text is used exactly as you type it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filling-the-name-in-from-the-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filling the name in from the server
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-when-you-change-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      What happens when you change it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duplicate-name-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Duplicate name warnings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-idrac-telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure iDRAC telemetry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-a-setting-is-adjusted-for-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      When a setting is adjusted for you
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring devices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Power control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    How it works
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting / FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connection
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Devices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Devices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drive-life-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drive life % devices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formatted-card-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      Formatted card text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#energy-counters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Energy counters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-fan-bar-maximum-is-a-setting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why the fan bar maximum is a setting
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Device names
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Device names">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-you-would-want-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why you would want this
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-text-is-used-exactly-as-you-type-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      The text is used exactly as you type it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filling-the-name-in-from-the-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filling the name in from the server
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-when-you-change-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      What happens when you change it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duplicate-name-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Duplicate name warnings
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-idrac-telemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure iDRAC telemetry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-a-setting-is-adjusted-for-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      When a setting is adjusted for you
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="settings">Settings<a class="headerlink" href="#settings" title="Permanent link">&para;</a></h1>
+<p>Every setting lives on the hardware page in Domoticz: <strong>Setup</strong> then <strong>Hardware</strong>, then select the Dell iDRAC Monitor entry. Changing any of them restarts the plugin. Your devices and their history are kept.</p>
+<p><img alt="The plugin's settings on the Domoticz hardware page" src="../assets/settings.png" /></p>
+<p>Each setting carries its own explanation on that page, and a link to the matching section here.</p>
+<h2 id="connection">Connection<a class="headerlink" href="#connection" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>iDRAC Address</strong></td>
+<td>none</td>
+<td>Hostname or IP of the iDRAC, with no scheme and no trailing path. A leading <code>https://</code> or <code>http://</code> is stripped for you, and a trailing <code>/</code> is removed.</td>
+</tr>
+<tr>
+<td><strong>Username</strong></td>
+<td><code>root</code></td>
+<td>iDRAC account. A read-only account is enough for monitoring.</td>
+</tr>
+<tr>
+<td><strong>Password</strong></td>
+<td>none</td>
+<td>Stored in the Domoticz database in cleartext. Never written to the log. See <a href="../security/">Security</a>.</td>
+</tr>
+<tr>
+<td><strong>Allow Control</strong></td>
+<td><code>No</code></td>
+<td>Master switch for power actions and the identify LED. See <a href="../control/">Power control</a>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="polling">Polling<a class="headerlink" href="#polling" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Range</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Poll Interval (s)</strong></td>
+<td>30</td>
+<td>20 to 600, step 10</td>
+<td>How often live sensors are read.</td>
+</tr>
+<tr>
+<td><strong>Slow Poll (every N polls)</strong></td>
+<td>10</td>
+<td>1 to 60</td>
+<td>How often the slower information is refreshed, as a <strong>multiple</strong> of the poll interval. At the defaults that is every 5 minutes.</td>
+</tr>
+</tbody>
+</table>
+<p>The plugin polls in two tiers because they cost very differently.</p>
+<p>The <strong>fast tier</strong> is a single request for the sensor collection: temperatures, fan speeds, utilization and system power. That is what you want frequently. On a machine where <a href="../devices/#per-component-power-needs-a-licence">per-component power</a> is available, the fast tier also reads the telemetry report that carries it, which is one further request.</p>
+<p>The <strong>slow tier</strong> re-reads system health, the fault list, chassis state, power supplies, storage controllers, drives, volumes, network interfaces and the Dell attribute set, and re-runs discovery so newly added hardware appears. That is several requests, so running it every poll would put needless load on the iDRAC's management controller for information that changes rarely.</p>
+<div class="admonition note">
+<p class="admonition-title">Why the minimum is 20 seconds and the step is 10</p>
+<p>Domoticz calls the plugin on a fixed 10-second heartbeat, and the plugin polls on the first heartbeat at or past your interval. A value that is not a multiple of 10 would therefore poll later than you asked. The manifest constrains the field so the setting cannot lie to you.</p>
+</div>
+<h2 id="devices">Devices<a class="headerlink" href="#devices" title="Permanent link">&para;</a></h2>
+<p>These control which optional device families are created. Turning one off stops the plugin creating and updating those devices; it does <strong>not</strong> delete devices that already exist.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Physical drives</strong></td>
+<td>on</td>
+<td>One alert device per physical disk.</td>
+</tr>
+<tr>
+<td><strong>RAID volumes</strong></td>
+<td>on</td>
+<td>One alert device per virtual disk.</td>
+</tr>
+<tr>
+<td><strong>Power supplies</strong></td>
+<td>on</td>
+<td>One wattage device per PSU. Also the source of the Power Redundancy device, see below.</td>
+</tr>
+<tr>
+<td><strong>Network interfaces</strong></td>
+<td>on</td>
+<td>One alert device per NIC port.</td>
+</tr>
+<tr>
+<td><strong>Drive life warning (%)</strong></td>
+<td>10</td>
+<td>Warn when a drive reports less predicted media life remaining than this. Only applies to drives that report the figure at all, which in practice means SSDs.</td>
+</tr>
+<tr>
+<td><strong>Drive life % devices</strong></td>
+<td>off</td>
+<td>A second device per drive reporting predicted media life as a graphable percentage. See below.</td>
+</tr>
+<tr>
+<td><strong>Formatted card text</strong></td>
+<td>on</td>
+<td>Renders System Health and Power Redundancy as a bullet list with a link to the iDRAC, instead of a single line of text. See below.</td>
+</tr>
+<tr>
+<td><strong>Energy counters</strong></td>
+<td>on</td>
+<td>Reports per-component power, each power supply and each GPU as a kWh counter with a running total, instead of a plain watt gauge. See below.</td>
+</tr>
+<tr>
+<td><strong>Fan bar maximum (RPM)</strong></td>
+<td>6000</td>
+<td>Top of the scale on fan bar graphs. <code>0</code> switches fan bars off. See below.</td>
+</tr>
+</tbody>
+</table>
+<p>Turning off a family also skips the requests that fetch it, so on a server with many drives, switching <strong>Physical drives</strong> off measurably shortens the slow tier.</p>
+<div class="admonition warning">
+<p class="admonition-title">Power supplies also controls Power Redundancy</p>
+<p>The redundancy group is reported inside the same Redfish payload as the power supplies, so switching <strong>Power supplies</strong> off stops the <a href="../devices/#power-redundancy">Power Redundancy</a> device updating too. The device is not deleted; it simply stops receiving values and Domoticz ages it out. If you want redundancy monitoring, leave power supplies on.</p>
+</div>
+<h3 id="drive-life-devices">Drive life % devices<a class="headerlink" href="#drive-life-devices" title="Permanent link">&para;</a></h3>
+<p>Every physical drive already reports its predicted media life on its own tile, as text such as <code>SSD, life 96%</code>. That tile is an Alert device, and Domoticz does not graph an Alert.</p>
+<p>Switching this on adds a <strong>second</strong> device per drive, a Percentage carrying the same figure, which Domoticz does graph and which gets a <a href="../devices/#bar-graphs">bar</a> coloured from your <strong>Drive life warning (%)</strong> setting. It is off by default because for most people the number on the drive's own tile is enough, and one extra device per drive adds up on a full chassis.</p>
+<p>Only drives that actually report a life figure get one, which in practice means SSDs. The setting has no effect while <strong>Physical drives</strong> is off, since the life device hangs off the drive device.</p>
+<h3 id="formatted-card-text">Formatted card text<a class="headerlink" href="#formatted-card-text" title="Permanent link">&para;</a></h3>
+<p>Two devices, <a href="../devices/#system-health">System Health</a> and <a href="../devices/#power-redundancy">Power Redundancy</a>, can show their facts as a formatted bullet list with a link to the iDRAC, instead of a single line of plain text. Nothing else is affected.</p>
+<p>With it on, System Health lists its faults as bullets instead of joining them with semicolons, and Power Redundancy lists its facts (the configured policy, the supply counts, and the hot spare line when there is one) the same way. Both cards also gain a link reading <strong>Open iDRAC</strong> at the end, which opens the server's own web interface in a new tab. The link appears on every state, including a fault and an unknown reading.</p>
+<p><img alt="System Health showing two faults as a bullet list" src="../assets/cards/system-health-critical.png" /></p>
+<p>With it off, both cards produce exactly the plain text the plugin has always produced, character for character.</p>
+<div class="admonition warning">
+<p class="admonition-title">This text is what dzVents and notifications see</p>
+<p>The card text is the device's <code>sValue</code>, which is what a dzVents script compares against and what Domoticz notifications send. If you have a script or notification matching text such as <code>Redundancy lost</code>, either leave this setting off or update it to match the new wording; turning the setting on changes that text on the next poll.</p>
+</div>
+<p><strong>Requires Domoticz 2026.1 or newer</strong>, the version from which Domoticz renders Text and Alert device data as HTML rather than as plain text. On an older build the markup may show as literal tags on the card instead of a bullet list, so turn this setting off there.</p>
+<h3 id="energy-counters">Energy counters<a class="headerlink" href="#energy-counters" title="Permanent link">&para;</a></h3>
+<p>With this on, the per-component power devices (CPU, memory, storage, fan, PCIe and FPGA), each power supply and each GPU report as a Domoticz <code>kWh</code> counter carrying a running total alongside their watt figure, rather than a plain <code>Usage</code> watt gauge. That is the same device type <a href="../devices/#energy">Server Power</a> has always used. Each counter then appears in Domoticz's energy report with a total and a cost.</p>
+<p>Switching this converts the affected devices <strong>in place</strong>: same idx, same name, same room. The counter starts from zero, and the previous watt history is hidden rather than deleted, because Domoticz keeps a <code>kWh</code> device's day history in a different table from a <code>Usage</code> device's. Turn the setting back off and the devices convert back to watt gauges, and the original watt graphs reappear exactly as they were.</p>
+<p>Server Power is a <code>kWh</code> counter either way; this setting does not affect it.</p>
+<div class="admonition warning">
+<p class="admonition-title">This changes what a dzVents script reads</p>
+<p>A counter device's <code>sValue</code> carries both figures, watts and the running total, separated by a semicolon, for example <code>41.0;1234.5</code>, in place of a bare <code>41.0</code>. Any script doing <code>tonumber(device.sValue)</code> on one of these devices needs to read the watt figure in front of the semicolon instead, or it will error the first time this setting converts the device.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">If you poll less often than every 5 minutes</p>
+<p>Domoticz's <strong>Settings &gt; Log History &gt; Only add newly received values to the Log</strong> skips a
+device from a 5 minute log bucket when it has not reported since the last one. With a poll
+interval above 5 minutes and that option enabled, roughly every other bucket is skipped.
+The kWh totals still come out right, because Domoticz takes a counter's daily figure from
+the first and last reading of the day, but the watt graphs will look gappy. Leave the poll
+interval at or below 5 minutes if you want an unbroken graph.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">A counter can get stuck while its watt reading keeps moving</p>
+<p>A component is not allowed to claim more power than the whole machine is drawing, with some
+margin for measurement differences between sensors. When it does, usually briefly on a
+server where one component's own sensor and the system total disagree, the plugin holds that
+counter instead of writing a nonsensical total: the card's watt figure keeps updating
+normally on every poll, but its kWh total stops advancing until a later reading is plausible
+again. This does not happen often, but a device stuck at a fixed kWh figure with a live watt
+reading is the sign to look for. The plugin logs one line naming the device and both figures
+the first time this happens after a plugin start, so check the log if you want to confirm it
+rather than guess.</p>
+</div>
+<h3 id="why-the-fan-bar-maximum-is-a-setting">Why the fan bar maximum is a setting<a class="headerlink" href="#why-the-fan-bar-maximum-is-a-setting" title="Permanent link">&para;</a></h3>
+<p>Redfish does not report a maximum fan speed, so the plugin cannot detect one. There is no sensible default either: on one tower server the three chassis fans topped out at 4920, 4920 and <strong>5520</strong> RPM, so even a single machine has no one maximum, and 1U servers run far faster again.</p>
+<p>Pick a value a little above what your fans actually reach. If you do not know, run them at full speed once and read the devices, or leave the default.</p>
+<p>A fan spinning faster than this setting is not a problem: the bar simply reads full and stays green. That is the correct reading for a fan, where a <strong>low</strong> speed is the fault and a high one just means it is working hard.</p>
+<p>Changing this value updates the bars on the next poll, unless you have edited a fan's bands by hand, in which case your version is left alone.</p>
+<h2 id="device-names">Device names<a class="headerlink" href="#device-names" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Name prefix</strong></td>
+<td>empty</td>
+<td>Text put in front of every device name this plugin creates.</td>
+</tr>
+<tr>
+<td><strong>Name suffix</strong></td>
+<td>empty</td>
+<td>Text appended to every device name this plugin creates.</td>
+</tr>
+</tbody>
+</table>
+<p>Both are empty by default, so an existing install is unaffected until you set one.</p>
+<h3 id="why-you-would-want-this">Why you would want this<a class="headerlink" href="#why-you-would-want-this" title="Permanent link">&para;</a></h3>
+<p>Device names are how dzVents looks devices up. The plugin names devices after the hardware, not after the server, so <strong>two installs monitoring two servers produce the same names</strong>: both create a device called <code>System Health</code>, both create <code>Inlet Temp</code>, both create <code>Server Power</code>. A dzVents lookup by name then silently picks one of them, and which one it picks is not something you can rely on.</p>
+<p>Measured across six PowerEdge servers, <strong>59 of the 186 distinct device names collided</strong>, including nearly every headline tile. If you monitor more than one server, set a prefix or a suffix on at least all but one of them.</p>
+<h3 id="the-text-is-used-exactly-as-you-type-it">The text is used exactly as you type it<a class="headerlink" href="#the-text-is-used-exactly-as-you-type-it" title="Permanent link">&para;</a></h3>
+<p>Nothing is added and nothing is trimmed, so <strong>include your own separator</strong>, and the trailing space if you want one:</p>
+<table>
+<thead>
+<tr>
+<th>You type</th>
+<th>You get</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SERVER1 -</code></td>
+<td><code>SERVER1 - System Health</code></td>
+</tr>
+<tr>
+<td><code>SERVER1</code></td>
+<td><code>SERVER1System Health</code></td>
+</tr>
+<tr>
+<td><code>_TESTSRV</code> (as suffix)</td>
+<td><code>System Health_TESTSRV</code></td>
+</tr>
+</tbody>
+</table>
+<p>The trailing space in the first row is doing real work and is invisible in the settings form. To let you check it, the plugin writes one finished example to the Domoticz log the first time it applies an affix:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>device names look like &quot;SERVER1 - System Health&quot;
+</code></pre></div>
+<p>Each field accepts up to 24 characters. A longer value is cut to 24 and the plugin says so in the log.</p>
+<h3 id="filling-the-name-in-from-the-server">Filling the name in from the server<a class="headerlink" href="#filling-the-name-in-from-the-server" title="Permanent link">&para;</a></h3>
+<p>Rather than typing the server's name, you can use a token and let the plugin read it from the machine:</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>What it expands to</th>
+<th>Typical length</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{servicetag}</code></td>
+<td>Dell service tag, for example <code>65CBFV2</code></td>
+<td>7</td>
+</tr>
+<tr>
+<td><code>{hostname}</code></td>
+<td>OS host name, <strong>cut at the first dot</strong></td>
+<td>10-15</td>
+</tr>
+<tr>
+<td><code>{fqdn}</code></td>
+<td>OS host name exactly as reported</td>
+<td>12-27</td>
+</tr>
+<tr>
+<td><code>{idrac}</code></td>
+<td>The iDRAC's own DNS name</td>
+<td>13-20</td>
+</tr>
+<tr>
+<td><code>{model}</code></td>
+<td>Model, for example <code>PowerEdge R750</code></td>
+<td>7-21</td>
+</tr>
+</tbody>
+</table>
+<p>So a prefix of <code>{servicetag} -</code> gives <code>65CBFV2 - System Health</code>, and a suffix of <code>[{model}]</code> gives <code>System Health [PowerEdge R750]</code>. Tokens and plain text mix freely: <code>{model} {servicetag} -</code> works.</p>
+<p><code>{hostname}</code> is cut at the first dot on purpose. Servers report host names inconsistently, some bare and some fully qualified, so passing the value straight through would give you <code>web01</code> on one machine and <code>web01.example.lan</code> on the next. Use <code>{fqdn}</code> if you genuinely want the whole thing.</p>
+<p>Two things to know before choosing one:</p>
+<ul>
+<li><strong><code>{model}</code> does not guarantee uniqueness.</strong> Two identical servers report the same model. If your goal is to keep installs apart, <code>{servicetag}</code> is the only token that is unique per machine.</li>
+<li><strong><code>{hostname}</code> needs the iDRAC Service Module</strong> installed on the server. Without it the iDRAC does not know the OS host name.</li>
+</ul>
+<p>If a token cannot be resolved, it expands to nothing and the plugin logs an error naming it. If that leaves the affix with no letters or digits at all, for example <code>{hostname} -</code> on a machine that reports no host name, the affix is dropped completely rather than putting a stray <code>-</code> in front of every device.</p>
+<h3 id="what-happens-when-you-change-it">What happens when you change it<a class="headerlink" href="#what-happens-when-you-change-it" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Changing this renames existing devices</p>
+<p>On the next poll the plugin renames every device it still owns, so <strong>any dzVents script that looks those devices up by name stops finding them</strong>. Update your scripts in the same sitting. Devices you renamed by hand are never touched, because the plugin only renames names it set itself.</p>
+</div>
+<p>Setting a prefix on an install that already has devices is therefore a deliberate, one-off disruption, not a cosmetic change. Doing it before you write any automation is much easier than doing it after.</p>
+<h3 id="duplicate-name-warnings">Duplicate name warnings<a class="headerlink" href="#duplicate-name-warnings" title="Permanent link">&para;</a></h3>
+<p>The plugin warns you in the Domoticz log when the names it is about to use are already taken:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>3 planned device name(s) already exist under hardware &#39;iDRAC T550&#39;: System Health,
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Inlet Temp, Server Power. A dzVents lookup by name cannot tell them apart; set a
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Name Prefix or Name Suffix.
+</code></pre></div>
+<p>This is checked once per plugin start, before any device is created, so the warning arrives on the first poll rather than after a full set of duplicates exists. It looks at <strong>every</strong> device in your Domoticz install, so it catches a second copy of this plugin, an unrelated piece of hardware that happens to own the name, and a dummy device you made yourself.</p>
+<p>The plugin only warns. It does not rename anything automatically to dodge a collision, because the name it invented would depend on which install happened to poll first, and an unpredictable name is no more useful to a script than a duplicate one.</p>
+<h2 id="control">Control<a class="headerlink" href="#control" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Allow Force Off and Power Cycle</strong></td>
+<td>off</td>
+<td>Adds the two hard power actions to the Power Control selector.</td>
+</tr>
+</tbody>
+</table>
+<p>This is inert while <strong>Allow Control</strong> is <code>No</code>: with control off, no control device is created at all and every command is refused. Read <a href="../control/">Power control</a> before enabling either.</p>
+<h2 id="advanced">Advanced<a class="headerlink" href="#advanced" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>Range</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Verify TLS certificate</strong></td>
+<td>off</td>
+<td></td>
+<td>Off because an iDRAC ships a self-signed certificate. While off, traffic is encrypted but <strong>not authenticated</strong>. See <a href="../security/">Security</a>.</td>
+</tr>
+<tr>
+<td><strong>Configure iDRAC telemetry</strong></td>
+<td>off</td>
+<td></td>
+<td>Switches Dell telemetry on so per-component power devices can appear. The only setting that writes configuration to your server. See below.</td>
+</tr>
+<tr>
+<td><strong>Request Timeout (s)</strong></td>
+<td>30</td>
+<td>5 to 120, step 5</td>
+<td>Per-request timeout.</td>
+</tr>
+<tr>
+<td><strong>Debug Level</strong></td>
+<td><code>None</code></td>
+<td></td>
+<td><code>Basic</code> and <code>Verbose</code> add detail to the Domoticz log. The password is never logged at any level.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configure-idrac-telemetry">Configure iDRAC telemetry<a class="headerlink" href="#configure-idrac-telemetry" title="Permanent link">&para;</a></h3>
+<p><a href="../devices/#per-component-power-needs-a-licence">Per-component power</a> comes from Dell's telemetry service, which is licence-gated and switched off by default on the iDRAC. Turning this setting on lets the plugin switch it on for you.</p>
+<p>This is the <strong>only</strong> setting that makes the plugin write configuration to your server, so it has deliberate limits:</p>
+<ul>
+<li>It acts <strong>only</strong> when per-component power was already found to be unavailable. On a machine where telemetry is already working, including one managed by OpenManage Enterprise, the plugin never touches the configuration.</li>
+<li>It writes exactly two iDRAC attributes, <code>Telemetry.1.EnableTelemetry</code> and <code>TelemetryPowerMetrics.1.EnableTelemetry</code>, both set to <code>Enabled</code>, and nothing else.</li>
+<li>It tries <strong>once per plugin start</strong>. A machine that cannot be fixed this way, because the licence does not allow it, is not written to again on every poll.</li>
+<li>It says what it did in the Domoticz log, at Status level, before it does it.</li>
+</ul>
+<p>If the licence does not permit telemetry you will see:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Error: Dell iDRAC Monitor: could not configure iDRAC telemetry, which usually means the licence
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>does not allow it: ...
+</code></pre></div>
+<p>Leave this off if OpenManage manages the server, or if you would rather set the two attributes yourself from the iDRAC interface or with <code>racadm</code>.</p>
+<div class="admonition danger">
+<p class="admonition-title">Do not lower Request Timeout much</p>
+<p>A recovering iDRAC can take several seconds to answer its first request after a restart, sometimes the better part of ten. A short timeout turns a normal recovery into a failed poll and starts a backoff you did not need. The 30 second default is deliberate.</p>
+</div>
+<h2 id="when-a-setting-is-adjusted-for-you">When a setting is adjusted for you<a class="headerlink" href="#when-a-setting-is-adjusted-for-you" title="Permanent link">&para;</a></h2>
+<p>If a value is out of range or unreadable, the plugin clamps or falls back to the default and says so in the log at Status level, for example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Status: Dell iDRAC Monitor: setting adjusted: PollInterval: 5 is outside 20-600, using 20
+</code></pre></div>
+<p>A silently rewritten setting you never see is worse than a wrong one you can spot, so these are always reported rather than applied quietly.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../install/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Installation">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Installation
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../devices/" class="md-footer__link md-footer__link--next" aria-label="Next: Monitoring devices">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Monitoring devices
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Rouzax - not affiliated with Dell Technologies
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" target="_blank" rel="noopener" title="Dell iDRAC Monitor on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://ko-fi.com/O0W221GBUG" target="_blank" rel="noopener" title="Support Dell iDRAC Monitor on Ko-fi" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.351 2.715c-2.7 0-4.986.025-6.83.26C2.078 3.285 0 5.154 0 8.61c0 3.506.182 6.13 1.585 8.493 1.584 2.701 4.233 4.182 7.662 4.182h.83c4.209 0 6.494-2.234 7.637-4a9.5 9.5 0 0 0 1.091-2.338C21.792 14.688 24 12.22 24 9.208v-.415c0-3.247-2.13-5.507-5.792-5.87-1.558-.156-2.65-.208-6.857-.208m0 1.947c4.208 0 5.09.052 6.571.182 2.624.311 4.13 1.584 4.13 4v.39c0 2.156-1.792 3.844-3.87 3.844h-.935l-.156.649c-.208 1.013-.597 1.818-1.039 2.546-.909 1.428-2.545 3.064-5.922 3.064h-.805c-2.571 0-4.831-.883-6.078-3.195-1.09-2-1.298-4.155-1.298-7.506 0-2.181.857-3.402 3.012-3.714 1.533-.233 3.559-.26 6.39-.26m6.547 2.287c-.416 0-.65.234-.65.546v2.935c0 .311.234.545.65.545 1.324 0 2.051-.754 2.051-2s-.727-2.026-2.052-2.026m-10.39.182c-1.818 0-3.013 1.48-3.013 3.142 0 1.533.858 2.857 1.949 3.897.727.701 1.87 1.429 2.649 1.896a1.47 1.47 0 0 0 1.507 0c.78-.467 1.922-1.195 2.623-1.896 1.117-1.039 1.974-2.364 1.974-3.897 0-1.662-1.247-3.142-3.039-3.142-1.065 0-1.792.545-2.338 1.298-.493-.753-1.246-1.298-2.312-1.298"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

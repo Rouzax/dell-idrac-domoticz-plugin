@@ -1,0 +1,1686 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A read-only-by-default Domoticz plugin for Dell PowerEdge servers: temperatures, fans, power, utilization, storage and health read from the iDRAC over Redfish, with opt-in power control.">
+      
+      
+        <meta name="author" content="Rouzax">
+      
+      
+        <link rel="canonical" href="https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/">
+      
+      
+        <link rel="prev" href="../settings/">
+      
+      
+        <link rel="next" href="../control/">
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>Monitoring devices - Dell iDRAC Monitor for Domoticz</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#monitoring-devices" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Dell iDRAC Monitor for Domoticz" class="md-header__button md-logo" aria-label="Dell iDRAC Monitor for Domoticz" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9zm0 8h1v-2H9zm0 8h1v-2H9zM5 3v2h2V3zm0 8v2h2v-2zm0 8v2h2v-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Dell iDRAC Monitor for Domoticz
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Monitoring devices
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rouzax/dell-idrac-domoticz-plugin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Dell iDRAC Monitor for Domoticz" class="md-nav__button md-logo" aria-label="Dell iDRAC Monitor for Domoticz" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9zm0 8h1v-2H9zm0 8h1v-2H9zM5 3v2h2V3zm0 8v2h2v-2zm0 8v2h2v-2z"/></svg>
+
+    </a>
+    Dell iDRAC Monitor for Domoticz
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rouzax/dell-idrac-domoticz-plugin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Monitoring devices
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring devices
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-can-expect-to-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you can expect to see
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What you can expect to see">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#always-where-the-server-reports-the-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      Always, where the server reports the value
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-per-piece-of-hardware-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      One per piece of hardware found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-off-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional, off by default
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#only-where-the-idrac-licence-allows-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only where the iDRAC licence allows it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-looks-like-when-something-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      What it looks like when something is wrong
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-device-names-and-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage device names and options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Storage device names and options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drive-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drive names
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drive-life-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drive life devices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thresholds-in-the-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Thresholds in the description
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bar-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bar graphs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-component-power-needs-a-licence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-component power (needs a licence)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-component power (needs a licence)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#switching-telemetry-on" class="md-nav__link">
+    <span class="md-ellipsis">
+      Switching telemetry on
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-report-the-metrics-come-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      Which report the metrics come from
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-supply-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power supply efficiency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPUs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GPUs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#without-a-telemetry-licence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Without a telemetry licence
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Health
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-redundancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power redundancy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#energy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Energy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Energy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-component-counters-do-not-add-up-to-server-power" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why the component counters do not add up to Server Power
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-supply-devices-show-input-watts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power supply devices show input watts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-naming-and-unit-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Device naming and unit numbers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#icons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Icons
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Power control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    How it works
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting / FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-can-expect-to-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you can expect to see
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What you can expect to see">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#always-where-the-server-reports-the-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      Always, where the server reports the value
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-per-piece-of-hardware-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      One per piece of hardware found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-off-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional, off by default
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#only-where-the-idrac-licence-allows-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only where the iDRAC licence allows it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-looks-like-when-something-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      What it looks like when something is wrong
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-device-names-and-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage device names and options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Storage device names and options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drive-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drive names
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drive-life-devices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Drive life devices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thresholds-in-the-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Thresholds in the description
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bar-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bar graphs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-component-power-needs-a-licence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-component power (needs a licence)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-component power (needs a licence)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#switching-telemetry-on" class="md-nav__link">
+    <span class="md-ellipsis">
+      Switching telemetry on
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-report-the-metrics-come-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      Which report the metrics come from
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-supply-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power supply efficiency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPUs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GPUs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#without-a-telemetry-licence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Without a telemetry licence
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Health
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-redundancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power redundancy
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#energy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Energy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Energy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-component-counters-do-not-add-up-to-server-power" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why the component counters do not add up to Server Power
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-supply-devices-show-input-watts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power supply devices show input watts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-naming-and-unit-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Device naming and unit numbers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#icons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Icons
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="monitoring-devices">Monitoring devices<a class="headerlink" href="#monitoring-devices" title="Permanent link">&para;</a></h1>
+<p>The exact set of devices depends on what your server reports. Nothing is created for hardware the iDRAC does not describe, and <strong>a sensor that reports no reading produces no device at all</strong>, rather than a device reading zero.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Screenshots here use the <a href="https://domoticz.github.io/Machinon/">Machinon theme</a>. Device names and values are identical on the stock theme; only the presentation differs.</p>
+</div>
+<p>Every non-temperature device the plugin created for one PowerEdge, on Domoticz's Utility tab:</p>
+<p><img alt="The Utility tab, showing power, health, storage and network devices" src="../assets/devices-overview.png" /></p>
+<h2 id="what-you-can-expect-to-see">What you can expect to see<a class="headerlink" href="#what-you-can-expect-to-see" title="Permanent link">&para;</a></h2>
+<p>The example values below come from that same machine: a tower PowerEdge with three fans, two power supplies, three RAID volumes, two NIC ports and ten drives. Yours will differ in the per-hardware rows, because those follow what your server has. Fans, drives, volumes and NICs are re-discovered on every slow poll, so hardware you add later appears on its own.</p>
+<p>Power supply, per-component power and GPU power devices read as <code>kWh</code> counters by default, carrying both a live watt figure and an accumulating total, the same way Server Power always has. Turn off <a href="../settings/#energy-counters">Energy counters</a> to get plain watt gauges instead, the way earlier versions of the plugin worked.</p>
+<h3 id="always-where-the-server-reports-the-value">Always, where the server reports the value<a class="headerlink" href="#always-where-the-server-reports-the-value" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Domoticz type</th>
+<th>Example reading</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server Power</td>
+<td>kWh</td>
+<td><code>160 Watt</code>, plus a kWh counter such as <code>0.176 kWh</code></td>
+</tr>
+<tr>
+<td>System Health</td>
+<td>Alert</td>
+<td><code>OK</code> in green, or the iDRAC's own fault text such as <code>Power supply redundancy is lost.</code> in red</td>
+</tr>
+<tr>
+<td>Power State</td>
+<td>Alert</td>
+<td><code>On</code> in green, <code>Off</code> in grey</td>
+</tr>
+<tr>
+<td>Inlet Temp</td>
+<td>Temperature</td>
+<td><code>27.0 C</code></td>
+</tr>
+<tr>
+<td>Exhaust Temp</td>
+<td>Temperature</td>
+<td><code>34.0 C</code></td>
+</tr>
+<tr>
+<td>CPU Usage</td>
+<td>Percentage</td>
+<td><code>8%</code></td>
+</tr>
+<tr>
+<td>Memory Usage</td>
+<td>Percentage</td>
+<td><code>0%</code></td>
+</tr>
+<tr>
+<td>I/O Usage</td>
+<td>Percentage</td>
+<td><code>0%</code></td>
+</tr>
+<tr>
+<td>System Usage</td>
+<td>Percentage</td>
+<td><code>9%</code></td>
+</tr>
+<tr>
+<td>Uptime</td>
+<td>Custom, hours</td>
+<td><code>7.4 h</code></td>
+</tr>
+<tr>
+<td>Boot Status</td>
+<td>Text</td>
+<td><code>OSRunning</code></td>
+</tr>
+<tr>
+<td>Chassis Intrusion</td>
+<td>Alert</td>
+<td><code>Normal</code> in green</td>
+</tr>
+<tr>
+<td>Power Redundancy</td>
+<td>Alert</td>
+<td><code>A/B Grid Redundant, 2 supplies (1 needed)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="one-per-piece-of-hardware-found">One per piece of hardware found<a class="headerlink" href="#one-per-piece-of-hardware-found" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Domoticz type</th>
+<th>Example name and reading</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU temperature, one per socket</td>
+<td>Temperature</td>
+<td><code>CPU1 Temp</code> reading <code>53.0 C</code></td>
+</tr>
+<tr>
+<td>Hottest DIMM</td>
+<td>Temperature</td>
+<td><code>Max DIMM Temp</code> reading <code>42.0 C</code></td>
+</tr>
+<tr>
+<td>Fan speed, one per fan</td>
+<td>Custom, RPM</td>
+<td><code>System Board Fan1</code> reading <code>1920 RPM</code></td>
+</tr>
+<tr>
+<td>Power supply, one per PSU</td>
+<td>kWh</td>
+<td><code>PS1 Status</code> reading <code>150.5 Watt</code>, plus a kWh counter such as <code>0.313 kWh</code>, with the health the server reports in its description, <code>OK</code> or <code>Critical</code></td>
+</tr>
+<tr>
+<td>RAID volume, one per virtual disk</td>
+<td>Alert</td>
+<td><code>Volume OS</code> reading <code>RAID1</code></td>
+</tr>
+<tr>
+<td>Physical drive, one per disk</td>
+<td>Alert</td>
+<td><code>SSD 0:2:0</code> reading <code>SSD, life 100%</code>, or <code>HDD 0:2:3</code> reading <code>HDD</code></td>
+</tr>
+<tr>
+<td>NIC port, one per port</td>
+<td>Alert</td>
+<td><code>NIC NIC.Embedded.1-1-1</code> reading <code>LinkUp 1000 Mb</code>, or <code>LinkDown</code> in amber</td>
+</tr>
+</tbody>
+</table>
+<h3 id="optional-off-by-default">Optional, off by default<a class="headerlink" href="#optional-off-by-default" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Domoticz type</th>
+<th>Example</th>
+<th>Turned on by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drive life, one per drive that reports it</td>
+<td>Percentage</td>
+<td><code>SSD 0:2:0 Life</code> reading <code>100%</code></td>
+<td><a href="../settings/#drive-life-devices">Drive life % devices</a></td>
+</tr>
+<tr>
+<td>Power Control</td>
+<td>Selector switch</td>
+<td><code>Idle</code>, then the action you pick</td>
+<td><a href="../control/">Allow Control</a></td>
+</tr>
+<tr>
+<td>Identify LED</td>
+<td>Switch</td>
+<td><code>Off</code></td>
+<td><a href="../control/">Allow Control</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="only-where-the-idrac-licence-allows-it">Only where the iDRAC licence allows it<a class="headerlink" href="#only-where-the-idrac-licence-allows-it" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Domoticz type</th>
+<th>Example reading</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU Power</td>
+<td>kWh</td>
+<td><code>51 Watt</code>, plus a kWh counter such as <code>1.204 kWh</code></td>
+</tr>
+<tr>
+<td>Memory Power</td>
+<td>kWh</td>
+<td><code>5 Watt</code>, plus a kWh counter such as <code>0.118 kWh</code></td>
+</tr>
+<tr>
+<td>Storage Power</td>
+<td>kWh</td>
+<td><code>57.8 Watt</code>, plus a kWh counter such as <code>1.367 kWh</code></td>
+</tr>
+<tr>
+<td>Fan Power</td>
+<td>kWh</td>
+<td><code>3.4 Watt</code>, plus a kWh counter such as <code>0.080 kWh</code></td>
+</tr>
+<tr>
+<td>PCIe Power</td>
+<td>kWh</td>
+<td><code>0 Watt</code>, plus a kWh counter such as <code>0.000 kWh</code></td>
+</tr>
+<tr>
+<td>FPGA Power</td>
+<td>kWh</td>
+<td><code>0 Watt</code>, plus a kWh counter such as <code>0.000 kWh</code></td>
+</tr>
+<tr>
+<td>GPU power, one per card</td>
+<td>kWh</td>
+<td><code>GPU Video.Slot.10-1 Power</code> reading <code>39.1 Watt</code>, plus a kWh counter such as <code>0.925 kWh</code></td>
+</tr>
+<tr>
+<td>GPU temperature, one per card</td>
+<td>Temperature</td>
+<td><code>GPU Video.Slot.6-1 Temp</code> reading <code>40.0 C</code></td>
+</tr>
+</tbody>
+</table>
+<p>On a seven-card server that is fourteen GPU devices, named by the slot each card sits in. See <a href="#per-component-power-needs-a-licence">Per-component power</a> for what unlocks these.</p>
+<h3 id="what-it-looks-like-when-something-is-wrong">What it looks like when something is wrong<a class="headerlink" href="#what-it-looks-like-when-something-is-wrong" title="Permanent link">&para;</a></h3>
+<p>Colour comes from the Domoticz alert level, so a problem is visible on the dashboard without opening anything:</p>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Reading</th>
+<th>Colour</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>System Health</td>
+<td><code>Power supply redundancy is lost.</code></td>
+<td>red</td>
+<td>The iDRAC has raised a fault and this is its own wording</td>
+</tr>
+<tr>
+<td>System Health</td>
+<td><code>Critical: PS, SEL</code></td>
+<td>red</td>
+<td>A fault is raised but the iDRAC gave no message, so the affected subsystems are named instead</td>
+</tr>
+<tr>
+<td>System Health</td>
+<td><code>Unknown</code></td>
+<td>grey</td>
+<td>Nothing is reporting health, which is normal while the host is powered off</td>
+</tr>
+<tr>
+<td>PS1 Status</td>
+<td><code>0 Watt</code>, description <code>Critical</code></td>
+<td></td>
+<td>A failed or unplugged supply. The watts alone mean nothing here, the description is the signal</td>
+</tr>
+<tr>
+<td>Power Redundancy</td>
+<td><code>Redundancy lost</code></td>
+<td>red</td>
+<td>The group is present and unhealthy</td>
+</tr>
+<tr>
+<td>Power Redundancy</td>
+<td><code>Not reported</code></td>
+<td>grey</td>
+<td>The iDRAC dropped the group entirely, which is what pulling a supply does</td>
+</tr>
+<tr>
+<td>HDD 0:2:5</td>
+<td><code>HDD, failure predicted</code></td>
+<td>amber</td>
+<td>The drive's own SMART prediction</td>
+</tr>
+<tr>
+<td>HDD 0:2:9</td>
+<td><code>HDD, life 4%</code></td>
+<td>amber</td>
+<td>Below your <strong>Drive life warning (%)</strong> setting</td>
+</tr>
+<tr>
+<td>NIC NIC.Embedded.2-1-1</td>
+<td><code>LinkDown</code></td>
+<td>amber</td>
+<td>The port is down. A port with no link state at all reads grey <code>Unknown</code></td>
+</tr>
+<tr>
+<td>Power State</td>
+<td><code>Off</code></td>
+<td>grey</td>
+<td>Deliberately grey, not red: a server you shut down is not a fault</td>
+</tr>
+<tr>
+<td>Power Redundancy</td>
+<td><code>Not redundant (configured)</code></td>
+<td>grey</td>
+<td>Redundancy is switched off on the server, so the missing group is intended rather than a fault</td>
+</tr>
+</tbody>
+</table>
+<p>Four of those, as they actually appear:</p>
+<p><img alt="System Health showing two faults listed as bullets, red" src="../assets/cards/system-health-critical.png" /></p>
+<p><img alt="A failed power supply reading 0 Watt" src="../assets/cards/psu-failed.png" /></p>
+<p><img alt="A drive whose own SMART prediction has flagged it" src="../assets/cards/drive-failure-predicted.png" /></p>
+<p><img alt="A drive below the drive life warning threshold" src="../assets/cards/drive-life-low.png" /></p>
+<h2 id="storage-device-names-and-options">Storage device names and options<a class="headerlink" href="#storage-device-names-and-options" title="Permanent link">&para;</a></h2>
+<h3 id="drive-names">Drive names<a class="headerlink" href="#drive-names" title="Permanent link">&para;</a></h3>
+<p>Dell names drives differently depending on which controller they sit behind, which reads badly when both appear in one list: a PERC calls a drive <code>Solid State Disk 0:2:0</code> while a BOSS boot card calls its pair <code>SSD 0</code> and <code>SSD 1</code>. The plugin shortens the long form and marks the boot card, so you get <code>SSD 0:2:0</code>, <code>HDD 0:2:3</code> and <code>BOSS SSD 0</code>.</p>
+<p>A drive in pass-through mode keeps that qualifier, because it says something real about how the disk is attached: <code>NonRAID Solid State Disk 0:1:0</code> becomes <code>NonRAID SSD 0:1:0</code> rather than losing the word.</p>
+<p><strong>NVMe drives are named as such.</strong> Dell reports one with <code>MediaType: SSD</code>, exactly like a SATA disk, and calls it <code>PCIe SSD in Slot 23 in Bay 2</code>; only the bus protocol distinguishes the two. Where the server reports a PCIe or NVMe protocol, the plugin uses <code>NVMe in Slot 23 in Bay 2</code> instead. The rename is driven by the reported protocol and never by the name, so a drive that merely reads like a PCIe device but is attached by SAS keeps the name the server gave it.</p>
+<p><img alt="An NVMe drive device" src="../assets/cards/drive-nvme.png" /></p>
+<p>The media type comes from the server, so a bay holding a mix stays correctly labelled. A drive whose name is not one of Dell's known forms is left exactly as the server reports it.</p>
+<h3 id="drive-life-devices">Drive life devices<a class="headerlink" href="#drive-life-devices" title="Permanent link">&para;</a></h3>
+<p>Switching on <strong>Drive life % devices</strong> in <a href="../settings/#drive-life-devices">Settings</a> adds a second device per drive, named after the drive with <code>Life</code> appended, reporting predicted media life as a percentage. It exists because the drive's own tile is an Alert, and Domoticz will not graph an Alert, so without it the life figure is readable but never plotted.</p>
+<p>It is off by default, and only drives that report a life figure get one, which in practice means SSDs. Each one carries a <a href="#bar-graphs">bar</a> that turns red below your <strong>Drive life warning (%)</strong> setting.</p>
+<p><img alt="A SAS SSD life device reading 90 percent" src="../assets/cards/drive-life-percent.png" /></p>
+<p>The same device for an NVMe drive, which reports life just as a SAS or SATA SSD does:</p>
+<p><img alt="An NVMe life device reading 98 percent" src="../assets/cards/drive-life-percent-nvme.png" /></p>
+<h2 id="thresholds-in-the-description">Thresholds in the description<a class="headerlink" href="#thresholds-in-the-description" title="Permanent link">&para;</a></h2>
+<p>Temperature and fan devices carry the server's own warning and critical thresholds in the device description, so you can see the limits without looking them up:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Inlet Temp        warning below 3 C; critical below -7 C; warning above 33 C; critical above 42 C
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>System Board Fan1 warning below 840 RPM; critical below 480 RPM
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>CPU1 Temp         critical below 3 C; warning above 83.3 C (estimated); critical above 98 C
+</code></pre></div>
+<p>A threshold marked <strong><code>(estimated)</code></strong> was not reported by the server. The plugin derives it from the critical threshold so a warning band exists at all. Reported values are never labelled this way, so an estimate can never be mistaken for something the server actually said.</p>
+<p>A sensor the server publishes no thresholds for gets no description at all, rather than an invented one. <code>Max DIMM Temp</code> is commonly one of those.</p>
+<p><img alt="The four temperature devices, three of them carrying a threshold bar" src="../assets/temperatures.png" /></p>
+<p><code>Max DIMM Temp</code> above is the one without a bar or a description: this server publishes no thresholds for it, so there is nothing to draw.</p>
+<h2 id="bar-graphs">Bar graphs<a class="headerlink" href="#bar-graphs" title="Permanent link">&para;</a></h2>
+<p>Where the server reports thresholds, they also become a coloured bar across the top of the device card, so the safe band is visible at a glance instead of being read out of the description text.</p>
+<p><img alt="Fan devices with their threshold bars" src="../assets/fan-bars.png" /></p>
+<p>Three kinds of device get one:</p>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Bands drawn from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fans</strong></td>
+<td>Red below the critical speed, amber up to the warning speed, green from there to the <a href="../settings/#why-the-fan-bar-maximum-is-a-setting">fan bar maximum</a> you set.</td>
+</tr>
+<tr>
+<td><strong>Temperatures</strong></td>
+<td>The server's own lower and upper critical limits, with amber warning bands where it reports them. Only sensors that report <strong>both</strong> critical limits get a bar, because those two define the axis.</td>
+</tr>
+<tr>
+<td><strong>Drive life</strong></td>
+<td>Red below your <strong>Drive life warning (%)</strong> setting, green above it, on the 0 to 100 axis a percentage inherently has.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Nothing else gets a bar.</strong> Utilization percentages, power supply wattage, the per-component power devices and the energy counter carry no server-reported thresholds, so any bands there would be invented rather than measured.</p>
+<p>A <strong>synthesized</strong> threshold is never drawn. The description labels an estimated warning limit <code>(estimated)</code>, but a coloured band carries no label, so drawing one would present a guess as a reported limit. That is why the description and the bar can legitimately disagree on a sensor whose warning threshold the server omits.</p>
+<div class="admonition note">
+<p class="admonition-title">Bar graphs need a beta or development Domoticz build</p>
+<p>They rely on a plugin being able to write the <code>Color</code> field (<a href="https://github.com/domoticz/domoticz/pull/6968">domoticz/domoticz#6968</a>, merged 19 August 2026). That fix is <strong>not in any stable release yet</strong>, 2026.3 included, so on a stable build Domoticz discards the value, the cards show no bar and nothing is logged. Everything else on this page is unaffected.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Your own bands are safe</p>
+<p>Bands are written when a device is created, and refreshed afterwards when the underlying thresholds or your settings change. That refresh only happens while the bands are still the ones the plugin last wrote. Edit a device's bar by hand and the plugin stops touching it, the same rule it follows for names and icons.</p>
+</div>
+<h2 id="per-component-power-needs-a-licence">Per-component power (needs a licence)<a class="headerlink" href="#per-component-power-needs-a-licence" title="Permanent link">&para;</a></h2>
+<p>Dell can break system power down by subsystem, and where it is available the plugin creates six more devices:</p>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Metric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU Power</td>
+<td><code>TotalCPUPower</code></td>
+</tr>
+<tr>
+<td>Memory Power</td>
+<td><code>TotalMemoryPower</code></td>
+</tr>
+<tr>
+<td>Storage Power</td>
+<td><code>TotalStoragePower</code></td>
+</tr>
+<tr>
+<td>Fan Power</td>
+<td><code>TotalFanPower</code></td>
+</tr>
+<tr>
+<td>PCIe Power</td>
+<td><code>TotalPciePower</code></td>
+</tr>
+<tr>
+<td>FPGA Power</td>
+<td><code>TotalFPGAPower</code></td>
+</tr>
+</tbody>
+</table>
+<p>Typical idle figures on a well-populated tower server: CPU 51 W, storage 58 W, memory 5 W, fans 3.4 W. The storage figure is often the surprise, since a full drive bay can draw more than the processor.</p>
+<div class="admonition warning">
+<p class="admonition-title">This needs a licence, and most machines will not have one</p>
+<p>The data comes from Dell's telemetry service, which is licence-gated. There are two routes to it, and the plugin supports both because it selects a report by its contents rather than by its name:</p>
+<ul>
+<li><strong>iDRAC Datacenter.</strong> Unlocks Dell's own built-in telemetry reports, including <code>PowerMetrics</code>, directly on the iDRAC.</li>
+<li><strong>OpenManage Enterprise Advanced.</strong> Unlocks the OpenManage Enterprise <strong>Power Manager</strong> features, and it is Power Manager's own reports (<code>OME-PMP-Power-A</code> and friends) that the plugin reads on such a machine. Dell's built-in reports stay locked there and answer with a licence error, which is exactly why the report is chosen by content.</li>
+</ul>
+<p>On an iDRAC with neither, the devices simply do not appear and everything else works exactly as before.</p>
+<p>The plugin asks once per start. If the answer is no, it stops asking and logs a single line saying so, rather than wasting a request on every poll.</p>
+</div>
+<h3 id="switching-telemetry-on">Switching telemetry on<a class="headerlink" href="#switching-telemetry-on" title="Permanent link">&para;</a></h3>
+<p>Telemetry also has to be enabled on the iDRAC, and it is off by default. Two attributes matter: the master switch <code>Telemetry.1.EnableTelemetry</code> and the report itself <code>TelemetryPowerMetrics.1.EnableTelemetry</code>, both set to <code>Enabled</code>.</p>
+<p>You can set them yourself from the iDRAC interface or with <code>racadm</code>, or you can switch on <strong>Configure iDRAC telemetry</strong> in <a href="../settings/#configure-idrac-telemetry">Settings</a> and let the plugin do it. That setting is off by default and is the only thing in the plugin that writes configuration to your server; it acts only when per-component power was already found to be unavailable, so it will not disturb a machine where OpenManage already owns that configuration.</p>
+<h3 id="which-report-the-metrics-come-from">Which report the metrics come from<a class="headerlink" href="#which-report-the-metrics-come-from" title="Permanent link">&para;</a></h3>
+<p>Report names are <strong>not</strong> fixed. A Datacenter iDRAC serves Dell's built-in <code>PowerMetrics</code>, while a machine managed by OpenManage Enterprise carries the Power Manager Plugin's own reports, <code>OME-PMP-Power-A</code> and friends, and answers the built-in names with a licence error.</p>
+<p>So the plugin looks at what each report on your machine actually contains, rather than at what it is called, and uses the ones carrying the metrics it needs. You do not have to tell it which licence you have.</p>
+<p>When telemetry <strong>is</strong> available, the Server Power device also switches to reporting <code>SystemInputPower</code>, which is what the wall socket actually delivers, rather than the mainboard sensor. That is typically a few percent higher, for example 160 W at the wall against 144 W at the board. Note that this makes a visible step in the energy graph at the point it switches over.</p>
+<h3 id="power-supply-efficiency">Power supply efficiency<a class="headerlink" href="#power-supply-efficiency" title="Permanent link">&para;</a></h3>
+<p>Where a supply reports both the AC it draws and the DC it delivers, the plugin adds a <code>PS1 Efficiency</code> device showing the ratio as a percentage. One per supply that reports both figures.</p>
+<p>This is real conversion loss, not an estimate. Measured across a fleet: a PowerEdge R750 under load ran at 93.3%, while an R440 idling at 32 W managed only 75.0%. That drop is expected and is the reason the device is interesting: a switching supply is least efficient when barely loaded, so a lightly used server wastes a larger share of what it draws than a busy one.</p>
+<p>No device appears when the figure would be meaningless, and nothing is written rather than a zero recorded:</p>
+<ul>
+<li><strong>A supply on standby.</strong> On a grid-redundant pair the idle feed reads a few watts in and zero out. That supply is doing nothing; it is not 0% efficient.</li>
+<li><strong>Too light a load.</strong> Below 25 W of input the ratio is mostly measurement granularity, because input is reported in whole watts and output in quarter watts.</li>
+<li><strong>More output than input</strong>, which cannot happen and means the sensor is wrong.</li>
+</ul>
+<p>A supply that never carries meaningful load therefore never gets an efficiency device at all, rather than getting one that sits empty.</p>
+<p><img alt="A power supply efficiency device" src="../assets/cards/psu-efficiency.png" /></p>
+<h3 id="gpus">GPUs<a class="headerlink" href="#gpus" title="Permanent link">&para;</a></h3>
+<p>Where telemetry reports them, each GPU gets a power device and a temperature device, named <code>GPU &lt;slot&gt; Power</code> and <code>GPU &lt;slot&gt; Temp</code>. Power is reported in milliwatts and converted, so a card drawing 39100 mW shows as 39.1 W.</p>
+<p>Cards are identified by the slot the server reports, including sub-indices, so a multi-GPU card occupying one slot appears as <code>Video.Slot.7-1</code> through <code>Video.Slot.7-4</code> rather than collapsing into one. A card that reports only one of the two figures gets only that device.</p>
+<p><img alt="The power and temperature devices for one GPU" src="../assets/cards/gpu-power.png" /></p>
+<p><img alt="The matching temperature device for the same card" src="../assets/cards/gpu-temp.png" /></p>
+<h4 id="without-a-telemetry-licence">Without a telemetry licence<a class="headerlink" href="#without-a-telemetry-licence" title="Permanent link">&para;</a></h4>
+<p>Telemetry is licence-gated, but a GPU's temperature is usually also in the ordinary sensor list, where it costs nothing. When telemetry reports no cards, the plugin falls back to any sensor the server tags with the Redfish physical context <code>GPU</code> and creates a temperature device from it, under the name the server gives it, such as <code>GPU Temp 8</code> or <code>System Board SLOT5 Temp</code>.</p>
+<p>This is a fallback, never an addition: where telemetry does report cards, these sensors describe the same hardware again, so they are ignored rather than doubling every card's temperature device.</p>
+<p>It is temperature only. Per-card wattage still needs telemetry, because the sensor that carries GPU board power is not tagged with a physical context and could only be found by matching Dell-specific sensor ids, which would break on any other vendor.</p>
+<p>Measured on a PowerEdge R750 whose telemetry reported no GPU at all: the fallback found a card running at 74 °C that was previously invisible.</p>
+<h2 id="system-health">System Health<a class="headerlink" href="#system-health" title="Permanent link">&para;</a></h2>
+<p>This is deliberately a single tile rather than one per subsystem, because a wall of green tiles is not information.</p>
+<p>Its level is the worst of the standard Redfish health rollup and Dell's own OEM rollups. Its text is the part that matters:</p>
+<ul>
+<li>When the iDRAC has raised a fault, the tile shows <strong>the iDRAC's own message</strong>, for example <code>Power supply redundancy is lost.</code></li>
+<li>When there is no fault message, it falls back to naming the unhappy subsystems.</li>
+<li>When everything is healthy, it reads <code>OK</code>.</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Why the fault text matters so much</p>
+<p>Dell's health rollups track <strong>raised faults</strong>, not instantaneous component state, so the tile can stay red for hours while every single component, both power supplies included, reports <code>Status.Health: OK</code>. Without the fault sentence you would be looking at a red square with nothing behind it that you could act on.</p>
+</div>
+<p>With <a href="../settings/#formatted-card-text">Formatted card text</a> on, a fault list of more than one message is shown as bullets rather than joined into one paragraph, and the card gains a link reading <strong>Open iDRAC</strong> that opens the server's own web interface in a new tab, on every state including <code>OK</code>:</p>
+<p><img alt="System Health showing two faults as a bullet list" src="../assets/cards/system-health-critical.png" /></p>
+<div class="admonition note">
+<p class="admonition-title">More faults than fit end in a count, not a cut-off sentence</p>
+<p>The card has a readability budget for fault text. Faults that fit are shown in full, and when there are more than that, the card drops whole faults rather than cutting one in half, ending with a count such as <code>+2 more</code>. That replaces an earlier version that joined every fault into one string and cut the result mid-sentence, which could leave half a fault on screen looking like a complete one. This applies whether <strong>Formatted card text</strong> is on or off.</p>
+</div>
+<h2 id="power-redundancy">Power redundancy<a class="headerlink" href="#power-redundancy" title="Permanent link">&para;</a></h2>
+<p>Reports the health of the redundancy <strong>group</strong>, which is a different question from whether each PSU is healthy. It can read Critical while both power supplies individually read OK, which is exactly the condition a per-component view cannot show you.</p>
+<p>It reads in plain English rather than in Redfish terms, and it leads with <strong>the policy the server is actually configured for</strong>, for example <code>A/B Grid Redundant, 2 supplies (1 needed)</code>. The policy, the number of supplies in the set and the number needed all come from the server. A fault reads <code>Redundancy lost</code> or <code>Redundancy degraded</code> instead: when redundancy is gone, what you need on screen is the failure, not the setting that is no longer being met.</p>
+<p>A server that reports no policy at all, which is any non-Dell Redfish endpoint, falls back to the generic Redfish mode and reads <code>Redundant, 2 supplies (1 needed)</code>.</p>
+<p>With <a href="../settings/#formatted-card-text">Formatted card text</a> on, these facts are shown as bullets rather than run together on one line, and the card gains a link reading <strong>Open iDRAC</strong> that opens the server's own web interface in a new tab.</p>
+<div class="admonition note">
+<p class="admonition-title">The Open iDRAC link can sit below the fold</p>
+<p>The card's text area is a fixed height and scrolls. On Power Redundancy with three facts, the <strong>Open iDRAC</strong> link lands just below the visible area, so reaching it needs a scroll; most browsers draw a scrollbar on the card to show there is more.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Hot Spare appears on the end</p>
+<p>With <strong>Hot Spare</strong> switched on, the iDRAC parks some supplies on standby and lets the ones you nominate as <strong>Primary</strong> carry the whole load. The device names the primaries, which is what explains a healthy set where one supply reads a few watts and another reads everything:</p>
+<p><img alt="Power Redundancy showing the policy, supply count and hot spare primary as three bullets" src="../assets/cards/power-redundancy-hot-spare.png" /></p>
+<p>The pair it describes, on the same server at the same moment. Neither supply is faulty:</p>
+<p><img alt="The active supply drawing 144 Watt" src="../assets/cards/psu-active.png" /></p>
+<p><img alt="The standby supply drawing 5 Watt" src="../assets/cards/psu-standby.png" /></p>
+<p>The supply named is the one <strong>carrying</strong> the load, not the one parked. Measured on a four-supply DSS8440 nominating <code>PSU1 and PSU3</code>: those two delivered 288 W and 307 W while PSU2 and PSU4 sat at exactly 0 W.</p>
+<p>Hot Spare is only shown alongside a redundant policy, and even then it describes the <strong>configuration</strong> rather than proving a supply is parked. Switching it on while the policy is <strong>Not Redundant</strong> left the supplies sharing the load evenly on four servers, and the same DSS8440 under a <strong>PSU Redundant</strong> policy also shared across all four with Hot Spare still on. Only the grid policy actually parked anything on the machines measured.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">When a supply fails</p>
+<p>A failed supply is <strong>not</strong> removed from the iDRAC's inventory. It stays listed, drawing 0 W and reporting <code>Critical</code>, and the redundancy group stays with it and goes Critical too, so the device reads a red <code>Redundancy lost</code>. Verified by pulling a mains cord on a live T550: the supply went to 0 W and <code>UnavailableOffline</code>, and the iDRAC raised two faults, <code>Power supply redundancy is lost.</code> and <code>The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.</code></p>
+<p>That holds whether the supply lost its input or failed outright. Taking one out of its bay reads the same way: the iDRAC keeps reporting the supply it knows about, and stays red.</p>
+<p><strong>Restarting the iDRAC re-inventories the chassis.</strong> If a supply is physically gone at that point, the iDRAC counts only the supplies actually present and treats that as the new normal, so the fault clears and the device goes healthy for the smaller set. Put the supply back and the next inventory picks it up again. Nothing the plugin does causes this; it reports what the server reports.</p>
+<p>System Health carries the iDRAC's own fault text throughout, which is where the reason lives.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">When redundancy is switched off</p>
+<p>An empty redundancy group has a second, entirely benign cause: the server is <strong>configured</strong> not to be redundant, which is common on machines that need every supply delivering at once. The plugin reads Dell's own policy attribute to tell the two apart, and says so rather than leaving you to guess:</p>
+<p><img alt="Power Redundancy reading Not redundant (configured)" src="../assets/cards/power-redundancy-not-redundant.png" /></p>
+<p>Still grey rather than green. Not redundant is an intended state, not a healthy one to advertise.</p>
+</div>
+<p>Only the first redundancy group is reported. Chassis that expose several groups will show only one. The device comes from the same payload as the power supplies, so it stops updating if you switch <strong>Power supplies</strong> off in <a href="../settings/#devices">Settings</a>.</p>
+<h2 id="energy">Energy<a class="headerlink" href="#energy" title="Permanent link">&para;</a></h2>
+<p>Server Power always carries both live watts and an accumulating kWh counter. With <a href="../settings/#energy-counters">Energy counters</a> on, which is the default, the per-component power devices, each power supply and each GPU carry the same pair of figures.</p>
+<p>Every counter is integrated by the plugin itself, over the <strong>measured</strong> interval since its last successful poll rather than the configured poll interval, capped at twice that interval. A poll that runs late is counted for the time that actually passed rather than for the time you configured, and an unreachable iDRAC does not stamp the clock at all, so an outage is under-counted rather than having its silence booked as either a full interval of load or none.</p>
+<p>It does <strong>not</strong> use the lifetime energy figure the iDRAC reports. That counter does not accumulate continuously: it works out to a lifetime average far below what the machine really draws, so it must pause across power-off periods or reset. Wiring it to a Domoticz counter would produce a graph with invented plateaus and sudden jumps.</p>
+<p>The trade-off is that energy accrued while Domoticz is not running is not recovered. Every counter is guarded so it can only move forwards, and an implausibly large jump is held back and reported rather than accepted.</p>
+<p>A component counter carries one further guard: a reading above one and a half times what the whole machine is drawing is not counted, because a component cannot draw more than the chassis it sits in. The counter is held at its last value, and the plugin logs one line per counter per plugin start rather than repeating it on every poll.</p>
+<h3 id="why-the-component-counters-do-not-add-up-to-server-power">Why the component counters do not add up to Server Power<a class="headerlink" href="#why-the-component-counters-do-not-add-up-to-server-power" title="Permanent link">&para;</a></h3>
+<p>Each component counter measures one internal rail. Together they never account for the whole machine, and the shortfall is not a fixed proportion: measured across a fleet of eight servers the subsystem figures covered 74% of the wall draw on a T550, 79% on an R740xd2, 48% on an R440 and 18% on a DSS8440, where the GPUs carry most of the load and no subsystem metric covers them.</p>
+<p>Metric coverage itself varies by machine: from two of the six subsystem metrics reported on a PowerEdge R750 up to all six on the T550. A metric your server does not report simply produces no device, rather than one reading zero.</p>
+<p>Server Power is the figure to trust for the machine's total consumption and cost. The component counters are for seeing where the power goes, and for spotting a change in one part over time.</p>
+<h2 id="power-supply-devices-show-input-watts">Power supply devices show input watts<a class="headerlink" href="#power-supply-devices-show-input-watts" title="Permanent link">&para;</a></h2>
+<p>A PSU device shows what the supply draws from the wall, which includes conversion loss, rather than what it delivers to the board.</p>
+<div class="admonition warning">
+<p class="admonition-title">A PSU reading near 0 W is often completely normal</p>
+<p>On a server with <strong>Hot Spare</strong> switched on, the supplies nominated as <strong>Primary</strong> carry the load while the rest idle near zero. Wattage alone is therefore <strong>not</strong> a fault signal, and the plugin never treats it as one. Health comes from the supply's reported status and from Power Redundancy, which names the supplies carrying the load so you can tell an idle standby apart from a failure at a glance.</p>
+<p>What tells you a supply has actually failed is <strong>System Health</strong>, which turns red and carries the iDRAC's own sentence, for example <code>The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.</code> The supply's own <strong>description</strong> also carries the health the server reports and follows it on every poll, <code>OK</code> while the supply is fine and <code>Critical</code> when it is not. Note that Domoticz does not draw the description on the card: you see it in the device's edit dialog, in Setup then Devices, in the JSON API and from dzVents as <code>device.description</code>.</p>
+<p>The idle supply also loses its <strong>PSU efficiency</strong> device while it is on standby. A supply drawing 5 W and delivering 0 W has no meaningful conversion efficiency, so the plugin reports none rather than inventing a figure.</p>
+</div>
+<h2 id="device-naming-and-unit-numbers">Device naming and unit numbers<a class="headerlink" href="#device-naming-and-unit-numbers" title="Permanent link">&para;</a></h2>
+<p>Each device is created with a name derived from what the server calls the component. <strong>If you rename a device yourself, the plugin leaves your name alone</strong> from then on; it only renames devices whose name it still owns.</p>
+<p>Unit numbers are allocated once per piece of hardware and then persist. If you remove hardware, its device stays until you delete it, and its unit number is not handed to something else. This keeps scenes, timers and scripts pointing at the same thing across a drive replacement.</p>
+<p>The plugin creates <strong>several Domoticz Devices</strong>, one per family, rather than a single one. See <a href="../internals/#one-domoticz-device-per-family">How it works</a>. A unit number is unique only within its Device, so a script acting on one should match the Device as well as the number.</p>
+<h2 id="icons">Icons<a class="headerlink" href="#icons" title="Permanent link">&para;</a></h2>
+<p>Fans get the Fan icon, Uptime the Clock icon and drive-life devices the Hard Disk icon when they are first created. If you pick a different icon afterwards, the plugin never overwrites your choice.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../settings/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Settings">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Settings
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../control/" class="md-footer__link md-footer__link--next" aria-label="Next: Power control">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Power control
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Rouzax - not affiliated with Dell Technologies
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" target="_blank" rel="noopener" title="Dell iDRAC Monitor on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://ko-fi.com/O0W221GBUG" target="_blank" rel="noopener" title="Support Dell iDRAC Monitor on Ko-fi" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.351 2.715c-2.7 0-4.986.025-6.83.26C2.078 3.285 0 5.154 0 8.61c0 3.506.182 6.13 1.585 8.493 1.584 2.701 4.233 4.182 7.662 4.182h.83c4.209 0 6.494-2.234 7.637-4a9.5 9.5 0 0 0 1.091-2.338C21.792 14.688 24 12.22 24 9.208v-.415c0-3.247-2.13-5.507-5.792-5.87-1.558-.156-2.65-.208-6.857-.208m0 1.947c4.208 0 5.09.052 6.571.182 2.624.311 4.13 1.584 4.13 4v.39c0 2.156-1.792 3.844-3.87 3.844h-.935l-.156.649c-.208 1.013-.597 1.818-1.039 2.546-.909 1.428-2.545 3.064-5.922 3.064h-.805c-2.571 0-4.831-.883-6.078-3.195-1.09-2-1.298-4.155-1.298-7.506 0-2.181.857-3.402 3.012-3.714 1.533-.233 3.559-.26 6.39-.26m6.547 2.287c-.416 0-.65.234-.65.546v2.935c0 .311.234.545.65.545 1.324 0 2.051-.754 2.051-2s-.727-2.026-2.052-2.026m-10.39.182c-1.818 0-3.013 1.48-3.013 3.142 0 1.533.858 2.857 1.949 3.897.727.701 1.87 1.429 2.649 1.896a1.47 1.47 0 0 0 1.507 0c.78-.467 1.922-1.195 2.623-1.896 1.117-1.039 1.974-2.364 1.974-3.897 0-1.662-1.247-3.142-3.039-3.142-1.065 0-1.792.545-2.338 1.298-.493-.753-1.246-1.298-2.312-1.298"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

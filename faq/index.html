@@ -1,0 +1,1443 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A read-only-by-default Domoticz plugin for Dell PowerEdge servers: temperatures, fans, power, utilization, storage and health read from the iDRAC over Redfish, with opt-in power control.">
+      
+      
+        <meta name="author" content="Rouzax">
+      
+      
+        <link rel="canonical" href="https://rouzax.github.io/dell-idrac-domoticz-plugin/faq/">
+      
+      
+        <link rel="prev" href="../security/">
+      
+      
+        <link rel="next" href="../about/">
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.23">
+    
+    
+      
+        <title>Troubleshooting / FAQ - Dell iDRAC Monitor for Domoticz</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting-faq" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Dell iDRAC Monitor for Domoticz" class="md-header__button md-logo" aria-label="Dell iDRAC Monitor for Domoticz" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9zm0 8h1v-2H9zm0 8h1v-2H9zM5 3v2h2V3zm0 8v2h2v-2zm0 8v2h2v-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Dell iDRAC Monitor for Domoticz
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Troubleshooting / FAQ
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rouzax/dell-idrac-domoticz-plugin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Dell iDRAC Monitor for Domoticz" class="md-nav__button md-logo" aria-label="Dell iDRAC Monitor for Domoticz" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9zm0 8h1v-2H9zm0 8h1v-2H9zM5 3v2h2V3zm0 8v2h2v-2zm0 8v2h2v-2z"/></svg>
+
+    </a>
+    Dell iDRAC Monitor for Domoticz
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rouzax/dell-idrac-domoticz-plugin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Settings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../devices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring devices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Power control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    How it works
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting / FAQ
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting / FAQ
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-new-hardware-type-appears-in-the-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      No new hardware type appears in the list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-hardware-is-added-but-no-devices-appear" class="md-nav__link">
+    <span class="md-ellipsis">
+      The hardware is added but no devices appear
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fewer-devices-than-i-expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fewer devices than I expected
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#devices-show-as-timed-out-and-their-values-are-stale" class="md-nav__link">
+    <span class="md-ellipsis">
+      Devices show as timed out and their values are stale
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-log-says-the-plugin-thread-ended-unexpectedly" class="md-nav__link">
+    <span class="md-ellipsis">
+      The log says the plugin thread ended unexpectedly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#everything-fails-and-the-log-mentions-a-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Everything fails and the log mentions a certificate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-keeps-failing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication keeps failing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lowering-request-timeout-made-things-worse" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lowering Request Timeout made things worse
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#readings-that-look-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      Readings that look wrong
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Readings that look wrong">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-power-supply-reads-0-w-or-close-to-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      A power supply reads 0 W or close to it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-health-is-red-but-every-component-reads-ok" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Health is red but every component reads OK
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-state-says-on-but-i-shut-the-server-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power State says On but I shut the server down
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-energy-counter-shows-a-negative-today-figure-right-after-upgrading" class="md-nav__link">
+    <span class="md-ellipsis">
+      My energy counter shows a negative Today figure right after upgrading
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-energy-counter-does-not-match-my-meter" class="md-nav__link">
+    <span class="md-ellipsis">
+      The energy counter does not match my meter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fan-and-temperature-cards-have-no-coloured-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      The fan and temperature cards have no coloured bar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-system-health-or-power-redundancy-card-shows-literal-ulli-or-a-href-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      The System Health or Power Redundancy card shows literal &lt;ul&gt;&lt;li&gt; or &lt;a href=...&gt; text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-redundancy-stopped-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power Redundancy stopped updating
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-temperature-reads-a-huge-negative-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      A temperature reads a huge negative number
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-component-power-and-gpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-component power and GPUs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-component power and GPUs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cpu-memory-and-storage-power-devices-never-appeared" class="md-nav__link">
+    <span class="md-ellipsis">
+      The CPU, memory and storage power devices never appeared
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-log-says-telemetry-is-reachable-but-carries-no-power-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      The log says telemetry is reachable but carries no power metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-turned-on-configure-idrac-telemetry-and-nothing-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      I turned on Configure iDRAC telemetry and nothing changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-gpus-do-not-appear" class="md-nav__link">
+    <span class="md-ellipsis">
+      My GPUs do not appear
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-power-command-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      A power command is refused
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-turned-control-off-but-the-control-devices-are-still-there" class="md-nav__link">
+    <span class="md-ellipsis">
+      I turned control off but the control devices are still there
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-the-plugin-cannot-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      Things the plugin cannot do
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Things the plugin cannot do">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#it-does-not-see-my-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      It does not see my UPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#it-only-shows-one-power-redundancy-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      It only shows one power redundancy group
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#no-new-hardware-type-appears-in-the-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      No new hardware type appears in the list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-hardware-is-added-but-no-devices-appear" class="md-nav__link">
+    <span class="md-ellipsis">
+      The hardware is added but no devices appear
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fewer-devices-than-i-expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fewer devices than I expected
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#devices-show-as-timed-out-and-their-values-are-stale" class="md-nav__link">
+    <span class="md-ellipsis">
+      Devices show as timed out and their values are stale
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-log-says-the-plugin-thread-ended-unexpectedly" class="md-nav__link">
+    <span class="md-ellipsis">
+      The log says the plugin thread ended unexpectedly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#everything-fails-and-the-log-mentions-a-certificate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Everything fails and the log mentions a certificate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-keeps-failing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication keeps failing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lowering-request-timeout-made-things-worse" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lowering Request Timeout made things worse
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#readings-that-look-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      Readings that look wrong
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Readings that look wrong">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-power-supply-reads-0-w-or-close-to-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      A power supply reads 0 W or close to it
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-health-is-red-but-every-component-reads-ok" class="md-nav__link">
+    <span class="md-ellipsis">
+      System Health is red but every component reads OK
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-state-says-on-but-i-shut-the-server-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power State says On but I shut the server down
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-energy-counter-shows-a-negative-today-figure-right-after-upgrading" class="md-nav__link">
+    <span class="md-ellipsis">
+      My energy counter shows a negative Today figure right after upgrading
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-energy-counter-does-not-match-my-meter" class="md-nav__link">
+    <span class="md-ellipsis">
+      The energy counter does not match my meter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fan-and-temperature-cards-have-no-coloured-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      The fan and temperature cards have no coloured bar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-system-health-or-power-redundancy-card-shows-literal-ulli-or-a-href-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      The System Health or Power Redundancy card shows literal &lt;ul&gt;&lt;li&gt; or &lt;a href=...&gt; text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#power-redundancy-stopped-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      Power Redundancy stopped updating
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-temperature-reads-a-huge-negative-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      A temperature reads a huge negative number
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-component-power-and-gpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-component power and GPUs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-component power and GPUs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-cpu-memory-and-storage-power-devices-never-appeared" class="md-nav__link">
+    <span class="md-ellipsis">
+      The CPU, memory and storage power devices never appeared
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-log-says-telemetry-is-reachable-but-carries-no-power-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      The log says telemetry is reachable but carries no power metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-turned-on-configure-idrac-telemetry-and-nothing-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      I turned on Configure iDRAC telemetry and nothing changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#my-gpus-do-not-appear" class="md-nav__link">
+    <span class="md-ellipsis">
+      My GPUs do not appear
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-power-command-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      A power command is refused
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i-turned-control-off-but-the-control-devices-are-still-there" class="md-nav__link">
+    <span class="md-ellipsis">
+      I turned control off but the control devices are still there
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-the-plugin-cannot-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      Things the plugin cannot do
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Things the plugin cannot do">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#it-does-not-see-my-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      It does not see my UPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#it-only-shows-one-power-redundancy-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      It only shows one power redundancy group
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="troubleshooting-faq">Troubleshooting / FAQ<a class="headerlink" href="#troubleshooting-faq" title="Permanent link">&para;</a></h1>
+<p>Organised by what you see, not by what is happening internally.</p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<h3 id="no-new-hardware-type-appears-in-the-list">No new hardware type appears in the list<a class="headerlink" href="#no-new-hardware-type-appears-in-the-list" title="Permanent link">&para;</a></h3>
+<p>Domoticz could not parse the plugin manifest, so it never registered the hardware type.</p>
+<p>Check the Domoticz log at startup for the plugin count:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Status: PluginSystem: Started, Python version &#39;3.13.5&#39;, 3 plugin definitions loaded.
+</code></pre></div>
+<p>It should be one higher than before you installed. If it is not:</p>
+<ul>
+<li>Confirm <code>plugin.py</code> is directly inside its own folder under <code>plugins</code>, not nested deeper and not loose in <code>plugins</code> itself.</li>
+<li>Confirm your Domoticz build has the Python plugin system enabled.</li>
+<li>Look for a line mentioning <code>dellidrac</code> in the log, which will name the parse problem.</li>
+</ul>
+<h3 id="the-hardware-is-added-but-no-devices-appear">The hardware is added but no devices appear<a class="headerlink" href="#the-hardware-is-added-but-no-devices-appear" title="Permanent link">&para;</a></h3>
+<p>Devices are created on the <strong>first successful poll</strong>, not when you click Add, so wait one poll interval (30 seconds by default).</p>
+<p>If nothing arrives after that, look for:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Error: Dell iDRAC Monitor: iDRAC unreachable, backing off 20s: ...
+</code></pre></div>
+<p>Then check:</p>
+<ul>
+<li>The address has <strong>no scheme</strong> and no trailing path. Just <code>hostname</code> or <code>10.0.0.5</code>.</li>
+<li>The machine running Domoticz can reach the iDRAC on port 443. In a container, that means the container, not the host.</li>
+<li>The credentials work by signing in to the iDRAC web interface with them.</li>
+</ul>
+<h3 id="fewer-devices-than-i-expected">Fewer devices than I expected<a class="headerlink" href="#fewer-devices-than-i-expected" title="Permanent link">&para;</a></h3>
+<p>That is usually correct rather than a fault. The plugin only creates devices for hardware the iDRAC actually describes, and skips sensors that report no value. Common reasons:</p>
+<ul>
+<li>A device family is switched off in <a href="../settings/">Settings</a>.</li>
+<li>The server genuinely does not report that sensor. Not every PowerEdge exposes exhaust temperature, for instance.</li>
+<li>The host is powered off, so most sensors report nothing at all.</li>
+<li>The <a href="../devices/#per-component-power-needs-a-licence">per-component power</a> devices need a licence most machines do not have, so on a typical iDRAC six of the devices in the documentation are legitimately missing.</li>
+<li>The drive-life percentage devices are <strong>off by default</strong>. See <a href="../settings/#drive-life-devices">Drive life % devices</a>.</li>
+</ul>
+<h2 id="running">Running<a class="headerlink" href="#running" title="Permanent link">&para;</a></h2>
+<h3 id="devices-show-as-timed-out-and-their-values-are-stale">Devices show as timed out and their values are stale<a class="headerlink" href="#devices-show-as-timed-out-and-their-values-are-stale" title="Permanent link">&para;</a></h3>
+<p>This is the plugin behaving correctly during an outage. It <strong>holds the last known value</strong> rather than writing a zero, and Domoticz marks the device stale itself based on its last update time.</p>
+<p>Look for <code>iDRAC unreachable, backing off</code> in the log. The wait doubles on each consecutive failure up to 15 minutes and resets as soon as one poll succeeds. An iDRAC reboot typically takes three to four minutes to recover.</p>
+<p>If it never recovers, the address, credentials or network path is the problem, not a transient outage.</p>
+<h3 id="the-log-says-the-plugin-thread-ended-unexpectedly">The log says the plugin thread ended unexpectedly<a class="headerlink" href="#the-log-says-the-plugin-thread-ended-unexpectedly" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Error: Dell iDRAC Monitor hardware (8) thread seems to have ended unexpectedly
+</code></pre></div>
+<p>This is Domoticz's own watchdog, which fires when hardware has not reported in for 60 seconds. It only logs; it does not restart anything.</p>
+<p>If you see it, a single poll is blocking longer than 60 seconds, which in practice means your <strong>Request Timeout</strong> is set high and the iDRAC address is unreachable in a way that blackholes packets rather than refusing them. Lower the timeout somewhat or fix the address. At the default 30 second timeout a single failed poll cannot reach the watchdog threshold.</p>
+<h3 id="everything-fails-and-the-log-mentions-a-certificate">Everything fails and the log mentions a certificate<a class="headerlink" href="#everything-fails-and-the-log-mentions-a-certificate" title="Permanent link">&para;</a></h3>
+<p>Turn <strong>Verify TLS certificate</strong> off, or install a certificate that the machine running Domoticz trusts. An iDRAC ships with a self-signed certificate, so verification fails on a stock machine. See <a href="../security/">Security</a>.</p>
+<h3 id="authentication-keeps-failing">Authentication keeps failing<a class="headerlink" href="#authentication-keeps-failing" title="Permanent link">&para;</a></h3>
+<p>Confirm the account works by signing in to the iDRAC web interface with it.</p>
+<div class="admonition warning">
+<p class="admonition-title">A wrong password can lock the account</p>
+<p>iDRAC locks an account after repeated failed attempts. A wrong password saved in Domoticz will retry on every poll, so it can lock you out through sheer volume. Fix or disable the hardware entry before the lockout window resets.</p>
+</div>
+<h3 id="lowering-request-timeout-made-things-worse">Lowering Request Timeout made things worse<a class="headerlink" href="#lowering-request-timeout-made-things-worse" title="Permanent link">&para;</a></h3>
+<p>A recovering iDRAC can take several seconds to answer its first request after a restart, sometimes the better part of ten. A short timeout turns a normal recovery into a failed poll and starts a backoff you did not need. The 30 second default is deliberate.</p>
+<h2 id="readings-that-look-wrong">Readings that look wrong<a class="headerlink" href="#readings-that-look-wrong" title="Permanent link">&para;</a></h2>
+<h3 id="a-power-supply-reads-0-w-or-close-to-it">A power supply reads 0 W or close to it<a class="headerlink" href="#a-power-supply-reads-0-w-or-close-to-it" title="Permanent link">&para;</a></h3>
+<p>Normal on a server configured for hot standby, where one supply carries the load and the other idles. Wattage alone is not a fault signal and the plugin never treats it as one.</p>
+<p>The signals that do mean something are the supply's own health and the <strong>Power Redundancy</strong> device.</p>
+<h3 id="system-health-is-red-but-every-component-reads-ok">System Health is red but every component reads OK<a class="headerlink" href="#system-health-is-red-but-every-component-reads-ok" title="Permanent link">&para;</a></h3>
+<p>Dell's health rollups track <strong>raised faults</strong>, not instantaneous component state, so a rollup can stay red while each individual part reports healthy. This is not a bug in the plugin and it is not a stale reading.</p>
+<p>The System Health tile shows the iDRAC's own fault message when there is one, and that sentence is the explanation. For example <code>Power supply redundancy is lost.</code> points at a redundancy condition that no per-component health field reports.</p>
+<p>The fault clears when the underlying condition clears. Clearing the system event log does <strong>not</strong> clear it: the fault list is a separate store tracking the live condition, which was confirmed by clearing the log and watching the fault persist.</p>
+<h3 id="power-state-says-on-but-i-shut-the-server-down">Power State says On but I shut the server down<a class="headerlink" href="#power-state-says-on-but-i-shut-the-server-down" title="Permanent link">&para;</a></h3>
+<p>Power State reflects what the iDRAC reports, and a graceful shutdown request is fire-and-forget: the iDRAC accepts it and returns success even when no operating system is there to act on it. The log says the action was <em>accepted</em>, not that it succeeded. If the state does not change, the request never reached anything that could act on it. See <a href="../control/">Power control</a>.</p>
+<h3 id="my-energy-counter-shows-a-negative-today-figure-right-after-upgrading">My energy counter shows a negative Today figure right after upgrading<a class="headerlink" href="#my-energy-counter-shows-a-negative-today-figure-right-after-upgrading" title="Permanent link">&para;</a></h3>
+<p>This only happens on an install that upgraded from a version where these were plain watt devices, and only for the devices that were converted: CPU, memory, storage, fan, PCIe and FPGA power, each power supply, and each GPU power device.</p>
+<p>Domoticz keeps a short log of recent readings that both device types share, but the stored number means something different for each: for a watt device it was the wattage, for a counter it is the running total. Right after the conversion, the older rows from before the upgrade are read back as if they were counter readings, so the graph works out the difference between consecutive wattage values instead of real consumption. Those differences swing positive and negative, and the day's total can come out negative.</p>
+<p>The live wattage on the card stays correct throughout. Only the kWh figure and the counter graph are affected.</p>
+<p>This lasts as long as Domoticz keeps those older readings in its short log, controlled by the <strong>Short log</strong> history days setting under <strong>Setup &gt; Settings &gt; History</strong> (the Domoticz default is 1 day). It corrects itself with no action needed once the older readings age out.</p>
+<p>The day, month and year graphs are not affected, because Domoticz stores the long-term history for the two device types in different places. One exception: the figure recorded for the day you upgraded can stay wrong, because Domoticz works a counter's daily total out from the first and last reading of that day.</p>
+<p>Nothing needs to be done. If you would rather not wait, turning <a href="../settings/#energy-counters">Energy counters</a> off converts the devices back to watt gauges, and their original graphs reappear.</p>
+<h3 id="the-energy-counter-does-not-match-my-meter">The energy counter does not match my meter<a class="headerlink" href="#the-energy-counter-does-not-match-my-meter" title="Permanent link">&para;</a></h3>
+<p>If the mismatch is a negative Today figure that appeared right after upgrading, see <a href="#my-energy-counter-shows-a-negative-today-figure-right-after-upgrading">My energy counter shows a negative Today figure right after upgrading</a> above instead.</p>
+<p>The counter is integrated by the plugin from the wattage the server reports, which is board power as the iDRAC measures it. It is not a revenue meter, and it does not include the conversion loss between wall and board, which is typically a few percent.</p>
+<p>Energy accrued while Domoticz is not running is not recovered. The iDRAC's own lifetime counter is not used, because it does not accumulate continuously and would produce invented plateaus and jumps. See <a href="../devices/#energy">Energy</a>.</p>
+<p>With <a href="../settings/#energy-counters">Energy counters</a> on, up to fifteen devices carry a counter this way: Server Power, the six subsystem power devices, each power supply and each GPU. The subsystem, power supply and GPU counters are not meant to add up to Server Power and will not: each measures one internal rail, and together they never account for the whole machine. See <a href="../devices/#why-the-component-counters-do-not-add-up-to-server-power">Why the component counters do not add up to Server Power</a> for the actual shortfall measured across a fleet of test servers, rather than repeating it here.</p>
+<h3 id="the-fan-and-temperature-cards-have-no-coloured-bar">The fan and temperature cards have no coloured bar<a class="headerlink" href="#the-fan-and-temperature-cards-have-no-coloured-bar" title="Permanent link">&para;</a></h3>
+<p>The bands are computed and sent, and your Domoticz build is discarding them. Plugin-supplied bar ranges need <a href="https://github.com/domoticz/domoticz/pull/6968">domoticz/domoticz#6968</a>, merged 19 August 2026, which is <strong>not in any stable release yet</strong>, 2026.3 included. A beta or development build has it. Nothing is logged, because from the plugin's side the write succeeded.</p>
+<p>Two other reasons a specific card has no bar, both correct behaviour:</p>
+<ul>
+<li>The server reports no thresholds for that sensor, or only one of the two critical limits. The axis cannot be derived from one edge, so no bar is drawn rather than a guessed one.</li>
+<li><strong>Fan bar maximum</strong> is set to <code>0</code>, which switches fan bars off.</li>
+</ul>
+<p>See <a href="../devices/#bar-graphs">Bar graphs</a>.</p>
+<h3 id="the-system-health-or-power-redundancy-card-shows-literal-ulli-or-a-href-text">The System Health or Power Redundancy card shows literal <code>&lt;ul&gt;&lt;li&gt;</code> or <code>&lt;a href=...&gt;</code> text<a class="headerlink" href="#the-system-health-or-power-redundancy-card-shows-literal-ulli-or-a-href-text" title="Permanent link">&para;</a></h3>
+<p><strong>Formatted card text</strong> needs a Domoticz build that renders Text and Alert device data as HTML, which is Domoticz 2026.1 or newer. On an older build the markup is not rendered and shows up on the card as raw tags instead of a bullet list and a link.</p>
+<p>Update Domoticz to 2026.1 or newer, or turn <a href="../settings/#formatted-card-text">Formatted card text</a> off to go back to plain single-line text.</p>
+<h3 id="power-redundancy-stopped-updating">Power Redundancy stopped updating<a class="headerlink" href="#power-redundancy-stopped-updating" title="Permanent link">&para;</a></h3>
+<p>The redundancy group arrives in the same payload as the power supplies, so switching <strong>Power supplies</strong> off in <a href="../settings/#devices">Settings</a> stops it being read. The device is not deleted, it just stops receiving values, and Domoticz eventually marks it stale.</p>
+<h3 id="a-temperature-reads-a-huge-negative-number">A temperature reads a huge negative number<a class="headerlink" href="#a-temperature-reads-a-huge-negative-number" title="Permanent link">&para;</a></h3>
+<p>It should not, and if it does, please report it. The plugin rejects out-of-range Celsius readings specifically because a powered-off host reports <code>-128.0</code> as a "no reading" marker.</p>
+<h2 id="per-component-power-and-gpus">Per-component power and GPUs<a class="headerlink" href="#per-component-power-and-gpus" title="Permanent link">&para;</a></h2>
+<h3 id="the-cpu-memory-and-storage-power-devices-never-appeared">The CPU, memory and storage power devices never appeared<a class="headerlink" href="#the-cpu-memory-and-storage-power-devices-never-appeared" title="Permanent link">&para;</a></h3>
+<p>They need Dell's telemetry service, which is licence-gated, and most iDRACs do not have the licence. The plugin asks once per plugin start and then says so in the log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Status: Dell iDRAC Monitor: per-component power unavailable, so those devices will not be created
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>(needs Dell telemetry, which is licence-gated): ...
+</code></pre></div>
+<p>Two licences unlock it, by different routes: <strong>iDRAC Datacenter</strong> for Dell's own built-in reports, and <strong>OpenManage Enterprise Advanced</strong> for the OME Power Manager reports. See <a href="../devices/#per-component-power-needs-a-licence">Per-component power</a>.</p>
+<p>If you do have a licence, telemetry still has to be switched on. Either set <code>Telemetry.1.EnableTelemetry</code> and <code>TelemetryPowerMetrics.1.EnableTelemetry</code> to <code>Enabled</code> yourself, or switch on <a href="../settings/#configure-idrac-telemetry">Configure iDRAC telemetry</a>.</p>
+<h3 id="the-log-says-telemetry-is-reachable-but-carries-no-power-metrics">The log says telemetry is reachable but carries no power metrics<a class="headerlink" href="#the-log-says-telemetry-is-reachable-but-carries-no-power-metrics" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Status: Dell iDRAC Monitor: Dell telemetry is reachable but no report carries power metrics, so
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>the per-component power devices will not be created
+</code></pre></div>
+<p>The service answered, but none of the reports the machine serves contained any of the metrics the plugin wants. The usual cause is that the specific report is still disabled while the master switch is on. Enabling <code>TelemetryPowerMetrics.1.EnableTelemetry</code>, or the equivalent Power Manager report, is what fills it in.</p>
+<h3 id="i-turned-on-configure-idrac-telemetry-and-nothing-changed">I turned on Configure iDRAC telemetry and nothing changed<a class="headerlink" href="#i-turned-on-configure-idrac-telemetry-and-nothing-changed" title="Permanent link">&para;</a></h3>
+<p>It is attempted <strong>once per plugin start</strong>, and only when per-component power was already found to be unavailable, so nothing happens on a machine where telemetry already works. Look for either of these in the log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Status: Dell iDRAC Monitor: configuring iDRAC telemetry, because per-component power was
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>unavailable and Configure iDRAC telemetry is on: ...
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Error: Dell iDRAC Monitor: could not configure iDRAC telemetry, which usually means the licence
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>does not allow it: ...
+</code></pre></div>
+<p>If neither appears, the plugin never got as far as trying. If the error appears, the licence does not permit it and no setting in the plugin will change that.</p>
+<h3 id="my-gpus-do-not-appear">My GPUs do not appear<a class="headerlink" href="#my-gpus-do-not-appear" title="Permanent link">&para;</a></h3>
+<p>GPU figures come from telemetry as well, so everything above applies first. GPU power and temperature have now been read live from two GPU servers, a 7-card Dell DSS8440 and a 4-card PowerEdge R7525. Cards that report temperature but no power, which both machines had, produce a temperature device on their own. If you have the licence and the cards and still see nothing, that is worth reporting.</p>
+<h2 id="control">Control<a class="headerlink" href="#control" title="Permanent link">&para;</a></h2>
+<h3 id="a-power-command-is-refused">A power command is refused<a class="headerlink" href="#a-power-command-is-refused" title="Permanent link">&para;</a></h3>
+<p>Work through these in order:</p>
+<ol>
+<li>Is <strong>Allow Control</strong> set to <code>Yes</code>?</li>
+<li>For Force Off or Power Cycle, is <strong>Allow Force Off and Power Cycle</strong> also enabled?</li>
+<li>Does the selector entry read <code>(unavailable)</code>? Then the server is not currently offering that action, which usually means it does not apply in the current power state.</li>
+<li>Does the iDRAC account have <strong>Server Control</strong> privilege? A read-only account can monitor but not act.</li>
+</ol>
+<h3 id="i-turned-control-off-but-the-control-devices-are-still-there">I turned control off but the control devices are still there<a class="headerlink" href="#i-turned-control-off-but-the-control-devices-are-still-there" title="Permanent link">&para;</a></h3>
+<p>They are not deleted, only made inert. Every command is refused at the guard so nothing can leak through, but the widgets stay visible and clickable with no sign that they do nothing. Delete them under <strong>Setup</strong> then <strong>Devices</strong> if you want them gone.</p>
+<h2 id="things-the-plugin-cannot-do">Things the plugin cannot do<a class="headerlink" href="#things-the-plugin-cannot-do" title="Permanent link">&para;</a></h2>
+<h3 id="it-does-not-see-my-ups">It does not see my UPS<a class="headerlink" href="#it-does-not-see-my-ups" title="Permanent link">&para;</a></h3>
+<p>The iDRAC cannot report UPS battery health, charge or runtime. It only knows whether input voltage is present at each power supply.</p>
+<p>That distinction matters. The iDRAC will tell you the instant a supply loses input voltage, but nothing in Redfish can warn you that a UPS battery has degraded and will not hold the load next time.</p>
+<p>For real UPS monitoring, add Domoticz's native NUT or apcupsd support alongside this plugin.</p>
+<h3 id="it-only-shows-one-power-redundancy-group">It only shows one power redundancy group<a class="headerlink" href="#it-only-shows-one-power-redundancy-group" title="Permanent link">&para;</a></h3>
+<p>Chassis that expose several redundancy groups will show only the first.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../security/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Security">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Security
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../about/" class="md-footer__link md-footer__link--next" aria-label="Next: About">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                About
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Rouzax - not affiliated with Dell Technologies
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/Rouzax/dell-idrac-domoticz-plugin" target="_blank" rel="noopener" title="Dell iDRAC Monitor on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://ko-fi.com/O0W221GBUG" target="_blank" rel="noopener" title="Support Dell iDRAC Monitor on Ko-fi" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.351 2.715c-2.7 0-4.986.025-6.83.26C2.078 3.285 0 5.154 0 8.61c0 3.506.182 6.13 1.585 8.493 1.584 2.701 4.233 4.182 7.662 4.182h.83c4.209 0 6.494-2.234 7.637-4a9.5 9.5 0 0 0 1.091-2.338C21.792 14.688 24 12.22 24 9.208v-.415c0-3.247-2.13-5.507-5.792-5.87-1.558-.156-2.65-.208-6.857-.208m0 1.947c4.208 0 5.09.052 6.571.182 2.624.311 4.13 1.584 4.13 4v.39c0 2.156-1.792 3.844-3.87 3.844h-.935l-.156.649c-.208 1.013-.597 1.818-1.039 2.546-.909 1.428-2.545 3.064-5.922 3.064h-.805c-2.571 0-4.831-.883-6.078-3.195-1.09-2-1.298-4.155-1.298-7.506 0-2.181.857-3.402 3.012-3.714 1.533-.233 3.559-.26 6.39-.26m6.547 2.287c-.416 0-.65.234-.65.546v2.935c0 .311.234.545.65.545 1.324 0 2.051-.754 2.051-2s-.727-2.026-2.052-2.026m-10.39.182c-1.818 0-3.013 1.48-3.013 3.142 0 1.533.858 2.857 1.949 3.897.727.701 1.87 1.429 2.649 1.896a1.47 1.47 0 0 0 1.507 0c.78-.467 1.922-1.195 2.623-1.896 1.117-1.039 1.974-2.364 1.974-3.897 0-1.662-1.247-3.142-3.039-3.142-1.065 0-1.792.545-2.338 1.298-.493-.753-1.246-1.298-2.312-1.298"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
