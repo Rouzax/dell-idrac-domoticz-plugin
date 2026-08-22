@@ -34,15 +34,6 @@ UNIT_FAN_POWER = 17
 UNIT_PCIE_POWER = 18
 UNIT_FPGA_POWER = 19
 
-# How a device update's energy counter is maintained. A unit number is a fixed slot, but the
-# counter policy is not stored anywhere, so these are plain markers rather than persisted values.
-# GATED applies to Dell's aggregated subsystem metrics only: they can report a static figure for
-# hardware that is not present, so they are not counted until the reading has been seen to move.
-# DIRECT is everything whose source is a per-device reading that moves on its own.
-COUNTER_NONE = ""
-COUNTER_DIRECT = "direct"
-COUNTER_GATED = "gated"
-
 # Domoticz built-in icon ids. The plugin API's Image= sets the CustomImage column
 # (hardware/plugins/PythonObjectEx.cpp), and domoticz_api applies it only when a unit is CREATED,
 # so a user who later picks a different icon keeps it.
@@ -119,9 +110,9 @@ class DeviceUpdate:
     device: str = DEVICE_SYSTEM
     image: int = 0
     switchtype: int = 0
-    # COUNTER_NONE, COUNTER_DIRECT or COUNTER_GATED. When set, `svalue` holds the watts ALONE and
-    # the caller's counter pass appends the energy half before the update is applied.
-    counter: str = COUNTER_NONE
+    # True when `svalue` holds the watts ALONE and the caller's counter pass must append the
+    # energy half before the update is applied.
+    counter: bool = False
 
 
 def _assign_block(ids, device: str, base: int, alloc: dict, taken: dict) -> None:
@@ -548,7 +539,7 @@ def plan(
                 nvalue=0,
                 svalue=_fmt_reading(watts),
                 options={"EnergyMeterMode": "0"},
-                counter=COUNTER_DIRECT,
+                counter=True,
             )
         )
 
@@ -565,7 +556,7 @@ def plan(
                         nvalue=0,
                         svalue=_fmt_reading(watts),
                         options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
-                        counter=COUNTER_DIRECT if cfg.energy_counters else COUNTER_NONE,
+                        counter=cfg.energy_counters,
                     )
                 )
         if celsius is not None:
@@ -632,7 +623,7 @@ def plan(
                 # "63.600002". A tenth of a watt is well past anything meaningful here.
                 svalue=_fmt_reading(round(value, 1)),
                 options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
-                counter=COUNTER_GATED if cfg.energy_counters else COUNTER_NONE,
+                counter=cfg.energy_counters,
             )
         )
 
@@ -819,7 +810,7 @@ def plan(
                     svalue=_fmt_reading(psu.input_watts),
                     options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
                     description=text,
-                    counter=COUNTER_DIRECT if cfg.energy_counters else COUNTER_NONE,
+                    counter=cfg.energy_counters,
                 )
             )
 

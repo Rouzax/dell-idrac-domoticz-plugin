@@ -45,19 +45,6 @@ def implausible(watts: float, system_watts) -> bool:
     return float(watts) > float(system_watts) * CHASSIS_HEADROOM
 
 
-def has_moved(first_watts, watts: float) -> bool:
-    """False until a reading differs from the first one seen this run.
-
-    Dell's aggregated telemetry can report a static figure for hardware that is not there. An
-    R7525 with no FPGA reported exactly 43 W both powered off at 22 W and running at 582 W,
-    while CPU, memory and storage in the same report tracked the boot. A value that never moves
-    is not a measurement, and integrating it would invent about a kilowatt hour a day for ever.
-    """
-    if first_watts is None:
-        return False
-    return float(watts) != float(first_watts)
-
-
 def advance(prev_wh: float, watts: float, elapsed_seconds: float, ceiling_watts: float) -> tuple:
     """One counter step: integrate, then clamp. Returns (counter_wh, warning or None)."""
     candidate = prev_wh + integrate_wh(watts, elapsed_seconds)

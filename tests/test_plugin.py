@@ -786,12 +786,10 @@ def _seed_counter_device(dev_id, unit, svalue):
 
 def test_attach_counters_appends_the_integrated_energy():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
-    plugin._state.first_watts = {"dellidrac_1_system:14": 10.0}
-    plugin._state.moved = {"dellidrac_1_system:14"}
     _seed_counter_device("dellidrac_1_system", 14, "40.0;100.0")
     out = plugin.attach_counters(
         domoticz_stub.Devices,
-        [_counter_update(14, "36.0", planner.COUNTER_GATED)],
+        [_counter_update(14, "36.0", True)],
         elapsed_s=3600.0,
         system_watts=150.0,
         peak_w=200.0,
@@ -809,57 +807,14 @@ def test_attach_counters_leaves_a_non_counter_update_alone():
     ) == [update]
 
 
-def test_attach_counters_holds_a_gated_reading_that_has_never_moved():
-    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
-    plugin._state.first_watts = {}
-    plugin._state.moved = set()
-    _seed_counter_device("dellidrac_1_system", 19, "43.0;500.0")
-    args = (
-        domoticz_stub.Devices,
-        [_counter_update(19, "43.0", planner.COUNTER_GATED, name="FPGA Power")],
-    )
-    first = plugin.attach_counters(*args, elapsed_s=3600.0, system_watts=582.0, peak_w=800.0)
-    second = plugin.attach_counters(*args, elapsed_s=3600.0, system_watts=582.0, peak_w=800.0)
-    # The counter never advances while the reading is a static figure.
-    assert first[0].svalue == "43.0;500.0"
-    assert second[0].svalue == "43.0;500.0"
-
-
-def test_attach_counters_starts_counting_once_a_gated_reading_moves():
-    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
-    plugin._state.first_watts = {}
-    plugin._state.moved = set()
-    _seed_counter_device("dellidrac_1_system", 14, "40.0;100.0")
-    plugin.attach_counters(
-        domoticz_stub.Devices,
-        [_counter_update(14, "40.0", planner.COUNTER_GATED)],
-        elapsed_s=3600.0,
-        system_watts=150.0,
-        peak_w=200.0,
-    )
-    out = plugin.attach_counters(
-        domoticz_stub.Devices,
-        [_counter_update(14, "36.0", planner.COUNTER_GATED)],
-        elapsed_s=3600.0,
-        system_watts=150.0,
-        peak_w=200.0,
-    )
-    assert out[0].svalue == "36.0;136.0"
-
-
-def test_attach_counters_never_gates_a_direct_counter():
-    # An R750 hot spare supply can sit at exactly 5.0 W for hours. That is real standby energy.
+def test_attach_counters_counts_a_flat_standby_reading():
+    # An R750 hot spare supply can sit at exactly 5.0 W for hours. That is real standby energy,
+    # and this is now a regression test proving nothing gates any counter.
     plugin._state.dev_ids = {planner.DEVICE_POWER: "dellidrac_1_power"}
-    plugin._state.first_watts = {}
-    plugin._state.moved = set()
     _seed_counter_device("dellidrac_1_power", 1, "5.0;10.0")
     out = plugin.attach_counters(
         domoticz_stub.Devices,
-        [
-            _counter_update(
-                1, "5.0", planner.COUNTER_DIRECT, name="PS2 Status", device=planner.DEVICE_POWER
-            )
-        ],
+        [_counter_update(1, "5.0", True, name="PS2 Status", device=planner.DEVICE_POWER)],
         elapsed_s=3600.0,
         system_watts=461.0,
         peak_w=800.0,
@@ -867,14 +822,22 @@ def test_attach_counters_never_gates_a_direct_counter():
     assert out[0].svalue == "5.0;15.0"
 
 
+def test_attach_counters_counts_a_reading_that_never_changes():
+    # The movement gate was removed deliberately: it delayed real energy for as long as a
+    # component held a steady value, and the fabricated reading it targeted moved anyway.
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_counter_device("dellidrac_1_system", 19, "42.0;500.0")
+    args = (domoticz_stub.Devices, [_counter_update(19, "42.0", True, name="FPGA Power")])
+    first = plugin.attach_counters(*args, elapsed_s=3600.0, system_watts=330.0, peak_w=800.0)
+    assert first[0].svalue == "42.0;542.0"
+
+
 def test_attach_counters_holds_a_reading_above_the_chassis_draw():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
-    plugin._state.first_watts = {"dellidrac_1_system:19": 10.0}
-    plugin._state.moved = {"dellidrac_1_system:19"}
     _seed_counter_device("dellidrac_1_system", 19, "43.0;500.0")
     out = plugin.attach_counters(
         domoticz_stub.Devices,
-        [_counter_update(19, "43.0", planner.COUNTER_GATED, name="FPGA Power")],
+        [_counter_update(19, "43.0", True, name="FPGA Power")],
         elapsed_s=3600.0,
         system_watts=22.0,
         peak_w=200.0,
@@ -884,14 +847,12 @@ def test_attach_counters_holds_a_reading_above_the_chassis_draw():
 
 def test_attach_counters_drops_an_update_whose_previous_value_is_unreadable():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
-    plugin._state.first_watts = {"dellidrac_1_system:14": 10.0}
-    plugin._state.moved = {"dellidrac_1_system:14"}
     _seed_counter_device("dellidrac_1_system", 14, "40.0;not-a-number")
     # Writing anything here would reset a counter whose whole contract is that it only climbs.
     assert (
         plugin.attach_counters(
             domoticz_stub.Devices,
-            [_counter_update(14, "36.0", planner.COUNTER_GATED)],
+            [_counter_update(14, "36.0", True)],
             elapsed_s=3600.0,
             system_watts=150.0,
             peak_w=200.0,

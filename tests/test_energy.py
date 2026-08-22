@@ -75,9 +75,3 @@ def test_implausible_accepts_a_supply_carrying_almost_the_whole_load():
 def test_implausible_accepts_anything_when_the_system_figure_is_unknown():
     assert energy.implausible(43.0, None) is False
     assert energy.implausible(43.0, 0.0) is False
-
-
-def test_has_moved_is_false_until_a_reading_differs_from_the_first():
-    assert energy.has_moved(None, 43.0) is False
-    assert energy.has_moved(43.0, 43.0) is False
-    assert energy.has_moved(43.0, 42.9) is True

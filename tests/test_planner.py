@@ -162,13 +162,13 @@ def test_server_power_is_a_counter_and_carries_only_watts():
     got = _by_unit(_plan("t550"))
     power = got[planner.UNIT_POWER]
     assert power.type_name == "kWh"
-    assert power.counter == planner.COUNTER_DIRECT
+    assert power.counter is True
     # The energy half is filled in later, by the counter pass, from the device's own sValue.
     assert ";" not in power.svalue
     assert float(power.svalue) > 0
 
 
-def test_subsystem_power_devices_are_gated_counters():
+def test_subsystem_power_devices_are_counters():
     # UNIT_CPU_POWER only appears once the telemetry report is readable, so metrics must be
     # supplied explicitly; _plan()'s default fixture carries none.
     parts = _parts("t550")
@@ -179,7 +179,7 @@ def test_subsystem_power_devices_are_gated_counters():
     )
     cpu = got[planner.UNIT_CPU_POWER]
     assert cpu.type_name == "kWh"
-    assert cpu.counter == planner.COUNTER_GATED
+    assert cpu.counter is True
     assert cpu.options == {"EnergyMeterMode": "0"}
 
 
@@ -189,7 +189,7 @@ def test_psu_power_devices_are_direct_counters():
     assert psus
     for psu in psus:
         assert psu.type_name == "kWh"
-        assert psu.counter == planner.COUNTER_DIRECT
+        assert psu.counter is True
         # A supply's health lives in its description and must survive the type change.
         assert psu.description
 
@@ -210,7 +210,7 @@ def test_energy_counters_off_keeps_the_watt_devices():
         assert got[unit].type_name == "kWh"  # Server Power ignores the setting
     cpu = got[planner.UNIT_CPU_POWER]
     assert cpu.type_name == "Usage"
-    assert cpu.counter == planner.COUNTER_NONE
+    assert cpu.counter is False
     assert cpu.options == {}
 
 
@@ -586,7 +586,7 @@ def test_component_power_devices_are_created_from_telemetry():
     assert got[planner.UNIT_CPU_POWER].svalue == "52.0"
     assert got[planner.UNIT_CPU_POWER].name == "CPU Power"
     assert got[planner.UNIT_CPU_POWER].type_name == "kWh"
-    assert got[planner.UNIT_CPU_POWER].counter == planner.COUNTER_GATED
+    assert got[planner.UNIT_CPU_POWER].counter is True
     assert got[planner.UNIT_MEMORY_POWER].svalue == "7.0"
     assert got[planner.UNIT_STORAGE_POWER].svalue == "63.6"
     assert got[planner.UNIT_FAN_POWER].svalue == "3.4"
@@ -671,7 +671,7 @@ def test_gpu_devices_are_created_one_per_card():
     watts = {u.name: u.svalue for u in powers}
     assert watts["GPU Video.Slot.10-1 Power"] == "39.1"
     assert {u.type_name for u in powers} == {"kWh"}
-    assert {u.counter for u in powers} == {planner.COUNTER_DIRECT}
+    assert {u.counter for u in powers} == {True}
     assert {u.type_name for u in temps} == {"Temperature"}
     assert dict((u.name, u.svalue) for u in temps)["GPU Video.Slot.6-1 Temp"] == "40.0"
 

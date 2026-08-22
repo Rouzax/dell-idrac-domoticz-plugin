@@ -158,11 +158,6 @@ class _PluginState:
         # Wall-clock reference for the energy counters, stamped only after a SUCCESSFUL poll.
         # None means "no measured interval yet", which integrates nothing rather than guessing.
         self.last_poll_monotonic = None
-        # Counter key -> the first wattage seen for it this run, and the keys that have since
-        # been seen to change. Held in memory on purpose: a restart re-arms the movement gate,
-        # which costs at most one interval per component and saves a persisted field.
-        self.first_watts = {}
-        self.moved = set()
         # (counter key, reason) pairs already warned about, so a machine reporting a permanently
         # bad figure costs one log line per plugin start per reason instead of one per poll, and
         # one reason firing first does not permanently silence a different reason on the same
@@ -541,7 +536,7 @@ def report_duplicate_names(updates) -> None:
 def _warn_counter_once(key: str, reason: str, message: str) -> None:
     """One line per counter per plugin start, PER REASON. Keying on the device alone would let
     the first condition to fire (say, an unreadable previous value) permanently silence the
-    other three for that device; a component that later goes implausible would then log nothing
+    other two for that device; a component that later goes implausible would then log nothing
     at all. Keying on (key, reason) keeps each condition's own one-line-per-start latch."""
     latch = (key, reason)
     if latch in _state.counter_warned:
@@ -574,18 +569,6 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
             _warn_counter_once(
                 key, "unreadable", f"{up.name}: energy counter unreadable, not written"
             )
-            continue
-        first = _state.first_watts.setdefault(key, watts)
-        if energy.has_moved(first, watts):
-            _state.moved.add(key)
-        if up.counter == planner.COUNTER_GATED and key not in _state.moved:
-            _warn_counter_once(
-                key,
-                "static",
-                f"{up.name}: {watts} W has not changed since start, treating it as a static "
-                "figure rather than a measurement and not counting it",
-            )
-            out.append(dataclasses.replace(up, svalue=f"{up.svalue};{prev_wh}"))
             continue
         if energy.implausible(watts, system_watts):
             _warn_counter_once(
