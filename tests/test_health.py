@@ -291,3 +291,35 @@ def test_is_not_redundant_tolerates_a_qualifier_on_dells_wording():
     assert health.is_not_redundant("  not redundant (something)  ")
     assert not health.is_not_redundant("A/B Grid Redundant")
     assert not health.is_not_redundant(None)
+
+
+def test_redundancy_parts_are_the_pieces_the_joined_text_is_made_of():
+    """The card puts one fact per line, so the facts have to exist separately before they are
+    joined. Splitting the finished sentence on ", " would be wrong: "hot spare, primary PSU1"
+    contains a comma and is a single fact."""
+    level, parts = health.redundancy_parts(_red(), _attrs(hot_spare="Enabled"))
+    assert level == health.LEVEL_OK
+    assert parts == [
+        "A/B Grid Redundant",
+        "2 supplies (1 needed)",
+        "hot spare, primary PSU1",
+    ]
+
+
+def test_joining_the_parts_reproduces_the_text_exactly():
+    """The two forms must be built from one source, or the plain path and the formatted path
+    drift apart as the wording changes."""
+    for attrs in (
+        _attrs(),
+        _attrs(hot_spare="Enabled"),
+        _attrs(hot_spare="Enabled", primary=None),
+        _attrs(policy=None),
+        _attrs(policy="Not Redundant"),
+    ):
+        for entry in (_red(), _red(status="Critical"), _red(status=None), _red(min_needed=None)):
+            level, parts = health.redundancy_parts(entry, attrs)
+            assert (level, ", ".join(parts)) == health.redundancy_health(entry, attrs)
+
+
+def test_a_fault_is_a_single_part():
+    assert health.redundancy_parts(_red(status="Critical"), _attrs())[1] == ["Redundancy lost"]
