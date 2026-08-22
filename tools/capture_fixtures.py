@@ -46,6 +46,10 @@ SCRUB_KEYS = (
     "PlatformGUID",
     "smbiosGUID",
     "ExpressServiceCode",
+    # The front LCD shows whatever the operator pointed it at, and on a stock PowerEdge that is
+    # the Service Tag. Free text, so there is nothing to pattern-match: scrub the whole value.
+    "CurrentDisplay",
+    "UserDefinedString",
 )
 PLACEHOLDERS = {
     "SerialNumber": "SERIAL0000000",
@@ -68,15 +72,32 @@ PLACEHOLDERS = {
     # Dell encodes the Service Tag in base 36; this is the same value in base 10, so it
     # reveals the tag even with every ServiceTag key above already replaced.
     "ExpressServiceCode": "00000000000",
+    "CurrentDisplay": "",
+    "UserDefinedString": "",
 }
+
+
+def scrub_key(key: str) -> str | None:
+    """The SCRUB_KEYS entry a payload key maps to, or None if it is not an identifier.
+
+    Dell attribute names are "<group>.<instance>.<Field>", so the DellAttributes document spells
+    the Service Tag "ServerInfo.1.ServiceTag" and the hostname "ServerOS.1.HostName". Matching
+    whole key names alone therefore missed EVERY identifier in the single largest payload the
+    capture takes, which is how a real Service Tag, node ID and hostname reached a fixture and
+    were caught only by the forbidden-literals sweep. The last dot-separated segment is the
+    field name in both spellings, so it is what gets matched.
+    """
+    field = key.rsplit(".", 1)[-1]
+    return field if field in SCRUB_KEYS else None
 
 
 def scrub(node):
     if isinstance(node, dict):
         out = {}
         for key, value in node.items():
-            if key in SCRUB_KEYS and isinstance(value, str):
-                out[key] = PLACEHOLDERS[key]
+            field = scrub_key(key)
+            if field is not None and isinstance(value, str):
+                out[key] = PLACEHOLDERS[field]
             else:
                 out[key] = scrub(value)
         return out

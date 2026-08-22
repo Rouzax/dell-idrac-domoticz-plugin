@@ -132,3 +132,47 @@ def test_no_express_service_code(path):
         f"{path.name} carries a real Express Service Code, which decodes directly to the "
         "machine's Service Tag. Scrub it to zeros."
     )
+
+
+def _capture_fixtures():
+    sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
+    try:
+        import capture_fixtures
+    finally:
+        sys.path.pop(0)
+    return capture_fixtures
+
+
+def test_the_scrubber_matches_dotted_dell_attribute_keys():
+    """Dell names attributes "<group>.<instance>.<Field>", so the DellAttributes document spells
+    the Service Tag "ServerInfo.1.ServiceTag". Matching whole key names alone silently skipped
+    every identifier in the largest payload the capture takes, and a real tag, node ID and
+    hostname reached a fixture before the forbidden-literals sweep caught them.
+    """
+    capture_fixtures = _capture_fixtures()
+    scrubbed = capture_fixtures.scrub(
+        {
+            "Attributes": {
+                "ServerInfo.1.ServiceTag": "REALTAG",
+                "ServerInfo.1.NodeID": "REALTAG",
+                "ServerOS.1.HostName": "box.internal.example",
+                "LCD.1.CurrentDisplay": "REALTAG",
+                "NIC.1.MACAddress": "aa:bb:cc:dd:ee:ff",
+                "ServerPwr.1.PSRedPolicy": "A/B Grid Redundant",
+            }
+        }
+    )["Attributes"]
+    assert scrubbed["ServerInfo.1.ServiceTag"] == capture_fixtures.PLACEHOLDERS["ServiceTag"]
+    assert scrubbed["ServerInfo.1.NodeID"] == capture_fixtures.PLACEHOLDERS["NodeID"]
+    assert scrubbed["ServerOS.1.HostName"] == capture_fixtures.PLACEHOLDERS["HostName"]
+    assert scrubbed["LCD.1.CurrentDisplay"] == ""
+    assert scrubbed["NIC.1.MACAddress"] == capture_fixtures.PLACEHOLDERS["MACAddress"]
+    # Not an identifier, and the whole point of the capture: it must survive untouched.
+    assert scrubbed["ServerPwr.1.PSRedPolicy"] == "A/B Grid Redundant"
+
+
+def test_the_scrubber_still_matches_plain_keys():
+    capture_fixtures = _capture_fixtures()
+    scrubbed = capture_fixtures.scrub({"SerialNumber": "REAL", "Model": "PowerEdge T550"})
+    assert scrubbed["SerialNumber"] == capture_fixtures.PLACEHOLDERS["SerialNumber"]
+    assert scrubbed["Model"] == "PowerEdge T550"

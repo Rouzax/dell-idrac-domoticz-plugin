@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The fixture capture tool now scrubs Dell attribute identifiers.** Dell names attributes `<group>.<instance>.<Field>`, so the DellAttributes payload spells the Service Tag `ServerInfo.1.ServiceTag`. The scrubber matched whole key names only and therefore skipped every identifier in the largest payload it captures. Dev tooling only; no committed fixture was affected, and nothing about running the plugin changes.
+
 ## [0.2.0] - 2026-08-20
 
 ### Added
