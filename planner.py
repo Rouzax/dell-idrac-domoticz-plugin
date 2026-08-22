@@ -5,6 +5,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field, replace
 
+import cardtext
 import health
 import model
 import thresholds
@@ -109,6 +110,9 @@ class DeviceUpdate:
     device: str = DEVICE_SYSTEM
     image: int = 0
     switchtype: int = 0
+    # True when `svalue` holds the watts ALONE and the caller's counter pass must append the
+    # energy half before the update is applied.
+    counter: bool = False
 
 
 def _assign_block(ids, device: str, base: int, alloc: dict, taken: dict) -> None:
@@ -463,19 +467,35 @@ def _temp_update(unit, sensor, name, threshold_map, device=DEVICE_SYSTEM) -> Dev
     )
 
 
-# Dell spells the non-redundant policy "Not Redundant". Matched loosely because the exact
-# wording is Dell's and could gain a qualifier; anything else is treated as "should be redundant",
-# which is the safe direction: an unrecognised policy keeps the neutral "Not reported" wording
-# rather than telling the user a redundancy loss was intentional.
-_NOT_REDUNDANT = "not redundant"
-
-
-def _is_not_redundant(policy: str | None) -> bool:
-    return bool(policy) and _NOT_REDUNDANT in str(policy).strip().lower()
-
-
 # Dell reports the intrusion sensor as a plain string, not a Status block.
 _INTRUSION_OK = {"Normal"}
+
+
+# How much fault text a card carries before the rest becomes a count. NOT a database limit:
+# sValue is declared VARCHAR(200) but SQLite does not enforce length, and a 350-character value
+# was stored and rendered in full while designing this. It is a readability budget.
+_FAULT_BUDGET = 200
+
+
+def fault_lines(faults) -> list:
+    """Fault messages that fit the budget, plus a count of any dropped.
+
+    Replaces cutting the JOINED text mid-sentence, which left half a fault on screen that could
+    not be told apart from a complete one. The first message is always kept whatever its length,
+    so a single long fault is still readable rather than being replaced by a bare count.
+    """
+    messages = [fault.message for fault in faults if fault.message]
+    kept = []
+    used = 0
+    for message in messages:
+        if kept and used + len(message) > _FAULT_BUDGET:
+            break
+        kept.append(message)
+        used += len(message)
+    dropped = len(messages) - len(kept)
+    if dropped:
+        kept.append(f"+{dropped} more")
+    return kept
 
 
 def plan(
@@ -491,7 +511,6 @@ def plan(
     inventory,
     alloc,
     cfg,
-    energy_wh: float = 0.0,
     faults: list | None = None,
     redundancy: list | None = None,
     metrics: dict | None = None,
@@ -518,8 +537,9 @@ def plan(
                 type_name="kWh",
                 name="Server Power",
                 nvalue=0,
-                svalue=f"{watts};{energy_wh}",
+                svalue=_fmt_reading(watts),
                 options={"EnergyMeterMode": "0"},
+                counter=True,
             )
         )
 
@@ -530,11 +550,13 @@ def plan(
                 out.append(
                     DeviceUpdate(
                         unit=unit,
-                        type_name="Usage",
+                        type_name="kWh" if cfg.energy_counters else "Usage",
                         name=f"GPU {device} Power",
                         device=DEVICE_GPU,
                         nvalue=0,
                         svalue=_fmt_reading(watts),
+                        options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
+                        counter=cfg.energy_counters,
                     )
                 )
         if celsius is not None:
@@ -594,24 +616,27 @@ def plan(
         out.append(
             DeviceUpdate(
                 unit=unit,
-                type_name="Usage",
+                type_name="kWh" if cfg.energy_counters else "Usage",
                 name=name,
                 nvalue=0,
                 # Telemetry values carry float32 noise, e.g. storage power arrives as
                 # "63.600002". A tenth of a watt is well past anything meaningful here.
                 svalue=_fmt_reading(round(value, 1)),
+                options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
+                counter=cfg.energy_counters,
             )
         )
 
     level, text = health.system_health(system.health, system.rollups)
+    link = cardtext.idrac_link(cfg.address) if cfg.rich_card_text else ""
     # Dell rollups latch onto faults, so a red level often has no unhealthy component behind it.
     # When the iDRAC states a reason, show the reason instead of a list of subsystem initials.
-    messages = [f.message for f in faults if f.message]
-    if messages and level not in (health.LEVEL_OK, health.LEVEL_GREY):
-        joined = "; ".join(messages)
-        # Domoticz sValue is VARCHAR(200). Mark a cut so a truncated fault cannot be mistaken
-        # for a complete one.
-        text = joined if len(joined) <= 200 else joined[:197] + "..."
+    messages = fault_lines(faults)
+    faulted = bool(messages) and level not in (health.LEVEL_OK, health.LEVEL_GREY)
+    if cfg.rich_card_text:
+        text = cardtext.bullets(messages, link) if faulted else cardtext.lines([text], link)
+    elif faulted:
+        text = "; ".join(messages)
     out.append(
         DeviceUpdate(
             unit=UNIT_HEALTH, type_name="Alert", name="System Health", nvalue=level, svalue=text
@@ -691,12 +716,21 @@ def plan(
     # Only the first group is reported; a chassis exposing several loses the rest.
     redundancy_state = None
     if redundancy:
-        redundancy_state = health.redundancy_health(redundancy[0])
+        # dell_attrs carries the configured policy and Hot Spare. The Redfish group on its own
+        # cannot tell one Dell policy from another; see redundancy_parts.
+        redundancy_state = health.redundancy_parts(redundancy[0], dell_attrs)
     elif psus:
-        # Pulling a supply EMPTIES this list rather than marking it Critical, measured on real
-        # hardware. Emitting nothing left the tile showing its last value, so it sat green
-        # claiming redundancy at the moment redundancy was lost. Grey rather than red because
-        # the plugin cannot know WHY the group vanished; System Health carries the fault text.
+        # An EMPTY list on a chassis that has supplies has never been observed under a
+        # redundant policy. A failed supply does NOT empty it: measured twice, once by pulling a
+        # mains cord and once in the "degraded" capture, the supply stays enumerated as Critical
+        # and the group survives and goes Critical too, which redundancy_parts reports as
+        # "Redundancy lost". So this branch is a DEFENSIVE fallback for a state no machine here
+        # has produced, not a documented iDRAC behaviour.
+        #
+        # It still must not emit nothing: that left the tile showing its last value, so it sat
+        # green claiming redundancy at the moment redundancy was lost. Grey rather than red
+        # because the plugin cannot know WHY the group would be missing; System Health carries
+        # the fault text either way.
         #
         # Dell's own policy attribute separates the two reasons the list can be empty. Measured
         # across six servers, the correlation was exact: every machine set to a redundant policy
@@ -705,19 +739,25 @@ def plan(
         # "Not reported" suggests the server is withholding something rather than obeying its
         # configuration. Still grey, never green: not redundant is not a healthy state to
         # advertise, it is simply an intended one.
-        if _is_not_redundant(dell_attrs.redundancy_policy):
-            redundancy_state = (health.LEVEL_GREY, "Not redundant (configured)")
+        if health.is_not_redundant(dell_attrs.redundancy_policy):
+            redundancy_state = (health.LEVEL_GREY, ["Not redundant (configured)"])
         else:
-            redundancy_state = (health.LEVEL_GREY, "Not reported")
+            redundancy_state = (health.LEVEL_GREY, ["Not reported"])
     if redundancy_state is not None:
-        level, text = redundancy_state
+        level, parts = redundancy_state
+        # Bullets rather than one fact per line, decided by measuring the real card. The text box
+        # caps at 60px and scrolls: three plain lines plus the link is 68px and cuts the link
+        # horizontally through its letters, while three bullets is 87px but the fold falls
+        # BETWEEN list items, so the visible area stays clean and the link is reached by
+        # scrolling. Merging facts onto one line does not help; that line then wraps.
+        svalue = cardtext.bullets(parts, link) if cfg.rich_card_text else ", ".join(parts)
         out.append(
             DeviceUpdate(
                 unit=UNIT_REDUNDANCY,
                 type_name="Alert",
                 name="Power Redundancy",
                 nvalue=level,
-                svalue=text,
+                svalue=svalue,
             )
         )
 
@@ -763,12 +803,14 @@ def plan(
             out.append(
                 DeviceUpdate(
                     unit=unit,
-                    type_name="Usage",
+                    type_name="kWh" if cfg.energy_counters else "Usage",
                     name=psu.name,
                     device=DEVICE_POWER,
                     nvalue=0,
                     svalue=_fmt_reading(psu.input_watts),
+                    options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
                     description=text,
+                    counter=cfg.energy_counters,
                 )
             )
 

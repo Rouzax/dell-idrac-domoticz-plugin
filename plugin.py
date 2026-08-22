@@ -1,6 +1,6 @@
 # pyright: reportMissingImports=false, reportUndefinedVariable=false, reportAttributeAccessIssue=false
 """\
-<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.2.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
+<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.3.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
     <description>
         <!-- Inlined as a data URI so no asset has to be web-served from the plugin folder.
              A PNG rather than an inline SVG deliberately: an inline SVG style block is DOCUMENT
@@ -53,6 +53,12 @@
             <param field="EnableDriveLife" type="boolean" label="Drive life % devices" default="false">
                 <description>Adds a second device per drive that reports predicted media life, showing it as a percentage with a bar. Off by default: the life figure is already on the drive's own tile, so this duplicates it for the sake of the graph. Only drives that report life get one, which in practice means SSDs. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#drive-life-devices" target="_blank">details</a>).</description>
             </param>
+            <param field="RichCardText" type="boolean" label="Formatted card text" default="true">
+                <description>Renders the System Health and Power Redundancy cards as a bullet list with a link to the iDRAC, instead of a single line of text. Turn it off to go back to plain single-line text, which is what any dzVents script written before this setting existed will be comparing against. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#formatted-card-text" target="_blank">details</a>).</description>
+            </param>
+            <param field="EnergyCounters" type="boolean" label="Energy counters" default="true">
+                <description>Reports per-component power as kWh counters instead of plain watt gauges, so each one appears in Domoticz's energy report with a total and a cost. Applies to the CPU, memory, storage, fan, PCIe and FPGA power devices, to each power supply and to each GPU. Existing devices are converted in place and keep their name and history. Turn it off to go back to watt gauges (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#energy-counters" target="_blank">details</a>).</description>
+            </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
                 <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">choosing a value</a>).</description>
             </param>
@@ -94,6 +100,7 @@
 """
 
 import dataclasses
+import time
 
 import DomoticzEx as Domoticz
 
@@ -148,6 +155,14 @@ class _PluginState:
         self.affix_logged = None
         self.duplicates_reported = ()
         self.collisions_checked = False
+        # Wall-clock reference for the energy counters, stamped only after a SUCCESSFUL poll.
+        # None means "no measured interval yet", which integrates nothing rather than guessing.
+        self.last_poll_monotonic = None
+        # (counter key, reason) pairs already warned about, so a machine reporting a permanently
+        # bad figure costs one log line per plugin start per reason instead of one per poll, and
+        # one reason firing first does not permanently silence a different reason on the same
+        # device.
+        self.counter_warned = set()
         self.reset_slow()
 
     def reset_slow(self):
@@ -518,6 +533,59 @@ def report_duplicate_names(updates) -> None:
     _state.duplicates_reported = duplicates
 
 
+def _warn_counter_once(key: str, reason: str, message: str) -> None:
+    """One line per counter per plugin start, PER REASON. Keying on the device alone would let
+    the first condition to fire (say, an unreadable previous value) permanently silence the
+    other two for that device; a component that later goes implausible would then log nothing
+    at all. Keying on (key, reason) keeps each condition's own one-line-per-start latch."""
+    latch = (key, reason)
+    if latch in _state.counter_warned:
+        return
+    _state.counter_warned.add(latch)
+    Domoticz.Error(message)
+
+
+def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
+    """Fill in the energy half of every counter device's sValue.
+
+    The previous total is read back off the device itself, so no counter state is persisted and
+    a device the user deleted simply starts again from zero. Returns the updates to apply: a
+    counter whose previous value cannot be read is DROPPED, because writing anything at all
+    would reset a counter whose entire contract is that it only climbs.
+    """
+    out = []
+    for up in updates:
+        if not up.counter:
+            out.append(up)
+            continue
+        # Keyed on the resolved DeviceID rather than the bare family name, so the key matches
+        # what read_prev_counter_wh actually reads: two families never share a DeviceID, but the
+        # family alone is not what identifies a device on the wire.
+        dev_id = _state.dev_ids[up.device]
+        key = f"{dev_id}:{up.unit}"
+        watts = float(up.svalue)
+        prev_wh = domoticz_api.read_prev_counter_wh(devices, dev_id, up.unit)
+        if prev_wh is None:
+            _warn_counter_once(
+                key, "unreadable", f"{up.name}: energy counter unreadable, not written"
+            )
+            continue
+        if energy.implausible(watts, system_watts):
+            _warn_counter_once(
+                key,
+                "implausible",
+                f"{up.name}: {watts} W exceeds the {system_watts} W the machine is drawing, "
+                "counter held",
+            )
+            out.append(dataclasses.replace(up, svalue=f"{up.svalue};{prev_wh}"))
+            continue
+        counter_wh, warning = energy.advance(prev_wh, watts, elapsed_s, peak_w * 2)
+        if warning:
+            _warn_counter_once(key, "advance", f"{up.name}: {warning}")
+        out.append(dataclasses.replace(up, svalue=f"{up.svalue};{counter_wh}"))
+    return out
+
+
 def onHeartbeat():
     cfg = _state.cfg
     if cfg is None:
@@ -594,40 +662,36 @@ def onHeartbeat():
             Domoticz.Status("all discovered items now have a unit")
         _state.orphaned_reported = orphaned
 
-    # Integrate the same figure the device displays: wall draw when telemetry supplies it,
-    # otherwise the board sensor. Anything else would make the counter disagree with its own watts.
+    # The figure the counters integrate is the same one Server Power displays: wall draw when
+    # telemetry supplies it, otherwise the board sensor. Anything else would make a counter
+    # disagree with its own watts, and it is what the chassis bound compares a component against.
     board = sensors.get("SystemBoardPwrConsumption")
-    watts = metrics.get("SystemInputPower")
-    if watts is None:
-        watts = board.reading if board is not None else None
-    prev_wh = domoticz_api.read_prev_counter_wh(
-        devices, _state.dev_ids[planner.DEVICE_SYSTEM], planner.UNIT_POWER
-    )
-    if prev_wh is None:
-        # Unknown, not zero. Leave the counter untouched this cycle rather than restart it.
-        Domoticz.Error("energy counter unreadable; leaving it untouched this cycle")
-        prev_wh, watts = 0.0, None
-    added = energy.integrate_wh(watts, cfg.poll_interval) if watts else 0.0
-    # Tie the sanity ceiling to the machine's OWN measured peak draw rather than a flat constant.
-    # A flat 1_000_000 Wh headroom is roughly 278 days of running at 150 W, so it could never fire.
-    # Allowing twice the observed peak over ten poll intervals still leaves generous slack for a
-    # catch-up after downtime while rejecting a genuinely absurd jump.
+    system_watts = metrics.get("SystemInputPower")
+    if system_watts is None:
+        system_watts = board.reading if board is not None else None
     peak_w = parts["dell_attrs"].peak_watts or 1000.0
-    ceiling = prev_wh + energy.integrate_wh(peak_w * 2, cfg.poll_interval * 10)
-    counter_wh, warning = energy.clamp_counter(prev_wh, prev_wh + added, ceiling_wh=ceiling)
-    if warning:
-        Domoticz.Error(warning)
+    # Measured, not nominal. A poll that runs late would otherwise be counted as though it ran on
+    # time. Capped at two intervals because an unreachable iDRAC does not stamp the clock, so a
+    # long outage would otherwise be integrated in full at whatever the last reading happened to
+    # be. Under-counting a period with no measurements is the honest error.
+    now = time.monotonic()
+    elapsed_s = (
+        0.0
+        if _state.last_poll_monotonic is None
+        else min(now - _state.last_poll_monotonic, cfg.poll_interval * 2)
+    )
+    _state.last_poll_monotonic = now
 
     updates = planner.plan(
         sensors=sensors,
         inventory=inventory,
         alloc=_state.alloc,
         cfg=cfg,
-        energy_wh=counter_wh,
         metrics=metrics,
         gpus=_state.gpus,
         **parts,
     )
+    updates = attach_counters(devices, updates, elapsed_s, system_watts, peak_w)
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
     # ONE choke point for naming, after the control devices are appended so nothing is missed.
     prefix, suffix = resolve_affixes(cfg, _state, parts["system"])
@@ -635,11 +699,18 @@ def onHeartbeat():
     report_duplicate_names(updates)
     report_name_collisions(updates)
     updates.sort(key=lambda u: u.unit)
-    names, colors = domoticz_api.apply_updates(
-        devices, _state.dev_ids, updates, saved.auto_names, saved.auto_colors, allow_create=True
+    names, colors, descriptions = domoticz_api.apply_updates(
+        devices,
+        _state.dev_ids,
+        updates,
+        saved.auto_names,
+        saved.auto_colors,
+        saved.auto_descriptions,
+        allow_create=True,
     )
     saved.auto_names = names
     saved.auto_colors = colors
+    saved.auto_descriptions = descriptions
     saved.unit_alloc = _state.alloc
     domoticz_api.save_state(saved)
 

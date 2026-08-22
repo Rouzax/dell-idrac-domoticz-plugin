@@ -36,6 +36,17 @@ class PluginConfig:
     # {idrac} tokens, which planner expands once the machine has been read.
     name_prefix: str = ""
     name_suffix: str = ""
+    # Line breaks, a bulleted fault list and a link to the iDRAC on the two roll-up cards.
+    # Default ON, so it reaches existing installs on upgrade. Off reproduces the previous text
+    # byte for byte, which matters because sValue is what dzVents compares and what Domoticz
+    # notifications send.
+    rich_card_text: bool = True
+    # Per-component power devices as kWh counters instead of watt gauges. Default ON, so the
+    # feature reaches existing installs on upgrade; the devices are converted IN PLACE and keep
+    # their idx, name and room. Turning it off converts them back to Usage devices and their
+    # original watt graphs reappear, because Domoticz keeps the two types' history in different
+    # tables. Server Power is a counter either way and ignores this.
+    energy_counters: bool = True
     # Every value this module quietly changed from what the user typed. The module is pure and
     # cannot log, so it reports instead and the caller logs at onStart. A silently rewritten
     # setting the user never sees is worse than a wrong one they can spot.
@@ -118,5 +129,7 @@ def parse_config(parameters: dict) -> PluginConfig:
         debug_level=_int(parameters, "DebugLevel", 0, 0, 2, notes),
         name_prefix=_affix(parameters, "NamePrefix", notes),
         name_suffix=_affix(parameters, "NameSuffix", notes),
+        rich_card_text=_bool(parameters, "RichCardText", True, notes),
+        energy_counters=_bool(parameters, "EnergyCounters", True, notes),
         warnings=tuple(notes),
     )

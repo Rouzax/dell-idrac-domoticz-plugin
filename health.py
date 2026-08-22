@@ -104,23 +104,88 @@ _REDUNDANCY_MODE_TEXT = {
 }
 
 
-def redundancy_health(entry) -> tuple:
-    """Level and text for a power redundancy group.
+# Dell spells the non-redundant policy "Not Redundant". Matched loosely because the exact
+# wording is Dell's and could gain a qualifier; anything else is treated as "should be
+# redundant", which is the safe direction: an unrecognised policy keeps neutral wording rather
+# than telling the user a redundancy loss was intentional.
+_NOT_REDUNDANT = "not redundant"
 
-    The mode alone renders as "N+m", which is Redfish jargon on a dashboard. Where the server
-    also reports how many supplies are in the set and how many are needed, both are included;
-    neither number is inferred.
+
+def is_not_redundant(policy: str | None) -> bool:
+    return bool(policy) and _NOT_REDUNDANT in str(policy).strip().lower()
+
+
+# Dell spells Hot Spare "PSRapidOn" and reports it as this word or "Disabled".
+_HOT_SPARE_ON = "enabled"
+
+
+def _hot_spare_text(dell_attrs) -> str:
+    """ "hot spare, primary PSU1" when the feature is on, otherwise nothing.
+
+    THE NAMED SUPPLY IS THE ACTIVE ONE, NOT THE SPARE. Dell's RapidOnPrimaryPSU names the supply
+    that CARRIES the load; the unnamed ones are what get parked. Proved on a four-supply DSS8440
+    by switching the setting from "PSU1 and PSU3" to "PSU2 and PSU4": the load followed, leaving
+    the unnamed pair at exactly 0 W out both times.
+
+    Reports the CONFIGURATION, which is what the iDRAC's own power screen does, and is not proof
+    that a supply is parked. The same DSS8440 under a "PSU Redundant" policy, Hot Spare still on
+    and the same primaries named, shared its load evenly across all four supplies.
+
+    Returned WITHOUT a leading separator: it is one fact among several, and the caller decides
+    whether facts are joined with ", " or put on separate lines.
+    """
+    if dell_attrs is None:
+        return ""
+    if str(dell_attrs.hot_spare or "").strip().lower() != _HOT_SPARE_ON:
+        return ""
+    primary = str(dell_attrs.hot_spare_primary or "").strip()
+    # Dell's value is a whole phrase on multi-supply hardware, literally "PSU1 and PSU3", so it
+    # goes through verbatim rather than being reworded.
+    return f"hot spare, primary {primary}" if primary else "hot spare enabled"
+
+
+def redundancy_parts(entry, dell_attrs=None) -> tuple:
+    """Level, and the facts as SEPARATE strings.
+
+    The primitive both card forms are built from. Joining these with ", " is the plain text the
+    plugin has always produced; putting them on separate lines is the formatted card. Splitting
+    the finished sentence instead would be wrong, because "hot spare, primary PSU1" is a single
+    fact that contains a comma.
+
+    The level always comes from the server's own Status.Health, the only field that reports an
+    actual fault. The text leads with the CONFIGURED policy, because the generic Redfish Mode
+    does not vary: measured across nine Dell servers under every policy any of them offers, it
+    was "N+m" every time, so a card built from the mode read identically whatever the machine
+    was set to. Falls back to the mode for a server that reports no policy, which is any
+    non-Dell Redfish endpoint.
     """
     level = alert_level(entry.health)
     if level == LEVEL_GREY:
-        return level, f"Unknown ({entry.health})" if entry.health else "Unknown"
+        return level, [f"Unknown ({entry.health})" if entry.health else "Unknown"]
     if level != LEVEL_OK:
-        return level, "Redundancy lost" if level == LEVEL_RED else "Redundancy degraded"
+        # A failure states the failure. The configuration that is no longer being met is not
+        # what the operator needs to read at that moment.
+        return level, ["Redundancy lost" if level == LEVEL_RED else "Redundancy degraded"]
 
-    mode = entry.mode or ""
-    text = _REDUNDANCY_MODE_TEXT.get(mode.strip().lower(), mode) or "Redundant"
+    policy = (dell_attrs.redundancy_policy or "").strip() if dell_attrs is not None else ""
+    if policy and not is_not_redundant(policy):
+        # A server reporting a healthy group under a "Not Redundant" policy is contradicting
+        # itself. Leading with the policy there would put "Not Redundant, 2 supplies (1 needed)"
+        # on a GREEN card, which reads worse than the generic wording, so the disagreeing case
+        # falls back to what the group itself says. Hot Spare goes with the policy for the same
+        # reason: machines run it on under a non-redundant policy and share their load evenly
+        # anyway, so claiming a standby supply there would be inventing one.
+        parts = [policy]
+        spare = _hot_spare_text(dell_attrs)
+    else:
+        mode = entry.mode or ""
+        parts = [_REDUNDANCY_MODE_TEXT.get(mode.strip().lower(), mode) or "Redundant"]
+        spare = ""
     if entry.supplies:
-        text += f", {entry.supplies} supplies"
+        count = f"{entry.supplies} supplies"
         if entry.min_needed:
-            text += f" ({entry.min_needed} needed)"
-    return level, text
+            count += f" ({entry.min_needed} needed)"
+        parts.append(count)
+    if spare:
+        parts.append(spare)
+    return level, parts

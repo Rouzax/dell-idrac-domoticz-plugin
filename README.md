@@ -54,6 +54,8 @@ Devices appear after the first successful poll, which is one poll interval later
 | Network interfaces | on | Create a device per NIC port. |
 | Drive life warning (%) | 10 | Warn when a drive reports less predicted media life remaining than this. |
 | Drive life % devices | off | Add a second device per drive showing predicted media life as a graphable percentage. |
+| Formatted card text | on | Renders System Health and Power Redundancy as a bullet list with a link to the iDRAC, instead of a single line of text. Changes the device `sValue`; turn it off if a dzVents script or notification matches the old plain text. |
+| Energy counters | on | Reports per-component power, each power supply and each GPU as a kWh counter with a running total, instead of a plain watt gauge. Changes the device `sValue`; turn it off if a dzVents script reads it as a plain number. |
 | Fan bar maximum (RPM) | 6000 | Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no fan maximum, so it cannot be detected. A faster fan still reads full and green. |
 | Allow Force Off and Power Cycle | off | Adds the two hard power actions. Inert unless Allow Control is Yes. |
 | Verify TLS certificate | off | See [Security](#security). |
@@ -81,7 +83,7 @@ The exact set depends on what the server reports. Nothing is created for hardwar
 | Chassis Intrusion | Alert | |
 | Power Redundancy | Alert | The redundancy group's own health, which can be Critical while every individual PSU still reads OK. Reads in plain English, for example `Redundant, 2 supplies (1 needed)`. Removing a supply makes the iDRAC drop the group entirely, which shows as a grey `Not reported` rather than a stale green tile. |
 
-**Per discovered component:** one temperature device per CPU, one for the hottest DIMM, one fan device per fan, one watts device per PSU, one alert per RAID volume, per NIC port and per physical drive. Physical drives are named by media type and location, for example `SSD 0:2:0`, `HDD 0:2:3` and `BOSS SSD 0` for a boot card.
+**Per discovered component:** one temperature device per CPU, one for the hottest DIMM, one fan device per fan, one power device per PSU, one alert per RAID volume, per NIC port and per physical drive. Physical drives are named by media type and location, for example `SSD 0:2:0`, `HDD 0:2:3` and `BOSS SSD 0` for a boot card.
 
 **Optional:** switching on **Drive life % devices** adds a second device per drive reporting predicted media life as a percentage with a bar, for drives that report the figure at all, which in practice means SSDs.
 
@@ -93,11 +95,15 @@ Where the iDRAC licence allows it, six more devices break system power down by s
 
 Where telemetry reports GPUs, each card also gets a power device and a temperature device.
 
+The six subsystem devices and each GPU power device also report a running kWh total alongside live watts, so they show up in Domoticz's energy report; turn **Energy counters** off for plain watt gauges instead.
+
 ### Bar graphs
 
 Fan, temperature and drive-life cards show a coloured bar built from the server's own thresholds: red beyond critical, amber in the warning band, green in between. Devices with no server-reported thresholds get no bar rather than an invented one.
 
 Bar graphs need a Domoticz build that includes the plugin `Color` fix ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026). On an older build Domoticz discards the bands and the cards simply show no bar; everything else works exactly the same.
+
+**Formatted card text** needs Domoticz 2026.1 or newer, the version from which Domoticz renders Text and Alert device data as HTML. On an older build the markup may show as literal tags on the System Health and Power Redundancy cards instead of a bullet list, so turn the setting off there.
 
 ### Icons
 
