@@ -5,6 +5,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field, replace
 
+import cardtext
 import health
 import model
 import thresholds
@@ -620,14 +621,15 @@ def plan(
         )
 
     level, text = health.system_health(system.health, system.rollups)
+    link = cardtext.idrac_link(cfg.address) if cfg.rich_card_text else ""
     # Dell rollups latch onto faults, so a red level often has no unhealthy component behind it.
     # When the iDRAC states a reason, show the reason instead of a list of subsystem initials.
-    messages = [f.message for f in faults if f.message]
-    if messages and level not in (health.LEVEL_OK, health.LEVEL_GREY):
-        joined = "; ".join(messages)
-        # Domoticz sValue is VARCHAR(200). Mark a cut so a truncated fault cannot be mistaken
-        # for a complete one.
-        text = joined if len(joined) <= 200 else joined[:197] + "..."
+    messages = fault_lines(faults)
+    faulted = bool(messages) and level not in (health.LEVEL_OK, health.LEVEL_GREY)
+    if cfg.rich_card_text:
+        text = cardtext.bullets(messages, link) if faulted else cardtext.lines([text], link)
+    elif faulted:
+        text = "; ".join(messages)
     out.append(
         DeviceUpdate(
             unit=UNIT_HEALTH, type_name="Alert", name="System Health", nvalue=level, svalue=text
@@ -708,8 +710,8 @@ def plan(
     redundancy_state = None
     if redundancy:
         # dell_attrs carries the configured policy and Hot Spare. The Redfish group on its own
-        # cannot tell one Dell policy from another; see redundancy_health.
-        redundancy_state = health.redundancy_health(redundancy[0], dell_attrs)
+        # cannot tell one Dell policy from another; see redundancy_parts.
+        redundancy_state = health.redundancy_parts(redundancy[0], dell_attrs)
     elif psus:
         # An EMPTY list on a chassis that has supplies has never been observed under a
         # redundant policy. A failed supply does NOT empty it: measured twice, once by pulling a
@@ -731,18 +733,19 @@ def plan(
         # configuration. Still grey, never green: not redundant is not a healthy state to
         # advertise, it is simply an intended one.
         if health.is_not_redundant(dell_attrs.redundancy_policy):
-            redundancy_state = (health.LEVEL_GREY, "Not redundant (configured)")
+            redundancy_state = (health.LEVEL_GREY, ["Not redundant (configured)"])
         else:
-            redundancy_state = (health.LEVEL_GREY, "Not reported")
+            redundancy_state = (health.LEVEL_GREY, ["Not reported"])
     if redundancy_state is not None:
-        level, text = redundancy_state
+        level, parts = redundancy_state
+        svalue = cardtext.lines(parts, link) if cfg.rich_card_text else ", ".join(parts)
         out.append(
             DeviceUpdate(
                 unit=UNIT_REDUNDANCY,
                 type_name="Alert",
                 name="Power Redundancy",
                 nvalue=level,
-                svalue=text,
+                svalue=svalue,
             )
         )
 
