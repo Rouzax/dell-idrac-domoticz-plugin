@@ -163,20 +163,25 @@ def test_redundancy_text_leads_with_the_configured_policy():
     )
 
 
-def test_redundancy_text_names_the_hot_spare_supply():
-    """Hot Spare is why one supply reads 0 W out while its partner carries everything. Without
-    it on the tile the pair looks broken; with it the 100/0 split is explained."""
+def test_redundancy_text_names_the_primary_supply_not_the_spare():
+    """The named supply is the one CARRYING the load, not the one parked.
+
+    Measured on a DSS8440 with primaries "PSU1 and PSU3": those two delivered 288 W and 307 W
+    while PSU2 and PSU4 sat at 0 W. Reading ", hot spare PSU1" therefore labelled the working
+    supply as the spare, which is the opposite of what the server means.
+    """
     level, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled"))
     assert (level, text) == (
         health.LEVEL_OK,
-        "A/B Grid Redundant, 2 supplies (1 needed), hot spare PSU1",
+        "A/B Grid Redundant, 2 supplies (1 needed), hot spare, primary PSU1",
     )
 
 
 def test_hot_spare_primary_is_shown_verbatim_because_it_can_name_several():
-    """A live DSS8440 reports RapidOnPrimaryPSU as "PSU1 and PSU3". It is not a single token."""
+    """A live DSS8440 reports RapidOnPrimaryPSU as "PSU1 and PSU3". It is not a single token,
+    and Dell's phrasing goes through untouched rather than being reworded to "PSU1 + PSU3"."""
     _, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled", primary="PSU1 and PSU3"))
-    assert text.endswith("hot spare PSU1 and PSU3")
+    assert text.endswith("hot spare, primary PSU1 and PSU3")
 
 
 def test_hot_spare_enabled_without_a_named_primary_still_says_so():

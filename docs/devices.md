@@ -259,7 +259,7 @@ It reads in plain English rather than in Redfish terms, and it leads with **the 
 A server that reports no policy at all, which is any non-Dell Redfish endpoint, falls back to the generic Redfish mode and reads `Redundant, 2 supplies (1 needed)`.
 
 !!! note "Hot Spare appears on the end"
-    With **Hot Spare** switched on, the iDRAC parks one supply on standby and lets the other carry the whole load. The device says so, which is what explains a healthy pair where one supply reads a few watts and the other reads everything:
+    With **Hot Spare** switched on, the iDRAC parks some supplies on standby and lets the ones you nominate as **Primary** carry the whole load. The device names the primaries, which is what explains a healthy set where one supply reads a few watts and another reads everything:
 
     ![Power Redundancy reading A/B Grid Redundant with a hot spare](assets/cards/power-redundancy-hot-spare.png)
 
@@ -269,7 +269,9 @@ A server that reports no policy at all, which is any non-Dell Redfish endpoint, 
 
     ![The standby supply drawing 5 Watt](assets/cards/psu-standby.png)
 
-    Hot Spare is only shown alongside a redundant policy. Measured on four servers, switching it on while the policy is **Not Redundant** left the supplies sharing the load evenly, so the setting on its own does not mean a supply is idling and the plugin does not claim it does.
+    The supply named is the one **carrying** the load, not the one parked. Measured on a four-supply DSS8440 nominating `PSU1 and PSU3`: those two delivered 288 W and 307 W while PSU2 and PSU4 sat at exactly 0 W.
+
+    Hot Spare is only shown alongside a redundant policy, and even then it describes the **configuration** rather than proving a supply is parked. Switching it on while the policy is **Not Redundant** left the supplies sharing the load evenly on four servers, and the same DSS8440 under a **PSU Redundant** policy also shared across all four with Hot Spare still on. Only the grid policy actually parked anything on the machines measured.
 
 !!! note "When a supply fails"
     A failed supply is **not** removed from the iDRAC's inventory. It stays listed, drawing 0 W and reporting `Critical`, and the redundancy group stays with it and goes Critical too, so the device reads a red `Redundancy lost`. Verified by pulling a mains cord on a live T550: the supply went to 0 W and `UnavailableOffline`, and the iDRAC raised two faults, `Power supply redundancy is lost.` and `The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.`
@@ -302,7 +304,7 @@ The trade-off is that energy accrued while Domoticz is not running is not recove
 A PSU device shows what the supply draws from the wall, which includes conversion loss, rather than what it delivers to the board.
 
 !!! warning "A PSU reading near 0 W is often completely normal"
-    On a server with **Hot Spare** switched on, one supply carries the load while the other idles near zero. Wattage alone is therefore **not** a fault signal, and the plugin never treats it as one. Health comes from the supply's reported status and from Power Redundancy, which names the standby supply so you can tell this apart from a failure at a glance.
+    On a server with **Hot Spare** switched on, the supplies nominated as **Primary** carry the load while the rest idle near zero. Wattage alone is therefore **not** a fault signal, and the plugin never treats it as one. Health comes from the supply's reported status and from Power Redundancy, which names the supplies carrying the load so you can tell an idle standby apart from a failure at a glance.
 
     What tells you a supply has actually failed is **System Health**, which turns red and carries the iDRAC's own sentence, for example `The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.` The supply's own **description** also carries the health the server reports and follows it on every poll, `OK` while the supply is fine and `Critical` when it is not. Note that Domoticz does not draw the description on the card: you see it in the device's edit dialog, in Setup then Devices, in the JSON API and from dzVents as `device.description`.
 

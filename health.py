@@ -120,19 +120,29 @@ _HOT_SPARE_ON = "enabled"
 
 
 def _hot_spare_clause(dell_attrs) -> str:
-    """ ", hot spare PSU1" when the feature is on, otherwise nothing.
+    """ ", hot spare, primary PSU1" when the feature is on, otherwise nothing.
 
-    Only ever appended to a group that EXISTS. Three fleet machines run Hot Spare on under a
-    "Not Redundant" policy and share their load evenly regardless, so the setting alone does not
-    mean one supply is idling; a redundancy group plus Hot Spare is what did, on both machines
-    measured that way.
+    THE NAMED SUPPLY IS THE ACTIVE ONE, NOT THE SPARE. Dell's RapidOnPrimaryPSU names the supply
+    that CARRIES the load; the unnamed ones are what get parked. Measured on a four-supply
+    DSS8440 configured "PSU1 and PSU3": those two delivered 288 W and 307 W while PSU2 and PSU4
+    sat at exactly 0 W out. An earlier version of this read ", hot spare PSU1", which labelled
+    the working supply as the spare, the precise opposite of what the server means.
+
+    Reports the CONFIGURATION, which is what the iDRAC's own power screen does, and is not proof
+    that a supply is actually parked. The same DSS8440 under a "PSU Redundant" policy, Hot Spare
+    still on and the same primaries named, shared its load evenly across all four supplies. Only
+    the grid policy parked anything on the machines measured.
+
+    Only ever appended to a group that EXISTS.
     """
     if dell_attrs is None:
         return ""
     if str(dell_attrs.hot_spare or "").strip().lower() != _HOT_SPARE_ON:
         return ""
     primary = str(dell_attrs.hot_spare_primary or "").strip()
-    return f", hot spare {primary}" if primary else ", hot spare enabled"
+    # Dell's value is a whole phrase on multi-supply hardware, literally "PSU1 and PSU3", so it
+    # goes through verbatim rather than being reworded.
+    return f", hot spare, primary {primary}" if primary else ", hot spare enabled"
 
 
 def redundancy_health(entry, dell_attrs=None) -> tuple:

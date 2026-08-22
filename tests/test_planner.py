@@ -1145,7 +1145,7 @@ def test_power_redundancy_states_the_configured_policy_and_hot_spare():
     parts["dell_attrs"] = model.parse_dell_attributes(load("redundant", "dell_attributes"))
     device = _redundancy_device(parts)
     assert device.nvalue == health.LEVEL_OK
-    assert device.svalue == "A/B Grid Redundant, 2 supplies (1 needed), hot spare PSU1"
+    assert device.svalue == "A/B Grid Redundant, 2 supplies (1 needed), hot spare, primary PSU1"
 
 
 def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
