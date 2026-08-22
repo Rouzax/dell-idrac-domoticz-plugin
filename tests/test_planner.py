@@ -1188,3 +1188,30 @@ def test_the_faults_behind_a_lost_redundancy_group_reach_system_health():
     assert "Power supply redundancy is lost." in messages
     assert any("input voltage" in m for m in messages)
     assert all(f.severity == "Critical" for f in faults)
+
+
+def test_a_four_supply_group_names_the_primaries_that_carry_the_load():
+    """Captured live from a DSS8440 with the primaries deliberately swapped to PSU2 and PSU4.
+
+    The load followed the swap: PS2 and PS4 deliver while PS1 and PS3 sit at exactly 0 W out.
+    That is what proves RapidOnPrimaryPSU names the ACTIVE supplies, so the earlier wording
+    ", hot spare PSU2 and PSU4" labelled the two doing all the work as the spares.
+
+    It is also the only capture in the repo with more than two supplies AND a redundancy group,
+    so it is the only one that can show MinNumNeeded is not always 1.
+    """
+    parts = _parts("t550")
+    parts["psus"] = model.parse_power(load("quad", "power"))
+    parts["redundancy"] = model.parse_redundancy(load("quad", "power"))
+    parts["dell_attrs"] = model.parse_dell_attributes(load("quad", "dell_attributes"))
+    device = _redundancy_device(parts)
+    assert device.nvalue == health.LEVEL_OK
+    assert device.svalue == (
+        "A/B Grid Redundant, 4 supplies (2 needed), hot spare, primary PSU2 and PSU4"
+    )
+    by_name = {psu.name: psu for psu in parts["psus"]}
+    # The named supplies are the loaded ones; the unnamed pair draws a trickle and delivers zero.
+    assert by_name["PS1 Status"].input_watts == 5.0
+    assert by_name["PS3 Status"].input_watts == 5.0
+    assert by_name["PS2 Status"].input_watts > 400
+    assert by_name["PS4 Status"].input_watts > 400

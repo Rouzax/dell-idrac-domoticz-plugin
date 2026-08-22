@@ -20,7 +20,13 @@ FIXTURE_ROOT = Path(__file__).parent / "fixtures"
 # "Not Redundant" and reports no redundancy group, "input_lost" is configured redundant and
 # reports a group gone Critical, so together they show that the empty array follows the POLICY
 # and not the failed supply.
-PROFILES = ("t550", "dual", "degraded", "ome", "r750", "redundant", "input_lost")
+# "quad" is a four-supply DSS8440 under A/B Grid Redundant with Hot Spare on. It is the only
+# capture here with more than two supplies AND a redundancy group, so it is what pins
+# MinNumNeeded of 2 (every two-supply machine reports 1) and Dell's multi-supply primary phrase
+# "PSU2 and PSU4". It was taken with the primaries deliberately swapped away from the default
+# PSU1/PSU3, and the load followed: PS2 and PS4 deliver while PS1 and PS3 sit at 0 W out. That
+# is the proof that RapidOnPrimaryPSU names the ACTIVE supplies rather than the spares.
+PROFILES = ("t550", "dual", "degraded", "ome", "r750", "redundant", "input_lost", "quad")
 
 
 def load(profile: str, name: str) -> dict:
