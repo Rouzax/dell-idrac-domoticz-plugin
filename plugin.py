@@ -100,6 +100,7 @@
 """
 
 import dataclasses
+import time
 
 import DomoticzEx as Domoticz
 
@@ -154,6 +155,17 @@ class _PluginState:
         self.affix_logged = None
         self.duplicates_reported = ()
         self.collisions_checked = False
+        # Wall-clock reference for the energy counters, stamped only after a SUCCESSFUL poll.
+        # None means "no measured interval yet", which integrates nothing rather than guessing.
+        self.last_poll_monotonic = None
+        # Counter key -> the first wattage seen for it this run, and the keys that have since
+        # been seen to change. Held in memory on purpose: a restart re-arms the movement gate,
+        # which costs at most one interval per component and saves a persisted field.
+        self.first_watts = {}
+        self.moved = set()
+        # Counter keys already warned about, so a machine reporting a permanently bad figure
+        # costs one log line per plugin start instead of one per poll.
+        self.counter_warned = set()
         self.reset_slow()
 
     def reset_slow(self):
@@ -524,6 +536,64 @@ def report_duplicate_names(updates) -> None:
     _state.duplicates_reported = duplicates
 
 
+def _warn_counter_once(key: str, message: str) -> None:
+    """One line per counter per plugin start. A machine reporting a permanently implausible
+    figure would otherwise fill the log every poll and bury whatever else went wrong."""
+    if key in _state.counter_warned:
+        return
+    _state.counter_warned.add(key)
+    Domoticz.Error(message)
+
+
+def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
+    """Fill in the energy half of every counter device's sValue.
+
+    The previous total is read back off the device itself, so no counter state is persisted and
+    a device the user deleted simply starts again from zero. Returns the updates to apply: a
+    counter whose previous value cannot be read is DROPPED, because writing anything at all
+    would reset a counter whose entire contract is that it only climbs.
+    """
+    out = []
+    for up in updates:
+        if not up.counter:
+            out.append(up)
+            continue
+        # Keyed on the resolved DeviceID rather than the bare family name, so the key matches
+        # what read_prev_counter_wh actually reads: two families never share a DeviceID, but the
+        # family alone is not what identifies a device on the wire.
+        dev_id = _state.dev_ids[up.device]
+        key = f"{dev_id}:{up.unit}"
+        watts = float(up.svalue)
+        prev_wh = domoticz_api.read_prev_counter_wh(devices, dev_id, up.unit)
+        if prev_wh is None:
+            _warn_counter_once(key, f"{up.name}: energy counter unreadable, not written")
+            continue
+        first = _state.first_watts.setdefault(key, watts)
+        if energy.has_moved(first, watts):
+            _state.moved.add(key)
+        if up.counter == planner.COUNTER_GATED and key not in _state.moved:
+            _warn_counter_once(
+                key,
+                f"{up.name}: {watts} W has not changed since start, treating it as a static "
+                "figure rather than a measurement and not counting it",
+            )
+            out.append(dataclasses.replace(up, svalue=f"{up.svalue};{prev_wh}"))
+            continue
+        if energy.implausible(watts, system_watts):
+            _warn_counter_once(
+                key,
+                f"{up.name}: {watts} W exceeds the {system_watts} W the machine is drawing, "
+                "counter held",
+            )
+            out.append(dataclasses.replace(up, svalue=f"{up.svalue};{prev_wh}"))
+            continue
+        counter_wh, warning = energy.advance(prev_wh, watts, elapsed_s, peak_w * 2)
+        if warning:
+            _warn_counter_once(key, f"{up.name}: {warning}")
+        out.append(dataclasses.replace(up, svalue=f"{up.svalue};{counter_wh}"))
+    return out
+
+
 def onHeartbeat():
     cfg = _state.cfg
     if cfg is None:
@@ -600,40 +670,36 @@ def onHeartbeat():
             Domoticz.Status("all discovered items now have a unit")
         _state.orphaned_reported = orphaned
 
-    # Integrate the same figure the device displays: wall draw when telemetry supplies it,
-    # otherwise the board sensor. Anything else would make the counter disagree with its own watts.
+    # The figure the counters integrate is the same one Server Power displays: wall draw when
+    # telemetry supplies it, otherwise the board sensor. Anything else would make a counter
+    # disagree with its own watts, and it is what the chassis bound compares a component against.
     board = sensors.get("SystemBoardPwrConsumption")
-    watts = metrics.get("SystemInputPower")
-    if watts is None:
-        watts = board.reading if board is not None else None
-    prev_wh = domoticz_api.read_prev_counter_wh(
-        devices, _state.dev_ids[planner.DEVICE_SYSTEM], planner.UNIT_POWER
-    )
-    if prev_wh is None:
-        # Unknown, not zero. Leave the counter untouched this cycle rather than restart it.
-        Domoticz.Error("energy counter unreadable; leaving it untouched this cycle")
-        prev_wh, watts = 0.0, None
-    added = energy.integrate_wh(watts, cfg.poll_interval) if watts else 0.0
-    # Tie the sanity ceiling to the machine's OWN measured peak draw rather than a flat constant.
-    # A flat 1_000_000 Wh headroom is roughly 278 days of running at 150 W, so it could never fire.
-    # Allowing twice the observed peak over ten poll intervals still leaves generous slack for a
-    # catch-up after downtime while rejecting a genuinely absurd jump.
+    system_watts = metrics.get("SystemInputPower")
+    if system_watts is None:
+        system_watts = board.reading if board is not None else None
     peak_w = parts["dell_attrs"].peak_watts or 1000.0
-    ceiling = prev_wh + energy.integrate_wh(peak_w * 2, cfg.poll_interval * 10)
-    counter_wh, warning = energy.clamp_counter(prev_wh, prev_wh + added, ceiling_wh=ceiling)
-    if warning:
-        Domoticz.Error(warning)
+    # Measured, not nominal. A poll that runs late would otherwise be counted as though it ran on
+    # time. Capped at two intervals because an unreachable iDRAC does not stamp the clock, so a
+    # long outage would otherwise be integrated in full at whatever the last reading happened to
+    # be. Under-counting a period with no measurements is the honest error.
+    now = time.monotonic()
+    elapsed_s = (
+        0.0
+        if _state.last_poll_monotonic is None
+        else min(now - _state.last_poll_monotonic, cfg.poll_interval * 2)
+    )
+    _state.last_poll_monotonic = now
 
     updates = planner.plan(
         sensors=sensors,
         inventory=inventory,
         alloc=_state.alloc,
         cfg=cfg,
-        energy_wh=counter_wh,
         metrics=metrics,
         gpus=_state.gpus,
         **parts,
     )
+    updates = attach_counters(devices, updates, elapsed_s, system_watts, peak_w)
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
     # ONE choke point for naming, after the control devices are appended so nothing is missed.
     prefix, suffix = resolve_affixes(cfg, _state, parts["system"])
