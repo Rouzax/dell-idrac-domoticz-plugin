@@ -1,4 +1,24 @@
+from html.parser import HTMLParser
+
 import cardtext
+
+
+class _AnchorAttrs(HTMLParser):
+    """Collects the attributes of the first <a> tag, the way a browser would read them."""
+
+    def __init__(self):
+        super().__init__()
+        self.attrs = {}
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a" and not self.attrs:
+            self.attrs = dict(attrs)
+
+
+def _anchor_attrs(markup: str) -> dict:
+    parser = _AnchorAttrs()
+    parser.feed(markup)
+    return parser.attrs
 
 
 def test_a_link_points_at_the_idrac_over_https():
@@ -13,13 +33,23 @@ def test_a_link_keeps_a_port_the_user_typed():
     assert 'href="https://10.0.0.5:8443"' in cardtext.idrac_link("10.0.0.5:8443")
 
 
-def test_a_hostile_address_cannot_break_out_of_the_attribute():
-    """The address is user-supplied configuration going straight into an href. DOMPurify would
-    strip an injected tag on the way out, but the value is also stored in the database and read
-    by dzVents, which does no such thing."""
-    link = cardtext.idrac_link('x" onload="alert(1)')
-    assert "onload=" not in link.replace("&quot;", "")
-    assert "&quot;" in link
+def test_a_hostile_address_cannot_introduce_an_attribute():
+    """The address is user-supplied configuration going straight into an href.
+
+    Asserted by PARSING the result rather than by string-matching: the property that matters is
+    that a browser sees only the two attributes we wrote, with the entire hostile value trapped
+    inside href. Stripping the entity out and then searching the text would be testing something
+    an attacker cannot do.
+    """
+    attrs = _anchor_attrs(cardtext.idrac_link('x" onload="alert(1)'))
+    assert set(attrs) == {"href", "target"}
+    assert attrs["href"] == 'https://x" onload="alert(1)'
+    assert attrs["target"] == "_blank"
+
+
+def test_a_normal_address_parses_back_unchanged():
+    attrs = _anchor_attrs(cardtext.idrac_link("10.0.0.5:8443"))
+    assert attrs["href"] == "https://10.0.0.5:8443"
 
 
 def test_no_address_means_no_link():
