@@ -1215,3 +1215,30 @@ def test_a_four_supply_group_names_the_primaries_that_carry_the_load():
     assert by_name["PS3 Status"].input_watts == 5.0
     assert by_name["PS2 Status"].input_watts > 400
     assert by_name["PS4 Status"].input_watts > 400
+
+
+def test_fault_lines_keeps_every_fault_when_they_fit():
+    faults = [model.Fault(severity="Critical", message="Fan 3 RPM is outside of range.")]
+    assert planner.fault_lines(faults) == ["Fan 3 RPM is outside of range."]
+
+
+def test_fault_lines_ignores_an_entry_with_no_message():
+    faults = [model.Fault(severity="Critical", message=None)]
+    assert planner.fault_lines(faults) == []
+
+
+def test_fault_lines_drops_whole_faults_and_says_how_many():
+    """The previous rule cut the JOINED text at 200 characters, which left a half sentence that
+    could not be told apart from a complete fault. Whole messages go instead, and the count is
+    stated so nothing disappears silently."""
+    faults = [model.Fault(severity="Critical", message="x" * 90) for _ in range(5)]
+    lines = planner.fault_lines(faults)
+    assert lines[:2] == ["x" * 90, "x" * 90]
+    assert lines[-1] == "+3 more"
+    assert all("..." not in line for line in lines)
+
+
+def test_fault_lines_always_keeps_the_first_fault_however_long_it_is():
+    """One enormous fault must still be readable, not replaced by a bare count."""
+    faults = [model.Fault(severity="Critical", message="y" * 400)]
+    assert planner.fault_lines(faults) == ["y" * 400]

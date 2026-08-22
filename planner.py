@@ -467,6 +467,33 @@ def _temp_update(unit, sensor, name, threshold_map, device=DEVICE_SYSTEM) -> Dev
 _INTRUSION_OK = {"Normal"}
 
 
+# How much fault text a card carries before the rest becomes a count. NOT a database limit:
+# sValue is declared VARCHAR(200) but SQLite does not enforce length, and a 350-character value
+# was stored and rendered in full while designing this. It is a readability budget.
+_FAULT_BUDGET = 200
+
+
+def fault_lines(faults) -> list:
+    """Fault messages that fit the budget, plus a count of any dropped.
+
+    Replaces cutting the JOINED text mid-sentence, which left half a fault on screen that could
+    not be told apart from a complete one. The first message is always kept whatever its length,
+    so a single long fault is still readable rather than being replaced by a bare count.
+    """
+    messages = [fault.message for fault in faults if fault.message]
+    kept = []
+    used = 0
+    for message in messages:
+        if kept and used + len(message) > _FAULT_BUDGET:
+            break
+        kept.append(message)
+        used += len(message)
+    dropped = len(messages) - len(kept)
+    if dropped:
+        kept.append(f"+{dropped} more")
+    return kept
+
+
 def plan(
     sensors,
     system,
