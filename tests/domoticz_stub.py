@@ -3,6 +3,17 @@
 import sys
 import types
 
+# TypeName -> (Type, SubType, sValue after a type change), mirroring maptypename in the core
+# (hardware/plugins/PythonObjects.cpp) for the ONLY two names the plugin ever converts between.
+# Numeric values from hardware/hardwaretypes.h: pTypeGeneral 0xF3, sTypeKwh 0x1D,
+# pTypeUsage 0xF8, sTypeElectric 0x01. Every other type name maps to (0, 0), because nothing in
+# the plugin inspects those, and inventing numbers for them would put unverified constants in a
+# test double where a wrong one would silently pass.
+TYPE_MAP: dict[str, tuple[int, int, str]] = {
+    "kWh": (243, 29, "0;0.0"),
+    "Usage": (248, 1, ""),
+}
+
 
 class Unit:
     def __init__(
@@ -22,6 +33,11 @@ class Unit:
         self.DeviceID = DeviceID
         self.Unit = Unit
         self.TypeName = TypeName
+        # Real CUnitEx exposes Type and SubType as writable members (PythonObjectEx.h), and the
+        # plugin now reads them to decide whether a unit needs converting. A stub without them
+        # cannot fail that code.
+        mapped = TYPE_MAP.get(TypeName)
+        self.Type, self.SubType = (mapped[0], mapped[1]) if mapped else (0, 0)
         self.Options = Options or {}
         self.Used = Used
         self.Image = Image
@@ -56,10 +72,22 @@ class Unit:
             "Options": dict(self.Options),
             "nValue": self.nValue,
             "sValue": self.sValue,
+            "Type": self.Type,
+            "SubType": self.SubType,
         }
 
     def Update(self, **kw):
         self.updates.append(kw)
+        # A TypeName on Update remaps Type/SubType/SwitchType and RESETS the value, exactly as
+        # CUnitEx_update does (PythonObjectEx.cpp): maptypename hands back a fresh sValue and the
+        # core assigns nValue = 0 before writing.
+        mapped = TYPE_MAP.get(kw.get("TypeName") or "")
+        if mapped is not None:
+            self.Type, self.SubType, self.TypeName = mapped[0], mapped[1], kw["TypeName"]
+            self.nValue = 0
+            self.sValue = mapped[2]
+            self.stored["Type"] = self.Type
+            self.stored["SubType"] = self.SubType
         # Values always persist; that is what Update is for.
         self.stored["nValue"] = self.nValue
         self.stored["sValue"] = self.sValue
