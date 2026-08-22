@@ -56,6 +56,9 @@
             <param field="RichCardText" type="boolean" label="Formatted card text" default="true">
                 <description>Renders the System Health and Power Redundancy cards as a bullet list with a link to the iDRAC, instead of a single line of text. Turn it off to go back to plain single-line text, which is what any dzVents script written before this setting existed will be comparing against. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#formatted-card-text" target="_blank">details</a>).</description>
             </param>
+            <param field="EnergyCounters" type="boolean" label="Energy counters" default="true">
+                <description>Reports per-component power as kWh counters instead of plain watt gauges, so each one appears in Domoticz's energy report with a total and a cost. Applies to the CPU, memory, storage, fan, PCIe and FPGA power devices, to each power supply and to each GPU. Existing devices are converted in place and keep their name and history. Turn it off to go back to watt gauges (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#energy-counters" target="_blank">details</a>).</description>
+            </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
                 <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">choosing a value</a>).</description>
             </param>

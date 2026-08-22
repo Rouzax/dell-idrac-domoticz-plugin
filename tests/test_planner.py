@@ -151,16 +151,67 @@ def test_core_devices_are_always_planned():
     got = _by_unit(_plan("t550"))
     assert got[planner.UNIT_POWER].type_name == "kWh"
     assert got[planner.UNIT_POWER].options == {"EnergyMeterMode": "0"}
+    # The energy half is appended by the counter pass in plugin.py, not by plan().
+    assert float(got[planner.UNIT_POWER].svalue) > 0
     assert got[planner.UNIT_HEALTH].type_name == "Alert"
     assert got[planner.UNIT_CPU_USAGE].svalue == "5.0"
     assert got[planner.UNIT_INLET].svalue == "25.0"
 
 
-def test_power_svalue_is_power_semicolon_energy_in_wh():
+def test_server_power_is_a_counter_and_carries_only_watts():
     got = _by_unit(_plan("t550"))
-    power, energy_wh = got[planner.UNIT_POWER].svalue.split(";")
-    assert float(power) == 144.0
-    assert float(energy_wh) >= 0
+    power = got[planner.UNIT_POWER]
+    assert power.type_name == "kWh"
+    assert power.counter == planner.COUNTER_DIRECT
+    # The energy half is filled in later, by the counter pass, from the device's own sValue.
+    assert ";" not in power.svalue
+    assert float(power.svalue) > 0
+
+
+def test_subsystem_power_devices_are_gated_counters():
+    # UNIT_CPU_POWER only appears once the telemetry report is readable, so metrics must be
+    # supplied explicitly; _plan()'s default fixture carries none.
+    parts = _parts("t550")
+    parts["metrics"] = _metrics()
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
+    )
+    cpu = got[planner.UNIT_CPU_POWER]
+    assert cpu.type_name == "kWh"
+    assert cpu.counter == planner.COUNTER_GATED
+    assert cpu.options == {"EnergyMeterMode": "0"}
+
+
+def test_psu_power_devices_are_direct_counters():
+    updates = _plan("t550")
+    psus = [u for u in updates if _in_block(u, planner.DEVICE_POWER, planner.BLOCK_PSUS)]
+    assert psus
+    for psu in psus:
+        assert psu.type_name == "kWh"
+        assert psu.counter == planner.COUNTER_DIRECT
+        # A supply's health lives in its description and must survive the type change.
+        assert psu.description
+
+
+def test_energy_counters_off_keeps_the_watt_devices():
+    parts = _parts("t550")
+    parts["metrics"] = _metrics()
+    inv = _inventory(parts)
+    got = _by_unit(
+        planner.plan(
+            inventory=inv,
+            alloc=planner.assign_units(inv, {}),
+            cfg=_cfg(energy_counters=False),
+            **parts,
+        )
+    )
+    for unit in (planner.UNIT_POWER,):
+        assert got[unit].type_name == "kWh"  # Server Power ignores the setting
+    cpu = got[planner.UNIT_CPU_POWER]
+    assert cpu.type_name == "Usage"
+    assert cpu.counter == planner.COUNTER_NONE
+    assert cpu.options == {}
 
 
 def test_single_socket_plans_one_cpu_temp_and_dual_plans_two():
@@ -534,7 +585,8 @@ def test_component_power_devices_are_created_from_telemetry():
     )
     assert got[planner.UNIT_CPU_POWER].svalue == "52.0"
     assert got[planner.UNIT_CPU_POWER].name == "CPU Power"
-    assert got[planner.UNIT_CPU_POWER].type_name == "Usage"
+    assert got[planner.UNIT_CPU_POWER].type_name == "kWh"
+    assert got[planner.UNIT_CPU_POWER].counter == planner.COUNTER_GATED
     assert got[planner.UNIT_MEMORY_POWER].svalue == "7.0"
     assert got[planner.UNIT_STORAGE_POWER].svalue == "63.6"
     assert got[planner.UNIT_FAN_POWER].svalue == "3.4"
@@ -618,7 +670,8 @@ def test_gpu_devices_are_created_one_per_card():
     # 39100.14 mW is 39.1 W, not 39100 W.
     watts = {u.name: u.svalue for u in powers}
     assert watts["GPU Video.Slot.10-1 Power"] == "39.1"
-    assert {u.type_name for u in powers} == {"Usage"}
+    assert {u.type_name for u in powers} == {"kWh"}
+    assert {u.counter for u in powers} == {planner.COUNTER_DIRECT}
     assert {u.type_name for u in temps} == {"Temperature"}
     assert dict((u.name, u.svalue) for u in temps)["GPU Video.Slot.6-1 Temp"] == "40.0"
 
