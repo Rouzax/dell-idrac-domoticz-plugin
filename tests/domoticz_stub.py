@@ -78,9 +78,12 @@ class Unit:
 
     def Update(self, **kw):
         self.updates.append(kw)
-        # A TypeName on Update remaps Type/SubType/SwitchType and RESETS the value, exactly as
-        # CUnitEx_update does (PythonObjectEx.cpp): maptypename hands back a fresh sValue and the
-        # core assigns nValue = 0 before writing.
+        # A TypeName on Update remaps the type and RESETS the value, exactly as CUnitEx_update
+        # does (PythonObjectEx.cpp): maptypename hands back a fresh sValue and the core assigns
+        # nValue = 0 before writing. SwitchType is deliberately not modelled: maptypename assigns
+        # it only in the switch-family branches, never in "kwh" or "usage", so for the two names
+        # this stub covers the core leaves it untouched. That is also what makes an in-place
+        # conversion safe, since a Usage device already carries the 0 a kWh device wants.
         mapped = TYPE_MAP.get(kw.get("TypeName") or "")
         if mapped is not None:
             self.Type, self.SubType, self.TypeName = mapped[0], mapped[1], kw["TypeName"]
