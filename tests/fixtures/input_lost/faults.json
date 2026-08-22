@@ -1,0 +1,70 @@
+{
+ "@odata.context": "/redfish/v1/$metadata#LogEntryCollection.LogEntryCollection",
+ "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/FaultList/Entries",
+ "@odata.type": "#LogEntryCollection.LogEntryCollection",
+ "Description": "Providing additional health information for the devices which support rolled up health data",
+ "Members": [
+  {
+   "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/FaultList/Entries/Fault_03200002_1",
+   "@odata.type": "#LogEntry.v1_16_1.LogEntry",
+   "Created": "2026-08-22T10:36:04+02:00",
+   "Description": "System.Embedded.1",
+   "EntryType": "SEL",
+   "Id": "Fault_03200002_1",
+   "Links": {
+    "OriginOfCondition": {
+     "@odata.id": "/redfish/v1/Systems/System.Embedded.1"
+    }
+   },
+   "Message": "Power supply redundancy is lost.",
+   "MessageId": "IDRAC.2.9.RDU0012",
+   "Name": "System.Embedded.1",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellLogEntry.v1_1_0.DellLogEntry",
+     "FQDD": "System.Embedded.1",
+     "Id": "Fault_03200002_1",
+     "Name": "System.Embedded.1",
+     "SubSystem": "PowerSupply"
+    }
+   },
+   "SensorNumber": 0,
+   "SensorType": "Power Supply / Converter",
+   "Severity": "Critical"
+  },
+  {
+   "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/FaultList/Entries/Fault_03200003_1",
+   "@odata.type": "#LogEntry.v1_16_1.LogEntry",
+   "Created": "2026-08-22T10:36:06+02:00",
+   "Description": "PSU.Slot.1",
+   "EntryType": "SEL",
+   "Id": "Fault_03200003_1",
+   "Links": {
+    "OriginOfCondition": {
+     "@odata.id": "/redfish/v1/Chassis/System.Embedded.1/PowerSubsystem/PowerSupplies/PSU.Slot.1"
+    }
+   },
+   "Message": "The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.",
+   "MessageArgs": [
+    "1"
+   ],
+   "MessageArgs@odata.count": 1,
+   "MessageId": "IDRAC.2.9.PWR2310",
+   "Name": "PSU.Slot.1",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellLogEntry.v1_1_0.DellLogEntry",
+     "FQDD": "PSU.Slot.1",
+     "Id": "Fault_03200003_1",
+     "Name": "PSU.Slot.1",
+     "SubSystem": "PowerSupply"
+    }
+   },
+   "SensorNumber": 0,
+   "SensorType": "Power Supply / Converter",
+   "Severity": "Critical"
+  }
+ ],
+ "Members@odata.count": 2,
+ "Name": "FaultList Entries Collection"
+}

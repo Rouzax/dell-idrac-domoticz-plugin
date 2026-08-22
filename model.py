@@ -98,8 +98,16 @@ class DellAttrs:
     powered_on_seconds: int | None
     # Dell's configured power redundancy policy. The Redfish Redundancy list is EMPTY both when
     # a supply has been pulled and when the operator turned redundancy off; this is what tells
-    # those two apart.
+    # those two apart. It is also the ONLY field that distinguishes one redundant policy from
+    # another: the generic Redfish Mode reads "N+m" on every Dell server, whatever the policy.
     redundancy_policy: str | None = None
+    # Hot Spare, which Dell spells "PSRapidOn", and the supply it makes primary. With it on, one
+    # supply carries the entire load and its partner idles at a few watts in and zero out.
+    # Measured on a T550 and an R750: on gave 150.5 W against 0 W, off gave an even split.
+    # Nothing else in the payload explains that, so without these two a healthy hot-spare pair
+    # looks like a failing one.
+    hot_spare: str | None = None
+    hot_spare_primary: str | None = None
 
 
 def _health(node: dict) -> str | None:
@@ -310,6 +318,9 @@ def parse_dell_attributes(payload: dict) -> DellAttrs:
         peak_watts=_number(attrs.get("ServerPwrMon.1.PeakPowerWatts")),
         powered_on_seconds=_int(attrs.get("ServerOS.1.ServerPoweredOnTime")),
         redundancy_policy=attrs.get("ServerPwr.1.PSRedPolicy"),
+        hot_spare=attrs.get("ServerPwr.1.PSRapidOn"),
+        # Not always a single supply: a live DSS8440 reports "PSU1 and PSU3".
+        hot_spare_primary=attrs.get("ServerPwr.1.RapidOnPrimaryPSU"),
     )
 
 

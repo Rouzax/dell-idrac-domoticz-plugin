@@ -104,23 +104,74 @@ _REDUNDANCY_MODE_TEXT = {
 }
 
 
-def redundancy_health(entry) -> tuple:
+# Dell spells the non-redundant policy "Not Redundant". Matched loosely because the exact
+# wording is Dell's and could gain a qualifier; anything else is treated as "should be
+# redundant", which is the safe direction: an unrecognised policy keeps neutral wording rather
+# than telling the user a redundancy loss was intentional.
+_NOT_REDUNDANT = "not redundant"
+
+
+def is_not_redundant(policy: str | None) -> bool:
+    return bool(policy) and _NOT_REDUNDANT in str(policy).strip().lower()
+
+
+# Dell spells Hot Spare "PSRapidOn" and reports it as this word or "Disabled".
+_HOT_SPARE_ON = "enabled"
+
+
+def _hot_spare_clause(dell_attrs) -> str:
+    """ ", hot spare PSU1" when the feature is on, otherwise nothing.
+
+    Only ever appended to a group that EXISTS. Three fleet machines run Hot Spare on under a
+    "Not Redundant" policy and share their load evenly regardless, so the setting alone does not
+    mean one supply is idling; a redundancy group plus Hot Spare is what did, on both machines
+    measured that way.
+    """
+    if dell_attrs is None:
+        return ""
+    if str(dell_attrs.hot_spare or "").strip().lower() != _HOT_SPARE_ON:
+        return ""
+    primary = str(dell_attrs.hot_spare_primary or "").strip()
+    return f", hot spare {primary}" if primary else ", hot spare enabled"
+
+
+def redundancy_health(entry, dell_attrs=None) -> tuple:
     """Level and text for a power redundancy group.
 
-    The mode alone renders as "N+m", which is Redfish jargon on a dashboard. Where the server
-    also reports how many supplies are in the set and how many are needed, both are included;
-    neither number is inferred.
+    The level always comes from the server's own Status.Health, which is the only field that
+    reports an actual fault. The text leads with the CONFIGURED policy, because the generic
+    Redfish Mode does not vary: measured across eight Dell servers it was "N+m" on every single
+    one, so a tile built from the mode read identically whether the machine was set to A/B Grid
+    Redundant or PSU Redundant, and changing the setting could never change the card.
+
+    Falls back to the mode for a server that reports no policy, which is any non-Dell Redfish
+    endpoint. Where the server also reports how many supplies are in the set and how many are
+    needed, both are included; neither number is inferred.
     """
     level = alert_level(entry.health)
     if level == LEVEL_GREY:
         return level, f"Unknown ({entry.health})" if entry.health else "Unknown"
     if level != LEVEL_OK:
+        # A failure states the failure. The configuration that is no longer being met is not
+        # what the operator needs to read at that moment.
         return level, "Redundancy lost" if level == LEVEL_RED else "Redundancy degraded"
 
     mode = entry.mode or ""
-    text = _REDUNDANCY_MODE_TEXT.get(mode.strip().lower(), mode) or "Redundant"
+    policy = (dell_attrs.redundancy_policy or "").strip() if dell_attrs is not None else ""
+    if policy and not is_not_redundant(policy):
+        # A server reporting a healthy group under a "Not Redundant" policy is contradicting
+        # itself. Leading with the policy there would put "Not Redundant, 2 supplies (1 needed)"
+        # on a GREEN tile, which reads worse than the generic wording, so the two disagreeing
+        # cases fall back to what the group itself says. Hot Spare goes with the policy for the
+        # same reason: three fleet machines run it on under a non-redundant policy and share
+        # their load evenly anyway, so claiming a standby supply there would be inventing one.
+        text = policy
+        suffix = _hot_spare_clause(dell_attrs)
+    else:
+        text = _REDUNDANCY_MODE_TEXT.get(mode.strip().lower(), mode) or "Redundant"
+        suffix = ""
     if entry.supplies:
         text += f", {entry.supplies} supplies"
         if entry.min_needed:
             text += f" ({entry.min_needed} needed)"
-    return level, text
+    return level, text + suffix

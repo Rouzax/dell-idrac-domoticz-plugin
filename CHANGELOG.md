@@ -4,7 +4,15 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Changed
+
+- **Power Redundancy now states the configured policy, and names a hot spare.** The device read `Redundant, 2 supplies (1 needed)` and was built entirely from the generic Redfish redundancy group. Measured across eight Dell servers, that group reports `Mode: N+m` on every single one whatever the policy is set to, so the device rendered the identical sentence for `A/B Grid Redundant` and `PSU Redundant` and changing the setting on the iDRAC could never change the card. It now leads with Dell's own policy, for example `A/B Grid Redundant, 2 supplies (1 needed)`, and appends `, hot spare PSU1` when **Hot Spare** is switched on. A server that reports no policy, which is any non-Dell Redfish endpoint, still falls back to the Redfish mode. A fault still reads `Redundancy lost` or `Redundancy degraded` on its own. Fixes [#7](https://github.com/Rouzax/dell-idrac-domoticz-plugin/issues/7).
+
+  Hot Spare is what makes a healthy pair read 100/0: with it on, one supply carries the entire load while its partner idles at a few watts in and zero out, which also means the idle supply reports no efficiency figure. The clause is only shown alongside a redundant policy, because switching Hot Spare on under a `Not Redundant` policy left the supplies sharing the load evenly on all four servers measured that way.
+
 ### Fixed
+
+- **Documentation: a lost power supply has two readings, not one.** The docs said that pulling a supply always makes the iDRAC drop the redundancy group, so the device reads a grey `Not reported`. That is only true when the supply is taken out of its bay. Pulling the mains cord while the supply stays seated keeps the group and marks it Critical, so the device reads a red `Redundancy lost`. Both are now documented, both verified on a live T550, and both pinned by a captured fixture. No behaviour changed; the plugin already handled both, and only the description of them was wrong.
 
 - **The fixture capture tool now scrubs Dell attribute identifiers.** Dell names attributes `<group>.<instance>.<Field>`, so the DellAttributes payload spells the Service Tag `ServerInfo.1.ServiceTag`. The scrubber matched whole key names only and therefore skipped every identifier in the largest payload it captures. Dev tooling only; no committed fixture was affected, and nothing about running the plugin changes.
 

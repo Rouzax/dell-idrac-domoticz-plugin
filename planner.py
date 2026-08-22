@@ -463,17 +463,6 @@ def _temp_update(unit, sensor, name, threshold_map, device=DEVICE_SYSTEM) -> Dev
     )
 
 
-# Dell spells the non-redundant policy "Not Redundant". Matched loosely because the exact
-# wording is Dell's and could gain a qualifier; anything else is treated as "should be redundant",
-# which is the safe direction: an unrecognised policy keeps the neutral "Not reported" wording
-# rather than telling the user a redundancy loss was intentional.
-_NOT_REDUNDANT = "not redundant"
-
-
-def _is_not_redundant(policy: str | None) -> bool:
-    return bool(policy) and _NOT_REDUNDANT in str(policy).strip().lower()
-
-
 # Dell reports the intrusion sensor as a plain string, not a Status block.
 _INTRUSION_OK = {"Normal"}
 
@@ -691,12 +680,17 @@ def plan(
     # Only the first group is reported; a chassis exposing several loses the rest.
     redundancy_state = None
     if redundancy:
-        redundancy_state = health.redundancy_health(redundancy[0])
+        # dell_attrs carries the configured policy and Hot Spare. The Redfish group on its own
+        # cannot tell one Dell policy from another; see redundancy_health.
+        redundancy_state = health.redundancy_health(redundancy[0], dell_attrs)
     elif psus:
-        # Pulling a supply EMPTIES this list rather than marking it Critical, measured on real
-        # hardware. Emitting nothing left the tile showing its last value, so it sat green
-        # claiming redundancy at the moment redundancy was lost. Grey rather than red because
-        # the plugin cannot know WHY the group vanished; System Health carries the fault text.
+        # Taking a supply OUT OF ITS BAY empties this list rather than marking it Critical,
+        # measured on real hardware. (Pulling only the mains cord does the opposite: the supply
+        # stays seated, the group survives and goes Critical, and redundancy_health reports the
+        # failure. Both are "a PSU is gone" to a human and they arrive here differently.)
+        # Emitting nothing left the tile showing its last value, so it sat green claiming
+        # redundancy at the moment redundancy was lost. Grey rather than red because the plugin
+        # cannot know WHY the group vanished; System Health carries the fault text.
         #
         # Dell's own policy attribute separates the two reasons the list can be empty. Measured
         # across six servers, the correlation was exact: every machine set to a redundant policy
@@ -705,7 +699,7 @@ def plan(
         # "Not reported" suggests the server is withholding something rather than obeying its
         # configuration. Still grey, never green: not redundant is not a healthy state to
         # advertise, it is simply an intended one.
-        if _is_not_redundant(dell_attrs.redundancy_policy):
+        if health.is_not_redundant(dell_attrs.redundancy_policy):
             redundancy_state = (health.LEVEL_GREY, "Not redundant (configured)")
         else:
             redundancy_state = (health.LEVEL_GREY, "Not reported")

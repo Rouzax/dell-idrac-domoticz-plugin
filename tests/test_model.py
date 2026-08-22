@@ -397,3 +397,33 @@ def test_dell_attributes_carry_the_power_redundancy_policy():
     )
     assert attrs.redundancy_policy == "A/B Grid Redundant"
     assert model.parse_dell_attributes({"Attributes": {}}).redundancy_policy is None
+
+
+def test_dell_attributes_carry_the_hot_spare_configuration():
+    """Hot Spare is what actually splits the load 100/0 across a redundant pair, and Dell spells
+    it "PSRapidOn". Captured from a live T550 with the feature on and PSU1 as the primary: PS1
+    drew 150.5 W while PS2 sat at 5 W in and 0 W out.
+    """
+    attrs = model.parse_dell_attributes(load("redundant", "dell_attributes"))
+    assert attrs.redundancy_policy == "A/B Grid Redundant"
+    assert attrs.hot_spare == "Enabled"
+    assert attrs.hot_spare_primary == "PSU1"
+
+
+def test_dell_attributes_without_hot_spare_keys_are_none_not_disabled():
+    """Absent is not the same as off. A non-Dell Redfish endpoint reports neither key, and
+    guessing "Disabled" would put a claim on the tile the server never made."""
+    attrs = model.parse_dell_attributes({"Attributes": {}})
+    assert attrs.hot_spare is None
+    assert attrs.hot_spare_primary is None
+
+
+def test_parse_redundancy_reads_a_populated_group_from_real_hardware():
+    """Until this capture existed every fixture in the repo came from a machine configured
+    "Not Redundant", which reports an EMPTY array, so no test had ever seen a real group."""
+    red = model.parse_redundancy(load("redundant", "power"))
+    assert len(red) == 1
+    assert red[0].name == "System Board PS Redundancy"
+    assert red[0].mode == "N+m"
+    assert red[0].health == "OK"
+    assert (red[0].min_needed, red[0].supplies) == (1, 2)

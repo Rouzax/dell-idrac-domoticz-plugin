@@ -29,7 +29,7 @@ The example values below come from that same machine: a tower PowerEdge with thr
 | Uptime | Custom, hours | `7.4 h` |
 | Boot Status | Text | `OSRunning` |
 | Chassis Intrusion | Alert | `Normal` in green |
-| Power Redundancy | Alert | `Redundant, 2 supplies (1 needed)` |
+| Power Redundancy | Alert | `A/B Grid Redundant, 2 supplies (1 needed)` |
 
 ### One per piece of hardware found
 
@@ -248,10 +248,31 @@ Its level is the worst of the standard Redfish health rollup and Dell's own OEM 
 
 Reports the health of the redundancy **group**, which is a different question from whether each PSU is healthy. It can read Critical while both power supplies individually read OK, which is exactly the condition a per-component view cannot show you.
 
-It reads in plain English rather than in Redfish terms, for example `Redundant, 2 supplies (1 needed)`. The mode, the number of supplies in the set and the number needed all come from the server. A fault reads `Redundancy lost` or `Redundancy degraded`.
+It reads in plain English rather than in Redfish terms, and it leads with **the policy the server is actually configured for**, for example `A/B Grid Redundant, 2 supplies (1 needed)`. The policy, the number of supplies in the set and the number needed all come from the server. A fault reads `Redundancy lost` or `Redundancy degraded` instead: when redundancy is gone, what you need on screen is the failure, not the setting that is no longer being met.
 
-!!! note "When a supply is removed"
-    Pulling a power supply does not mark the group Critical: the iDRAC **removes the redundancy group entirely**. The device then reads a grey `Not reported`, rather than keeping its last value and claiming redundancy that no longer exists. It is grey rather than red because the plugin cannot tell why the group vanished; look at System Health, which carries the iDRAC's own fault text in that situation.
+A server that reports no policy at all, which is any non-Dell Redfish endpoint, falls back to the generic Redfish mode and reads `Redundant, 2 supplies (1 needed)`.
+
+!!! note "Hot Spare appears on the end"
+    With **Hot Spare** switched on, the iDRAC parks one supply on standby and lets the other carry the whole load. The device says so, which is what explains a healthy pair where one supply reads a few watts and the other reads everything:
+
+    ![Power Redundancy reading A/B Grid Redundant with a hot spare](assets/cards/power-redundancy-hot-spare.png)
+
+    The pair it describes, on the same server at the same moment. Neither supply is faulty:
+
+    ![The active supply drawing 144 Watt](assets/cards/psu-active.png)
+
+    ![The standby supply drawing 5 Watt](assets/cards/psu-standby.png)
+
+    Hot Spare is only shown alongside a redundant policy. Measured on four servers, switching it on while the policy is **Not Redundant** left the supplies sharing the load evenly, so the setting on its own does not mean a supply is idling and the plugin does not claim it does.
+
+!!! note "When a supply fails, there are two different readings"
+    Losing a supply is not one state on the iDRAC, it is two, and they read differently.
+
+    **The mains input is lost**, by pulling the cord or losing that grid feed, while the supply stays in its bay. The iDRAC keeps the redundancy group and marks it Critical, so the device reads a red `Redundancy lost`. Verified by pulling a cord on a live T550: the supply itself went to 0 W and `UnavailableOffline`, and the iDRAC raised two faults, `Power supply redundancy is lost.` and `The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.`
+
+    **The supply is removed from its bay.** The iDRAC then **removes the redundancy group entirely** rather than marking it Critical. The device reads a grey `Not reported`, rather than keeping its last value and claiming redundancy that no longer exists. It is grey rather than red because the plugin cannot tell why the group vanished.
+
+    In both cases System Health carries the iDRAC's own fault text, which is where the reason lives.
 
 !!! note "When redundancy is switched off"
     An empty redundancy group has a second, entirely benign cause: the server is **configured** not to be redundant, which is common on machines that need every supply delivering at once. The plugin reads Dell's own policy attribute to tell the two apart, and says so rather than leaving you to guess:

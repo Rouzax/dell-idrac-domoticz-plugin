@@ -1126,3 +1126,58 @@ def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
         parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
     )
     assert _redundancy_device(parts).svalue == "Not reported"
+
+
+def test_power_redundancy_states_the_configured_policy_and_hot_spare():
+    """End to end on a real capture: a T550 recaptured after its policy was changed to A/B Grid
+    Redundant with Hot Spare on. Before this the tile read "Redundant, 2 supplies (1 needed)"
+    and said the same thing for every policy the machine could be set to.
+    """
+    parts = _parts("t550")
+    parts["psus"] = model.parse_power(load("redundant", "power"))
+    parts["redundancy"] = model.parse_redundancy(load("redundant", "power"))
+    parts["dell_attrs"] = model.parse_dell_attributes(load("redundant", "dell_attributes"))
+    device = _redundancy_device(parts)
+    assert device.nvalue == health.LEVEL_OK
+    assert device.svalue == "A/B Grid Redundant, 2 supplies (1 needed), hot spare PSU1"
+
+
+def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
+    """Captured live with one mains cord pulled from a T550.
+
+    This is NOT the "degraded" case. A supply removed from its bay empties the Redundancy array
+    and the tile reads a grey "Not reported"; a supply still seated but with no input keeps the
+    group and marks it Critical, so the tile can say what actually happened. Both look like "a
+    PSU is gone" to a human and they take different code paths, so both are pinned here.
+    """
+    parts = _parts("t550")
+    parts["psus"] = model.parse_power(load("input_lost", "power"))
+    parts["redundancy"] = model.parse_redundancy(load("input_lost", "power"))
+    parts["dell_attrs"] = model.parse_dell_attributes(load("input_lost", "dell_attributes"))
+    parts["faults"] = model.parse_faults(load("input_lost", "faults"))
+    device = _redundancy_device(parts)
+    assert device.nvalue == health.LEVEL_RED
+    # The failure, not the configured policy: A/B Grid Redundant is no longer being met.
+    assert device.svalue == "Redundancy lost"
+
+
+def test_the_supply_with_no_input_is_still_listed_and_reports_its_own_failure():
+    """The supply has not vanished, which is exactly what separates this from the bay-removal
+    case: it is still enumerated, drawing nothing, and carrying its own Critical status."""
+    dead = {psu.name: psu for psu in model.parse_power(load("input_lost", "power"))}
+    assert dead["PS1 Status"].input_watts == 0.0
+    assert dead["PS1 Status"].health == "Critical"
+    assert dead["PS1 Status"].state == "UnavailableOffline"
+    # Its partner carries the whole load and is fine.
+    assert dead["PS2 Status"].health == "OK"
+    assert dead["PS2 Status"].input_watts > 0
+
+
+def test_the_faults_behind_a_lost_redundancy_group_reach_system_health():
+    """The tile says "Redundancy lost"; System Health is where WHY lives, in the iDRAC's own
+    words. Captured with the cord out, the iDRAC raised two entries, not one."""
+    faults = model.parse_faults(load("input_lost", "faults"))
+    messages = [f.message for f in faults]
+    assert "Power supply redundancy is lost." in messages
+    assert any("input voltage" in m for m in messages)
+    assert all(f.severity == "Critical" for f in faults)

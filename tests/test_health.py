@@ -137,6 +137,73 @@ def _red(mode="N+m", status="OK", min_needed=1, supplies=2):
     )
 
 
+def _attrs(policy="A/B Grid Redundant", hot_spare="Disabled", primary="PSU1"):
+    return model.DellAttrs(
+        accumulative_power=None,
+        peak_watts=None,
+        powered_on_seconds=None,
+        redundancy_policy=policy,
+        hot_spare=hot_spare,
+        hot_spare_primary=primary,
+    )
+
+
+def test_redundancy_text_leads_with_the_configured_policy():
+    """Measured across eight Dell servers: Mode is "N+m" on EVERY ONE of them, whatever the
+    redundancy policy is set to. Building the text from the mode alone therefore rendered the
+    identical sentence for "A/B Grid Redundant" and "PSU Redundant", so changing the policy on
+    the iDRAC could never change the card. The configured policy is the only field that moves.
+    """
+    assert health.redundancy_health(_red(), _attrs()) == (
+        health.LEVEL_OK,
+        "A/B Grid Redundant, 2 supplies (1 needed)",
+    )
+    assert health.redundancy_health(_red(), _attrs(policy="PSU Redundant"))[1] == (
+        "PSU Redundant, 2 supplies (1 needed)"
+    )
+
+
+def test_redundancy_text_names_the_hot_spare_supply():
+    """Hot Spare is why one supply reads 0 W out while its partner carries everything. Without
+    it on the tile the pair looks broken; with it the 100/0 split is explained."""
+    level, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled"))
+    assert (level, text) == (
+        health.LEVEL_OK,
+        "A/B Grid Redundant, 2 supplies (1 needed), hot spare PSU1",
+    )
+
+
+def test_hot_spare_primary_is_shown_verbatim_because_it_can_name_several():
+    """A live DSS8440 reports RapidOnPrimaryPSU as "PSU1 and PSU3". It is not a single token."""
+    _, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled", primary="PSU1 and PSU3"))
+    assert text.endswith("hot spare PSU1 and PSU3")
+
+
+def test_hot_spare_enabled_without_a_named_primary_still_says_so():
+    _, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled", primary=None))
+    assert text.endswith("hot spare enabled")
+
+
+def test_hot_spare_disabled_adds_nothing():
+    _, text = health.redundancy_health(_red(), _attrs(hot_spare="Disabled"))
+    assert "hot spare" not in text
+
+
+def test_a_missing_policy_falls_back_to_the_redfish_mode():
+    """Non-Dell Redfish serves the generic Redundancy object and none of the Dell attributes."""
+    _, text = health.redundancy_health(_red(), _attrs(policy=None))
+    assert text == "Redundant, 2 supplies (1 needed)"
+
+
+def test_a_fault_reports_the_fault_and_not_the_policy():
+    """When redundancy is lost, what the operator needs is the failure, not the configuration
+    that is no longer being met."""
+    assert health.redundancy_health(_red(status="Critical"), _attrs(hot_spare="Enabled")) == (
+        health.LEVEL_RED,
+        "Redundancy lost",
+    )
+
+
 def test_redundancy_text_is_plain_english_with_the_counts():
     """ "N+m" is Redfish jargon and was leaking straight onto the dashboard.
 
@@ -201,3 +268,21 @@ def test_a_latched_rollup_with_no_fault_text_still_names_the_subsystem():
     level, text = health.system_health(system.health, system.rollups)
     assert level == health.LEVEL_RED
     assert text == "Critical: SEL"
+
+
+def test_a_healthy_group_under_a_non_redundant_policy_does_not_print_the_contradiction():
+    """The server is disagreeing with itself: it reports a healthy redundancy group while the
+    configured policy says there is none. Leading with the policy would put "Not Redundant,
+    2 supplies (1 needed)" on a GREEN tile, so the group's own wording wins instead.
+    """
+    level, text = health.redundancy_health(
+        _red(), _attrs(policy="Not Redundant", hot_spare="Enabled")
+    )
+    assert (level, text) == (health.LEVEL_OK, "Redundant, 2 supplies (1 needed)")
+
+
+def test_is_not_redundant_tolerates_a_qualifier_on_dells_wording():
+    assert health.is_not_redundant("Not Redundant")
+    assert health.is_not_redundant("  not redundant (something)  ")
+    assert not health.is_not_redundant("A/B Grid Redundant")
+    assert not health.is_not_redundant(None)
