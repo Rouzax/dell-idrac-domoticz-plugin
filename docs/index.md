@@ -12,7 +12,7 @@ Read-only by default. Power control and the identify LED exist, but stay switche
 
 - **Temperatures** for chassis inlet and exhaust, each CPU, and the hottest DIMM, each carrying the server's own warning and critical thresholds in its description.
 - **Fan speeds**, one device per fan, with the low-speed thresholds the iDRAC reports.
-- **Power**, as live watts plus an energy counter suitable for Domoticz's usage graphs, and per power-supply input wattage.
+- **Power**, as live watts plus a kWh counter suitable for Domoticz's energy report, for the server overall and, by default, for each power supply too.
 - **Utilization** for CPU, memory, I/O and the overall system.
 - **Health** as a single tile that names the reason. When the iDRAC raises a fault, the tile shows the iDRAC's own words, for example `Power supply redundancy is lost.`
 - **Storage**, one alert per physical drive and per RAID volume, named by media type and location, including predicted SSD life.
