@@ -112,6 +112,34 @@ def test_there_is_no_mark_timed_out():
     assert not hasattr(domoticz_api, "mark_timed_out")
 
 
+def test_a_missing_type_attribute_degrades_the_conversion_not_the_poll():
+    """Type/SubType are read with getattr precisely because we could not establish the oldest
+    Domoticz release exposing them, and the read sits on a path hit every heartbeat. A build
+    without them must still write every unit's values instead of raising AttributeError and
+    taking the whole poll down with it."""
+    domoticz_stub.Devices.clear()
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dev"),
+        [_update(1, type_name="Usage"), _update(2, type_name="Alert", svalue="OK")],
+        {},
+    )
+    unit = domoticz_stub.Devices["dev"].Units[1]
+    del unit.Type
+    del unit.SubType
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dev"),
+        [
+            _update(1, type_name="kWh", svalue="144;2500.5"),
+            _update(2, type_name="Alert", svalue="Warning"),
+        ],
+        {},
+    )
+    assert unit.sValue == "144;2500.5"
+    assert domoticz_stub.Devices["dev"].Units[2].sValue == "Warning"
+
+
 def test_apply_updates_never_touches_timedout():
     domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1)], {})
     domoticz_api.apply_updates(
@@ -503,3 +531,92 @@ def test_a_description_from_before_ownership_tracking_is_adopted_not_frozen():
     assert unit.stored["Description"] == "Critical"
     # And it is recorded from now on, so the next edit by the user does survive.
     assert descriptions[domoticz_api.name_key("dellidrac_1", 1)] == "Critical"
+
+
+def test_apply_converts_a_usage_device_to_kwh_in_place():
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(14, name="CPU Power", type_name="Usage", svalue="41.0")],
+        {},
+    )
+    unit = domoticz_stub.Devices["dellidrac_1_system"].Units[14]
+    created_id = id(unit)
+    assert (unit.Type, unit.SubType) == (248, 1)
+
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [
+            _update(
+                14,
+                name="CPU Power",
+                type_name="kWh",
+                svalue="41.0;12.5",
+                options={"EnergyMeterMode": "0"},
+            )
+        ],
+        {"dellidrac_1_system:14": "CPU Power"},
+    )
+    unit = domoticz_stub.Devices["dellidrac_1_system"].Units[14]
+    # Same object, so same device row: idx, name and history all survive.
+    assert id(unit) == created_id
+    assert unit.Name == "CPU Power"
+    assert (unit.Type, unit.SubType) == (243, 29)
+    # The real values are written immediately after the conversion reset them.
+    assert unit.sValue == "41.0;12.5"
+    assert unit.stored["Options"] == {"EnergyMeterMode": "0"}
+
+
+def test_apply_converts_back_to_usage_when_the_setting_is_turned_off():
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(14, name="CPU Power", type_name="kWh", svalue="41.0;12.5")],
+        {},
+    )
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(14, name="CPU Power", type_name="Usage", svalue="41.0")],
+        {"dellidrac_1_system:14": "CPU Power"},
+    )
+    unit = domoticz_stub.Devices["dellidrac_1_system"].Units[14]
+    assert (unit.Type, unit.SubType) == (248, 1)
+    assert unit.sValue == "41.0"
+
+
+def test_apply_does_not_convert_a_unit_that_already_has_the_right_type():
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(14, name="CPU Power", type_name="kWh", svalue="41.0;12.5")],
+        {},
+    )
+    unit = domoticz_stub.Devices["dellidrac_1_system"].Units[14]
+    unit.updates.clear()
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(14, name="CPU Power", type_name="kWh", svalue="41.0;13.5")],
+        {"dellidrac_1_system:14": "CPU Power"},
+    )
+    assert not any("TypeName" in call for call in unit.updates)
+
+
+def test_apply_never_converts_a_device_whose_type_is_not_convertible():
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(2, name="System Health", type_name="Alert", nvalue=1, svalue="OK")],
+        {},
+    )
+    unit = domoticz_stub.Devices["dellidrac_1_system"].Units[2]
+    unit.updates.clear()
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1_system"),
+        [_update(2, name="System Health", type_name="Alert", nvalue=1, svalue="OK")],
+        {"dellidrac_1_system:2": "System Health"},
+    )
+    assert not any("TypeName" in call for call in unit.updates)

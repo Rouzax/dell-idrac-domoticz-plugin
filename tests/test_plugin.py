@@ -1,6 +1,7 @@
 import pytest
 
 import control
+import planner
 import plugin
 import redfish_client
 from tests import domoticz_stub
@@ -273,6 +274,54 @@ def test_energy_counter_never_decreases(started):
     assert second >= first
 
 
+def test_the_first_poll_integrates_nothing(started):
+    """No prior heartbeat means no measured interval, and there is nothing honest to integrate
+    over. Server Board Power on the t550 fixture is 144.0 W; if this ever measured from a
+    fictitious interval it would show up here as a nonzero first reading."""
+    assert started.last_poll_monotonic is None
+    _beat_once(started)
+    energy_wh = float(_units()[plugin.planner.UNIT_POWER].sValue.split(";")[1])
+    assert energy_wh == 0.0
+    # The clock is stamped only AFTER a successful poll, so the next one has something to measure.
+    assert started.last_poll_monotonic is not None
+
+
+def test_a_late_poll_integrates_the_measured_interval_not_the_nominal_one(started, monkeypatch):
+    """PollInterval is 30s here. A poll that actually took 45s (a slow iDRAC, a GC pause, a busy
+    heartbeat thread) must count 45s of energy, not 30s worth, or every counter quietly under- or
+    over-reports by however late polls tend to run."""
+    times = iter([1000.0, 1000.0 + 45.0])
+    monkeypatch.setattr(plugin.time, "monotonic", lambda: next(times))
+    _beat_once(started)  # first poll: elapsed_s forced to 0.0, stamps last_poll_monotonic=1000.0
+    _beat_once(started)  # second poll: 45s later by the (fake) clock
+    watts, energy_wh = (float(v) for v in _units()[plugin.planner.UNIT_POWER].sValue.split(";"))
+    assert watts == 144.0
+    expected = 144.0 * 45.0 / 3600.0
+    assert energy_wh == pytest.approx(expected)
+    # Had the nominal PollInterval driven the integration instead of the measured gap, a 45s-late
+    # poll would have under-counted against what actually elapsed.
+    assert energy_wh > 144.0 * started.cfg.poll_interval / 3600.0
+
+
+def test_a_long_outage_is_capped_at_two_poll_intervals(started, monkeypatch):
+    """The plugin writes nothing while the iDRAC is unreachable (deliberate: see the RedfishError
+    branch in onHeartbeat) and does not stamp the clock during an outage. So when it finally
+    recovers, the real gap since the last successful poll can be huge, and the design compromise
+    is to under-count that gap rather than book the whole outage as one energy step."""
+    times = iter([1000.0, 1000.0 + 10_000.0])
+    monkeypatch.setattr(plugin.time, "monotonic", lambda: next(times))
+    _beat_once(started)  # success, stamps last_poll_monotonic=1000.0
+    started.client = FakeClient(fail_paths=("/Sensors",))
+    _beat_once(started)  # fails: returns before time.monotonic() is ever reached
+    _drain_backoff(started)  # burns the countdown; still no poll attempt, so no clock read
+    started.client = FakeClient()  # the iDRAC is back
+    _beat_once(started)  # 10_000s after the last successful poll by the (fake) clock
+    energy_wh = float(_units()[plugin.planner.UNIT_POWER].sValue.split(";")[1])
+    cap_seconds = started.cfg.poll_interval * 2
+    expected = 144.0 * cap_seconds / 3600.0
+    assert energy_wh == pytest.approx(expected)
+
+
 def test_password_never_reaches_the_log(started):
     started.client = FakeClient(fail_paths=("/Sensors",))
     _beat_once(started)
@@ -332,7 +381,7 @@ def test_component_power_devices_appear_when_telemetry_is_available(started):
     started.client = FakeClient(telemetry_available=True)
     _beat_once(started)
     units = _units()
-    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
+    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue.split(";")[0]) > 0
     assert units[plugin.planner.UNIT_STORAGE_POWER].Name == "Storage Power"
     assert started.telemetry is True
     # And the energy device switches to the wall figure telemetry reports.
@@ -369,7 +418,7 @@ def test_the_power_report_is_found_under_an_openmanage_name(started):
     started.client = FakeClient(telemetry_available=True, report_name="OME-PMP-Power-A")
     _beat_once(started)
     units = _units()
-    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
+    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue.split(";")[0]) > 0
     assert started.telemetry is True
     assert started.metric_paths == ("/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-A",)
 
@@ -434,7 +483,7 @@ def test_the_setting_enables_telemetry_and_the_metrics_then_appear(started):
     # The next poll finds the report that the write just switched on.
     _beat_once(started)
     units = _units()
-    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue) > 0
+    assert float(units[plugin.planner.UNIT_CPU_POWER].sValue.split(";")[0]) > 0
 
 
 def test_telemetry_is_not_reconfigured_when_it_already_works(started):
@@ -714,3 +763,99 @@ def test_no_collision_warning_when_the_names_are_free(monkeypatch, tmp_path, sta
     DomoticzEx._log.clear()
     _beat_once(started)
     assert not [line for line in DomoticzEx._log if "already exist under hardware" in line]
+
+
+def _counter_update(unit, svalue, counter, name="CPU Power", device=planner.DEVICE_SYSTEM):
+    return planner.DeviceUpdate(
+        unit=unit,
+        type_name="kWh",
+        name=name,
+        nvalue=0,
+        svalue=svalue,
+        device=device,
+        counter=counter,
+    )
+
+
+def _seed_counter_device(dev_id, unit, svalue):
+    u = domoticz_stub.Unit(Name="X", DeviceID=dev_id, Unit=unit, TypeName="kWh")
+    u.Create()
+    u.sValue = svalue
+    u.Update(Log=False)
+
+
+def test_attach_counters_appends_the_integrated_energy():
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_counter_device("dellidrac_1_system", 14, "40.0;100.0")
+    out = plugin.attach_counters(
+        domoticz_stub.Devices,
+        [_counter_update(14, "36.0", True)],
+        elapsed_s=3600.0,
+        system_watts=150.0,
+        peak_w=200.0,
+    )
+    assert out[0].svalue == "36.0;136.0"
+
+
+def test_attach_counters_leaves_a_non_counter_update_alone():
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    update = planner.DeviceUpdate(
+        unit=2, type_name="Alert", name="System Health", nvalue=1, svalue="OK"
+    )
+    assert plugin.attach_counters(
+        domoticz_stub.Devices, [update], elapsed_s=30.0, system_watts=150.0, peak_w=200.0
+    ) == [update]
+
+
+def test_attach_counters_counts_a_flat_standby_reading():
+    # An R750 hot spare supply can sit at exactly 5.0 W for hours. That is real standby energy,
+    # and this is now a regression test proving nothing gates any counter.
+    plugin._state.dev_ids = {planner.DEVICE_POWER: "dellidrac_1_power"}
+    _seed_counter_device("dellidrac_1_power", 1, "5.0;10.0")
+    out = plugin.attach_counters(
+        domoticz_stub.Devices,
+        [_counter_update(1, "5.0", True, name="PS2 Status", device=planner.DEVICE_POWER)],
+        elapsed_s=3600.0,
+        system_watts=461.0,
+        peak_w=800.0,
+    )
+    assert out[0].svalue == "5.0;15.0"
+
+
+def test_attach_counters_counts_a_reading_that_never_changes():
+    # The movement gate was removed deliberately: it delayed real energy for as long as a
+    # component held a steady value, and the fabricated reading it targeted moved anyway.
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_counter_device("dellidrac_1_system", 19, "42.0;500.0")
+    args = (domoticz_stub.Devices, [_counter_update(19, "42.0", True, name="FPGA Power")])
+    first = plugin.attach_counters(*args, elapsed_s=3600.0, system_watts=330.0, peak_w=800.0)
+    assert first[0].svalue == "42.0;542.0"
+
+
+def test_attach_counters_holds_a_reading_above_the_chassis_draw():
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_counter_device("dellidrac_1_system", 19, "43.0;500.0")
+    out = plugin.attach_counters(
+        domoticz_stub.Devices,
+        [_counter_update(19, "43.0", True, name="FPGA Power")],
+        elapsed_s=3600.0,
+        system_watts=22.0,
+        peak_w=200.0,
+    )
+    assert out[0].svalue == "43.0;500.0"
+
+
+def test_attach_counters_drops_an_update_whose_previous_value_is_unreadable():
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_counter_device("dellidrac_1_system", 14, "40.0;not-a-number")
+    # Writing anything here would reset a counter whose whole contract is that it only climbs.
+    assert (
+        plugin.attach_counters(
+            domoticz_stub.Devices,
+            [_counter_update(14, "36.0", True)],
+            elapsed_s=3600.0,
+            system_watts=150.0,
+            peak_w=200.0,
+        )
+        == []
+    )

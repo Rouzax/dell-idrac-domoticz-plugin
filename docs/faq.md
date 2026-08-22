@@ -107,6 +107,8 @@ The counter is integrated by the plugin from the wattage the server reports, whi
 
 Energy accrued while Domoticz is not running is not recovered. The iDRAC's own lifetime counter is not used, because it does not accumulate continuously and would produce invented plateaus and jumps. See [Energy](devices.md#energy).
 
+With [Energy counters](settings.md#energy-counters) on, up to fifteen devices carry a counter this way: Server Power, the six subsystem power devices, each power supply and each GPU. The subsystem, power supply and GPU counters are not meant to add up to Server Power and will not: each measures one internal rail, and together they never account for the whole machine. See [Why the component counters do not add up to Server Power](devices.md#why-the-component-counters-do-not-add-up-to-server-power) for the actual shortfall measured across a fleet of test servers, rather than repeating it here.
+
 ### The fan and temperature cards have no coloured bar
 
 The bands are computed and sent, and your Domoticz build is discarding them. Plugin-supplied bar ranges need [domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026, which is **not in any stable release yet**, 2026.3 included. A beta or development build has it. Nothing is logged, because from the plugin's side the write succeeded.

@@ -32,6 +32,17 @@ def _existing_unit(devices, dev_id, unit):
     return dev.Units.get(unit)
 
 
+# The only two type names a per-component power device ever holds, and the (Type, SubType) pair
+# each maps to in the core (hardware/hardwaretypes.h: pTypeGeneral 0xF3, sTypeKwh 0x1D,
+# pTypeUsage 0xF8, sTypeElectric 0x01). A unit whose plan entry names one of these while its
+# stored pair is the other is converted IN PLACE, which keeps its idx, name, room and history
+# rows. Deciding by inspection rather than by a stored migration flag makes it idempotent and
+# self-healing: a device that somehow ends up with the wrong type is repaired on the next poll.
+# Restricting the map to these two names is deliberate. Every other device the plugin creates
+# keeps the type it was created with.
+_CONVERTIBLE = {"kWh": (243, 29), "Usage": (248, 1)}
+
+
 def apply_updates(
     devices,
     dev_ids,
@@ -53,6 +64,7 @@ def apply_updates(
     renamed = 0
     recoloured = 0
     redescribed = 0
+    converted = 0
     # Create in ascending device then unit order: Domoticz lists devices in creation order, so
     # this keeps the on-disk layout matching the logical numbering.
     for up in sorted(updates, key=lambda u: (u.device, u.unit)):
@@ -91,6 +103,30 @@ def apply_updates(
                 descriptions[key] = up.description
             created += 1
             continue
+
+        # Read Type/SubType defensively. They are exposed on domoticz/domoticz:beta but we could
+        # not establish the oldest release that carries them, and this file declares no minimum
+        # Domoticz version. This runs on a path reached every heartbeat, same as the mark_timed_out
+        # reasoning below: an AttributeError here would escape onHeartbeat's RedfishError-only
+        # catch and kill the whole poll, taking every device update down with it. A build without
+        # these members degrades to leaving units unconverted rather than dying.
+        live_type = getattr(unit, "Type", None)
+        live_subtype = getattr(unit, "SubType", None)
+        wanted = _CONVERTIBLE.get(up.type_name)
+        if (
+            wanted is not None
+            and None not in (live_type, live_subtype)
+            and (live_type, live_subtype) != wanted
+        ):
+            # Update(TypeName=...) is the only way a plugin can change a unit's type. It remaps
+            # Type, SubType and SwitchType and RESETS nValue and sValue
+            # (hardware/plugins/PythonObjectEx.cpp, CUnitEx_update), which is why the real values
+            # are written immediately below. Options travel with it: a kWh device needs
+            # EnergyMeterMode set in the same breath, or the first counter write is interpreted
+            # under the wrong mode.
+            unit.Options = up.options or {}
+            unit.Update(TypeName=up.type_name, UpdateOptions=True)
+            converted += 1
 
         unit.nValue = up.nvalue
         unit.sValue = up.svalue
@@ -145,7 +181,7 @@ def apply_updates(
     if updates:
         Domoticz.Debug(
             f"apply units={len(updates)} created={created} renamed={renamed} "
-            f"recoloured={recoloured} redescribed={redescribed}"
+            f"recoloured={recoloured} redescribed={redescribed} converted={converted}"
         )
     return names, colors, descriptions
 

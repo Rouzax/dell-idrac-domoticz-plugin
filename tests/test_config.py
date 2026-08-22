@@ -127,3 +127,13 @@ def test_an_unrecognised_formatted_card_text_value_keeps_the_default():
     cfg = config.parse_config({"RichCardText": "perhaps"})
     assert cfg.rich_card_text is True
     assert any("RichCardText" in note for note in cfg.warnings)
+
+
+def test_energy_counters_defaults_on():
+    cfg = config.parse_config({"Address": "h"})
+    assert cfg.energy_counters is True
+
+
+def test_energy_counters_can_be_turned_off():
+    cfg = config.parse_config({"Address": "h", "EnergyCounters": "false"})
+    assert cfg.energy_counters is False

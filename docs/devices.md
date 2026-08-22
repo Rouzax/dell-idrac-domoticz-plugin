@@ -13,6 +13,8 @@ Every non-temperature device the plugin created for one PowerEdge, on Domoticz's
 
 The example values below come from that same machine: a tower PowerEdge with three fans, two power supplies, three RAID volumes, two NIC ports and ten drives. Yours will differ in the per-hardware rows, because those follow what your server has. Fans, drives, volumes and NICs are re-discovered on every slow poll, so hardware you add later appears on its own.
 
+Power supply, per-component power and GPU power devices read as `kWh` counters by default, carrying both a live watt figure and an accumulating total, the same way Server Power always has. Turn off [Energy counters](settings.md#energy-counters) to get plain watt gauges instead, the way earlier versions of the plugin worked.
+
 ### Always, where the server reports the value
 
 | Device | Domoticz type | Example reading |
@@ -38,7 +40,7 @@ The example values below come from that same machine: a tower PowerEdge with thr
 | CPU temperature, one per socket | Temperature | `CPU1 Temp` reading `53.0 C` |
 | Hottest DIMM | Temperature | `Max DIMM Temp` reading `42.0 C` |
 | Fan speed, one per fan | Custom, RPM | `System Board Fan1` reading `1920 RPM` |
-| Power supply, one per PSU | Usage, watts | `PS1 Status` reading `150.5 Watt`, with the health the server reports in its description, `OK` or `Critical` |
+| Power supply, one per PSU | kWh | `PS1 Status` reading `150.5 Watt`, plus a kWh counter such as `0.313 kWh`, with the health the server reports in its description, `OK` or `Critical` |
 | RAID volume, one per virtual disk | Alert | `Volume OS` reading `RAID1` |
 | Physical drive, one per disk | Alert | `SSD 0:2:0` reading `SSD, life 100%`, or `HDD 0:2:3` reading `HDD` |
 | NIC port, one per port | Alert | `NIC NIC.Embedded.1-1-1` reading `LinkUp 1000 Mb`, or `LinkDown` in amber |
@@ -55,13 +57,13 @@ The example values below come from that same machine: a tower PowerEdge with thr
 
 | Device | Domoticz type | Example reading |
 |---|---|---|
-| CPU Power | Usage, watts | `51 Watt` |
-| Memory Power | Usage, watts | `5 Watt` |
-| Storage Power | Usage, watts | `57.8 Watt` |
-| Fan Power | Usage, watts | `3.4 Watt` |
-| PCIe Power | Usage, watts | `0 Watt` |
-| FPGA Power | Usage, watts | `0 Watt` |
-| GPU power, one per card | Usage, watts | `GPU Video.Slot.10-1 Power` reading `39.1 Watt` |
+| CPU Power | kWh | `51 Watt`, plus a kWh counter such as `1.204 kWh` |
+| Memory Power | kWh | `5 Watt`, plus a kWh counter such as `0.118 kWh` |
+| Storage Power | kWh | `57.8 Watt`, plus a kWh counter such as `1.367 kWh` |
+| Fan Power | kWh | `3.4 Watt`, plus a kWh counter such as `0.080 kWh` |
+| PCIe Power | kWh | `0 Watt`, plus a kWh counter such as `0.000 kWh` |
+| FPGA Power | kWh | `0 Watt`, plus a kWh counter such as `0.000 kWh` |
+| GPU power, one per card | kWh | `GPU Video.Slot.10-1 Power` reading `39.1 Watt`, plus a kWh counter such as `0.925 kWh` |
 | GPU temperature, one per card | Temperature | `GPU Video.Slot.6-1 Temp` reading `40.0 C` |
 
 On a seven-card server that is fourteen GPU devices, named by the slot each card sits in. See [Per-component power](#per-component-power-needs-a-licence) for what unlocks these.
@@ -305,11 +307,23 @@ Only the first redundancy group is reported. Chassis that expose several groups 
 
 ## Energy
 
-The Server Power device carries both live watts and an accumulating kWh counter that the plugin integrates itself from the measured wattage.
+Server Power always carries both live watts and an accumulating kWh counter. With [Energy counters](settings.md#energy-counters) on, which is the default, the per-component power devices, each power supply and each GPU carry the same pair of figures.
+
+Every counter is integrated by the plugin itself, over the **measured** interval since its last successful poll rather than the configured poll interval, capped at twice that interval. A poll that runs late is counted for the time that actually passed rather than for the time you configured, and an unreachable iDRAC does not stamp the clock at all, so an outage is under-counted rather than having its silence booked as either a full interval of load or none.
 
 It does **not** use the lifetime energy figure the iDRAC reports. That counter does not accumulate continuously: it works out to a lifetime average far below what the machine really draws, so it must pause across power-off periods or reset. Wiring it to a Domoticz counter would produce a graph with invented plateaus and sudden jumps.
 
-The trade-off is that energy accrued while Domoticz is not running is not recovered. The counter is guarded so it can only move forwards, and an implausibly large jump is held back and reported rather than accepted.
+The trade-off is that energy accrued while Domoticz is not running is not recovered. Every counter is guarded so it can only move forwards, and an implausibly large jump is held back and reported rather than accepted.
+
+A component counter carries one further guard: a reading above one and a half times what the whole machine is drawing is not counted, because a component cannot draw more than the chassis it sits in. The counter is held at its last value, and the plugin logs one line per counter per plugin start rather than repeating it on every poll.
+
+### Why the component counters do not add up to Server Power
+
+Each component counter measures one internal rail. Together they never account for the whole machine, and the shortfall is not a fixed proportion: measured across a fleet of eight servers the subsystem figures covered 74% of the wall draw on a T550, 79% on an R740xd2, 48% on an R440 and 18% on a DSS8440, where the GPUs carry most of the load and no subsystem metric covers them.
+
+Metric coverage itself varies by machine: from two of the six subsystem metrics reported on a PowerEdge R750 up to all six on the T550. A metric your server does not report simply produces no device, rather than one reading zero.
+
+Server Power is the figure to trust for the machine's total consumption and cost. The component counters are for seeing where the power goes, and for spotting a change in one part over time.
 
 ## Power supply devices show input watts
 

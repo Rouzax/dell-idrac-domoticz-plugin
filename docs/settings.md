@@ -44,6 +44,7 @@ These control which optional device families are created. Turning one off stops 
 | **Drive life warning (%)** | 10 | Warn when a drive reports less predicted media life remaining than this. Only applies to drives that report the figure at all, which in practice means SSDs. |
 | **Drive life % devices** | off | A second device per drive reporting predicted media life as a graphable percentage. See below. |
 | **Formatted card text** | on | Renders System Health and Power Redundancy as a bullet list with a link to the iDRAC, instead of a single line of text. See below. |
+| **Energy counters** | on | Reports per-component power, each power supply and each GPU as a kWh counter with a running total, instead of a plain watt gauge. See below. |
 | **Fan bar maximum (RPM)** | 6000 | Top of the scale on fan bar graphs. `0` switches fan bars off. See below. |
 
 Turning off a family also skips the requests that fetch it, so on a server with many drives, switching **Physical drives** off measurably shortens the slow tier.
@@ -73,6 +74,37 @@ With it off, both cards produce exactly the plain text the plugin has always pro
     The card text is the device's `sValue`, which is what a dzVents script compares against and what Domoticz notifications send. If you have a script or notification matching text such as `Redundancy lost`, either leave this setting off or update it to match the new wording; turning the setting on changes that text on the next poll.
 
 **Requires Domoticz 2026.1 or newer**, the version from which Domoticz renders Text and Alert device data as HTML rather than as plain text. On an older build the markup may show as literal tags on the card instead of a bullet list, so turn this setting off there.
+
+### Energy counters
+
+With this on, the per-component power devices (CPU, memory, storage, fan, PCIe and FPGA), each power supply and each GPU report as a Domoticz `kWh` counter carrying a running total alongside their watt figure, rather than a plain `Usage` watt gauge. That is the same device type [Server Power](devices.md#energy) has always used. Each counter then appears in Domoticz's energy report with a total and a cost.
+
+Switching this converts the affected devices **in place**: same idx, same name, same room. The counter starts from zero, and the previous watt history is hidden rather than deleted, because Domoticz keeps a `kWh` device's day history in a different table from a `Usage` device's. Turn the setting back off and the devices convert back to watt gauges, and the original watt graphs reappear exactly as they were.
+
+Server Power is a `kWh` counter either way; this setting does not affect it.
+
+!!! warning "This changes what a dzVents script reads"
+    A counter device's `sValue` carries both figures, watts and the running total, separated by a semicolon, for example `41.0;1234.5`, in place of a bare `41.0`. Any script doing `tonumber(device.sValue)` on one of these devices needs to read the watt figure in front of the semicolon instead, or it will error the first time this setting converts the device.
+
+!!! note "If you poll less often than every 5 minutes"
+
+    Domoticz's **Settings > Log History > Only add newly received values to the Log** skips a
+    device from a 5 minute log bucket when it has not reported since the last one. With a poll
+    interval above 5 minutes and that option enabled, roughly every other bucket is skipped.
+    The kWh totals still come out right, because Domoticz takes a counter's daily figure from
+    the first and last reading of the day, but the watt graphs will look gappy. Leave the poll
+    interval at or below 5 minutes if you want an unbroken graph.
+
+!!! note "A counter can get stuck while its watt reading keeps moving"
+    A component is not allowed to claim more power than the whole machine is drawing, with some
+    margin for measurement differences between sensors. When it does, usually briefly on a
+    server where one component's own sensor and the system total disagree, the plugin holds that
+    counter instead of writing a nonsensical total: the card's watt figure keeps updating
+    normally on every poll, but its kWh total stops advancing until a later reading is plausible
+    again. This does not happen often, but a device stuck at a fixed kWh figure with a live watt
+    reading is the sign to look for. The plugin logs one line naming the device and both figures
+    the first time this happens after a plugin start, so check the log if you want to confirm it
+    rather than guess.
 
 ### Why the fan bar maximum is a setting
 

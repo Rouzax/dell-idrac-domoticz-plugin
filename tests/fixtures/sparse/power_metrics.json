@@ -1,0 +1,1103 @@
+{
+ "@odata.context": "/redfish/v1/$metadata#MetricReport.MetricReport",
+ "@odata.id": "/redfish/v1/TelemetryService/MetricReports/OME-PMP-Power-B",
+ "@odata.type": "#MetricReport.v1_5_0.MetricReport",
+ "Id": "OME-PMP-Power-B",
+ "MetricReportDefinition": {
+  "@odata.id": "/redfish/v1/TelemetryService/MetricReportDefinitions/OME-PMP-Power-B"
+ },
+ "MetricValues": [
+  {
+   "MetricId": "SystemPowerConsumption",
+   "MetricProperty": "/redfish/v1/Chassis/System.Embedded.1/Power/PowerControl#PowerConsumedWatts",
+   "MetricValue": "452.623036649215",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics SystemPowerConsumption- Average (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "SystemPowerConsumption",
+   "MetricProperty": "/redfish/v1/Chassis/System.Embedded.1/Power/PowerControl#PowerConsumedWatts",
+   "MetricValue": "438",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics SystemPowerConsumption- Minimum (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "SystemPowerConsumption",
+   "MetricProperty": "/redfish/v1/Chassis/System.Embedded.1/Power/PowerControl#PowerConsumedWatts",
+   "MetricValue": "462",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics SystemPowerConsumption- Maximum (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "SysNetAirflow",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+   "MetricValue": "92.9999994236534",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Thermal",
+     "FQDD": "Thermal",
+     "Label": "Thermal SysNetAirflow- Average (15m0s)",
+     "Source": "thermalmetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "SysNetAirflow",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+   "MetricValue": "90",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Thermal",
+     "FQDD": "Thermal",
+     "Label": "Thermal SysNetAirflow- Minimum (15m0s)",
+     "Source": "thermalmetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "SysNetAirflow",
+   "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+   "MetricValue": "93",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "Thermal",
+     "FQDD": "Thermal",
+     "Label": "Thermal SysNetAirflow- Maximum (15m0s)",
+     "Source": "thermalmetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "CPUUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage CPUUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "AggregateUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage AggregateUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TotalCPUPower",
+   "MetricProperty": "",
+   "MetricValue": "183.848167539267",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalCPUPower- Average (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TotalCPUPower",
+   "MetricProperty": "",
+   "MetricValue": "172.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalCPUPower- Minimum (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TotalCPUPower",
+   "MetricProperty": "",
+   "MetricValue": "189.0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalCPUPower- Maximum (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TotalMemoryPower",
+   "MetricProperty": "",
+   "MetricValue": "27.6282722513089",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalMemoryPower- Average (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TotalMemoryPower",
+   "MetricProperty": "",
+   "MetricValue": "26",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalMemoryPower- Minimum (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TotalMemoryPower",
+   "MetricProperty": "",
+   "MetricValue": "30",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "PowerMetrics",
+     "FQDD": "PowerMetrics",
+     "Label": "PowerMetrics TotalMemoryPower- Maximum (15m0s)",
+     "Source": "PowerMetrics"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "CumulativeSystemEnergy",
+   "MetricProperty": "",
+   "MetricValue": "6841.8744",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "System Power Consumption data",
+     "FQDD": "iDRAC.Embedded.1#SystemPowerConsumptionData",
+     "Label": "System Power Consumption data CumulativeSystemEnergy- Average (15m0s)",
+     "Source": "systemenergy"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "CumulativeSystemEnergy",
+   "MetricProperty": "",
+   "MetricValue": "6841.927",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "System Power Consumption data",
+     "FQDD": "iDRAC.Embedded.1#SystemPowerConsumptionData",
+     "Label": "System Power Consumption data CumulativeSystemEnergy- Maximum (15m0s)",
+     "Source": "systemenergy"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "CumulativeSystemEnergy",
+   "MetricProperty": "",
+   "MetricValue": "6841.822",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "System Power Consumption data",
+     "FQDD": "iDRAC.Embedded.1#SystemPowerConsumptionData",
+     "Label": "System Power Consumption data CumulativeSystemEnergy- Minimum (15m0s)",
+     "Source": "systemenergy"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "49.5742026865436",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Average (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "49.047065793979",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Average (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "49.0196107474912",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Average (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "50",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Maximum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "50",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Maximum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "50",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Maximum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "48",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Minimum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "48",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Minimum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU1Temp#CurrentReading",
+   "MetricValue": "48",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU1 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU1Temp",
+     "Label": "CPU1 Temp TemperatureReading- Minimum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "53.9403346133773",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Average (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "53.9413290364876",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Average (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "53.9755371914847",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Average (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "56",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Maximum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "56",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Maximum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "56",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Maximum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "52",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Minimum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "52",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Minimum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_CPU2Temp#CurrentReading",
+   "MetricValue": "52",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "CPU2 Temp",
+     "FQDD": "iDRAC.Embedded.1#CPU2Temp",
+     "Label": "CPU2 Temp TemperatureReading- Minimum (5m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+   "MetricValue": "24.9999997895212",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "System Board Inlet Temp",
+     "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp",
+     "Label": "System Board Inlet Temp TemperatureReading- Average (15m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+   "MetricValue": "25",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "System Board Inlet Temp",
+     "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp",
+     "Label": "System Board Inlet Temp TemperatureReading- Maximum (15m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "TemperatureReading",
+   "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+   "MetricValue": "24",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "System Board Inlet Temp",
+     "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp",
+     "Label": "System Board Inlet Temp TemperatureReading- Minimum (15m0s)",
+     "Source": "rawsensor"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "IOUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage IOUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Average (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Minimum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:50:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T15:55:00.000Z"
+  },
+  {
+   "MetricId": "MemoryUsage",
+   "MetricProperty": "",
+   "MetricValue": "0",
+   "Oem": {
+    "Dell": {
+     "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+     "ContextID": "SystemUsage",
+     "FQDD": "SystemUsage",
+     "Label": "SystemUsage MemoryUsage- Maximum (5m0s)",
+     "Source": "SystemUsage"
+    }
+   },
+   "Timestamp": "2026-08-22T16:00:00.000Z"
+  }
+ ],
+ "MetricValues@odata.count": 72,
+ "Name": "OME-PMP-Power-B Metric Report",
+ "Oem": {
+  "Dell": {
+   "@odata.type": "#DellMetricReport.v1_0_0.DellMetricReport",
+   "MetricReportDefinitionDigest": "fba6bddf879218a50e7cd3ea779eb5f427ecfe73886b55c49746783440ed3d27",
+   "ServiceTag": "SVCTAG0",
+   "iDRACFirmwareVersion": "7.20.30.50"
+  }
+ },
+ "ReportSequence": "8955",
+ "Timestamp": "2026-08-22T16:00:08.000Z"
+}
