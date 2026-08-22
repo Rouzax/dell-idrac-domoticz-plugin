@@ -350,7 +350,7 @@ def test_power_redundancy_reads_in_plain_english():
     )
     assert got[planner.UNIT_REDUNDANCY].svalue == (
         "Redundant<br>2 supplies (1 needed)"
-        '<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        '<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_OK
 
@@ -383,7 +383,7 @@ def test_a_vanished_redundancy_group_is_reported_not_left_stale():
     )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_GREY
     assert got[planner.UNIT_REDUNDANCY].svalue == (
-        'Not reported<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        'Not reported<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1124,7 +1124,7 @@ def test_a_deliberately_non_redundant_supply_set_says_so():
     )
     device = _redundancy_device(parts)
     assert device.svalue == (
-        'Not redundant (configured)<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        'Not redundant (configured)<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     assert device.nvalue == planner.health.LEVEL_GREY
 
@@ -1140,7 +1140,7 @@ def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
         parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
     )
     assert _redundancy_device(parts).svalue == (
-        'Not reported<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        'Not reported<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1157,7 +1157,7 @@ def test_power_redundancy_states_the_configured_policy_and_hot_spare():
     assert device.nvalue == health.LEVEL_OK
     assert device.svalue == (
         "A/B Grid Redundant<br>2 supplies (1 needed)<br>hot spare, primary PSU1"
-        '<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        '<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1179,7 +1179,7 @@ def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
     assert device.nvalue == health.LEVEL_RED
     # The failure, not the configured policy: A/B Grid Redundant is no longer being met.
     assert device.svalue == (
-        'Redundancy lost<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        'Redundancy lost<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1223,7 +1223,7 @@ def test_a_four_supply_group_names_the_primaries_that_carry_the_load():
     assert device.nvalue == health.LEVEL_OK
     assert device.svalue == (
         "A/B Grid Redundant<br>4 supplies (2 needed)<br>hot spare, primary PSU2 and PSU4"
-        '<br><a href="https://h" target="_blank">Open iDRAC</a>'
+        '<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     by_name = {psu.name: psu for psu in parts["psus"]}
     # The named supplies are the loaded ones; the unnamed pair draws a trickle and delivers zero.
@@ -1302,7 +1302,7 @@ def test_power_redundancy_puts_one_fact_per_line_with_the_link_last():
     parts["dell_attrs"] = model.parse_dell_attributes(load("quad", "dell_attributes"))
     assert _redundancy_device_with(parts, _cfg_rich()).svalue == (
         "A/B Grid Redundant<br>4 supplies (2 needed)<br>hot spare, primary PSU2 and PSU4"
-        '<br><a href="https://10.0.0.5" target="_blank">Open iDRAC</a>'
+        '<br><a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1331,7 +1331,9 @@ def test_system_health_lists_faults_as_bullets_with_the_link_last():
     parts["system"] = dataclasses.replace(parts["system"], health="Critical")
     svalue = _health_device(parts, _cfg_rich()).svalue
     assert svalue.startswith("<ul><li>Power supply redundancy is lost.</li><li>")
-    assert svalue.endswith('<a href="https://10.0.0.5" target="_blank">Open iDRAC</a>')
+    assert svalue.endswith(
+        '<a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
     assert "; " not in svalue
 
 
@@ -1351,7 +1353,9 @@ def test_a_healthy_system_health_card_carries_the_link_and_no_bullets():
     parts["faults"] = []
     svalue = _health_device(parts, _cfg_rich()).svalue
     assert "<ul>" not in svalue
-    assert svalue.endswith('<a href="https://10.0.0.5" target="_blank">Open iDRAC</a>')
+    assert svalue.endswith(
+        '<a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
 
 
 def test_no_address_means_no_link_rather_than_a_broken_one():
@@ -1367,5 +1371,5 @@ def test_a_pasted_url_still_produces_one_scheme_in_the_link():
     guarantee needs a test rather than a comment."""
     cfg = config.parse_config({"Address": "https://idrac.example.invalid/"})
     assert cardtext.idrac_link(cfg.address) == (
-        '<a href="https://idrac.example.invalid" target="_blank">Open iDRAC</a>'
+        '<a href="https://idrac.example.invalid" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )

@@ -16,6 +16,16 @@ import html
 
 LINK_LABEL = "Open iDRAC"
 
+# The link takes the card's OWN text colour rather than a colour of its own. Measured on a live
+# Machinon card: the theme sets `a { color: #43A4D3 }` but also `a:link { color: #FFF }`, and
+# `a:link` wins for any anchor with an href, so an unstyled link renders white on a white card and
+# is invisible. A hard-coded hex cannot work either, because the same link has to read on a white
+# card, a dark-theme card and a red alert card, and no single value does all three. `inherit`
+# takes whatever the theme already guarantees is readable on that surface, in either mode; the
+# underline is what marks it as a link. DOMPurify allows the style attribute, so this survives
+# sanitisation.
+LINK_STYLE = "color:inherit;text-decoration:underline"
+
 
 def escape(value) -> str:
     """HTML-escape a value before it is interpolated into markup.
@@ -36,7 +46,10 @@ def idrac_link(address) -> str:
     """
     if not address:
         return ""
-    return f'<a href="https://{escape(address)}" target="_blank">{LINK_LABEL}</a>'
+    return (
+        f'<a href="https://{escape(address)}" target="_blank"'
+        f' style="{LINK_STYLE}">{LINK_LABEL}</a>'
+    )
 
 
 def lines(parts, link: str = "") -> str:

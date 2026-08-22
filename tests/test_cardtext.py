@@ -25,7 +25,8 @@ def test_a_link_points_at_the_idrac_over_https():
     """The scheme is always https: redfish_client builds every request that way whatever the
     VerifyTLS setting says, so the configured address never carries one."""
     assert cardtext.idrac_link("10.0.0.5") == (
-        '<a href="https://10.0.0.5" target="_blank">Open iDRAC</a>'
+        '<a href="https://10.0.0.5" target="_blank"'
+        ' style="color:inherit;text-decoration:underline">Open iDRAC</a>'
     )
 
 
@@ -37,12 +38,12 @@ def test_a_hostile_address_cannot_introduce_an_attribute():
     """The address is user-supplied configuration going straight into an href.
 
     Asserted by PARSING the result rather than by string-matching: the property that matters is
-    that a browser sees only the two attributes we wrote, with the entire hostile value trapped
+    that a browser sees only the three attributes we wrote, with the entire hostile value trapped
     inside href. Stripping the entity out and then searching the text would be testing something
     an attacker cannot do.
     """
     attrs = _anchor_attrs(cardtext.idrac_link('x" onload="alert(1)'))
-    assert set(attrs) == {"href", "target"}
+    assert set(attrs) == {"href", "target", "style"}
     assert attrs["href"] == 'https://x" onload="alert(1)'
     assert attrs["target"] == "_blank"
 
@@ -50,6 +51,15 @@ def test_a_hostile_address_cannot_introduce_an_attribute():
 def test_a_normal_address_parses_back_unchanged():
     attrs = _anchor_attrs(cardtext.idrac_link("10.0.0.5:8443"))
     assert attrs["href"] == "https://10.0.0.5:8443"
+
+
+def test_the_link_takes_the_cards_own_colour_rather_than_its_own():
+    """A theme that styles `a:link` can otherwise render this white on a white card, which was
+    measured on a live Machinon instance. Inheriting is the only value that reads on a white
+    card, a dark card and a red alert card alike."""
+    attrs = _anchor_attrs(cardtext.idrac_link("10.0.0.5"))
+    assert "color:inherit" in attrs["style"]
+    assert "underline" in attrs["style"]
 
 
 def test_no_address_means_no_link():
