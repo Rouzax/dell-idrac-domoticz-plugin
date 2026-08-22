@@ -113,3 +113,17 @@ def test_an_affix_at_the_limit_is_not_reported():
     cfg = config.parse_config({"NameSuffix": "y" * config.MAX_AFFIX})
     assert cfg.name_suffix == "y" * config.MAX_AFFIX
     assert not any("NameSuffix" in note for note in cfg.warnings)
+
+
+def test_formatted_card_text_defaults_on():
+    assert config.parse_config({}).rich_card_text is True
+
+
+def test_formatted_card_text_can_be_switched_off():
+    assert config.parse_config({"RichCardText": "false"}).rich_card_text is False
+
+
+def test_an_unrecognised_formatted_card_text_value_keeps_the_default():
+    cfg = config.parse_config({"RichCardText": "perhaps"})
+    assert cfg.rich_card_text is True
+    assert any("RichCardText" in note for note in cfg.warnings)
