@@ -43,6 +43,7 @@ These control which optional device families are created. Turning one off stops 
 | **Network interfaces** | on | One alert device per NIC port. |
 | **Drive life warning (%)** | 10 | Warn when a drive reports less predicted media life remaining than this. Only applies to drives that report the figure at all, which in practice means SSDs. |
 | **Drive life % devices** | off | A second device per drive reporting predicted media life as a graphable percentage. See below. |
+| **Formatted card text** | on | Renders System Health and Power Redundancy as a bullet list with a link to the iDRAC, instead of a single line of text. See below. |
 | **Fan bar maximum (RPM)** | 6000 | Top of the scale on fan bar graphs. `0` switches fan bars off. See below. |
 
 Turning off a family also skips the requests that fetch it, so on a server with many drives, switching **Physical drives** off measurably shortens the slow tier.
@@ -57,6 +58,21 @@ Every physical drive already reports its predicted media life on its own tile, a
 Switching this on adds a **second** device per drive, a Percentage carrying the same figure, which Domoticz does graph and which gets a [bar](devices.md#bar-graphs) coloured from your **Drive life warning (%)** setting. It is off by default because for most people the number on the drive's own tile is enough, and one extra device per drive adds up on a full chassis.
 
 Only drives that actually report a life figure get one, which in practice means SSDs. The setting has no effect while **Physical drives** is off, since the life device hangs off the drive device.
+
+### Formatted card text
+
+Two devices, [System Health](devices.md#system-health) and [Power Redundancy](devices.md#power-redundancy), can show their facts as a formatted bullet list with a link to the iDRAC, instead of a single line of plain text. Nothing else is affected.
+
+With it on, System Health lists its faults as bullets instead of joining them with semicolons, and Power Redundancy lists its facts (the configured policy, the supply counts, and the hot spare line when there is one) the same way. Both cards also gain a link reading **Open iDRAC** at the end, which opens the server's own web interface in a new tab. The link appears on every state, including a fault and an unknown reading.
+
+![System Health reading OK, with the Open iDRAC link underneath](assets/cards/system-health-link.png)
+
+With it off, both cards produce exactly the plain text the plugin has always produced, character for character.
+
+!!! warning "This text is what dzVents and notifications see"
+    The card text is the device's `sValue`, which is what a dzVents script compares against and what Domoticz notifications send. If you have a script or notification matching text such as `Redundancy lost`, either leave this setting off or update it to match the new wording; turning the setting on changes that text on the next poll.
+
+**Requires Domoticz 2026.1 or newer**, the version from which Domoticz renders Text and Alert device data as HTML rather than as plain text. On an older build the markup may show as literal tags on the card instead of a bullet list, so turn this setting off there.
 
 ### Why the fan bar maximum is a setting
 

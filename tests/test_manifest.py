@@ -49,3 +49,16 @@ def test_no_description_link_is_preceded_by_a_bare_space():
     raw = ast.get_docstring(ast.parse(PLUGIN_SOURCE.read_text(encoding="utf-8")))
     glued = re.findall(r"[^(\s]\s<a href=", raw)
     assert not glued, f"{len(glued)} description link(s) not wrapped in parentheses"
+
+
+def test_the_manifest_offers_the_formatted_card_text_setting():
+    """A config field the manifest never declares can never be set by a user, and nothing else
+    in the test suite would notice.
+
+    test_every_declared_parameter_is_read_by_config catches the reverse, a parameter nothing
+    reads, so between them the manifest and config cannot drift apart.
+    """
+    params = {p.get("field"): p for p in _manifest().iter("param")}
+    assert "RichCardText" in params
+    assert params["RichCardText"].get("type") == "boolean"
+    assert params["RichCardText"].get("default") == "true"

@@ -148,17 +148,27 @@ def _attrs(policy="A/B Grid Redundant", hot_spare="Disabled", primary="PSU1"):
     )
 
 
+def _joined(entry, dell_attrs=None):
+    """The parts as one sentence, which is what the plain card text is.
+
+    A local helper rather than a function in health.py: planner builds this string inline, so a
+    production function would exist only to be tested.
+    """
+    level, parts = health.redundancy_parts(entry, dell_attrs)
+    return level, ", ".join(parts)
+
+
 def test_redundancy_text_leads_with_the_configured_policy():
     """Measured across eight Dell servers: Mode is "N+m" on EVERY ONE of them, whatever the
     redundancy policy is set to. Building the text from the mode alone therefore rendered the
     identical sentence for "A/B Grid Redundant" and "PSU Redundant", so changing the policy on
     the iDRAC could never change the card. The configured policy is the only field that moves.
     """
-    assert health.redundancy_health(_red(), _attrs()) == (
+    assert _joined(_red(), _attrs()) == (
         health.LEVEL_OK,
         "A/B Grid Redundant, 2 supplies (1 needed)",
     )
-    assert health.redundancy_health(_red(), _attrs(policy="PSU Redundant"))[1] == (
+    assert _joined(_red(), _attrs(policy="PSU Redundant"))[1] == (
         "PSU Redundant, 2 supplies (1 needed)"
     )
 
@@ -170,7 +180,7 @@ def test_redundancy_text_names_the_primary_supply_not_the_spare():
     while PSU2 and PSU4 sat at 0 W. Reading ", hot spare PSU1" therefore labelled the working
     supply as the spare, which is the opposite of what the server means.
     """
-    level, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled"))
+    level, text = _joined(_red(), _attrs(hot_spare="Enabled"))
     assert (level, text) == (
         health.LEVEL_OK,
         "A/B Grid Redundant, 2 supplies (1 needed), hot spare, primary PSU1",
@@ -180,30 +190,30 @@ def test_redundancy_text_names_the_primary_supply_not_the_spare():
 def test_hot_spare_primary_is_shown_verbatim_because_it_can_name_several():
     """A live DSS8440 reports RapidOnPrimaryPSU as "PSU1 and PSU3". It is not a single token,
     and Dell's phrasing goes through untouched rather than being reworded to "PSU1 + PSU3"."""
-    _, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled", primary="PSU1 and PSU3"))
+    _, text = _joined(_red(), _attrs(hot_spare="Enabled", primary="PSU1 and PSU3"))
     assert text.endswith("hot spare, primary PSU1 and PSU3")
 
 
 def test_hot_spare_enabled_without_a_named_primary_still_says_so():
-    _, text = health.redundancy_health(_red(), _attrs(hot_spare="Enabled", primary=None))
+    _, text = _joined(_red(), _attrs(hot_spare="Enabled", primary=None))
     assert text.endswith("hot spare enabled")
 
 
 def test_hot_spare_disabled_adds_nothing():
-    _, text = health.redundancy_health(_red(), _attrs(hot_spare="Disabled"))
+    _, text = _joined(_red(), _attrs(hot_spare="Disabled"))
     assert "hot spare" not in text
 
 
 def test_a_missing_policy_falls_back_to_the_redfish_mode():
     """Non-Dell Redfish serves the generic Redundancy object and none of the Dell attributes."""
-    _, text = health.redundancy_health(_red(), _attrs(policy=None))
+    _, text = _joined(_red(), _attrs(policy=None))
     assert text == "Redundant, 2 supplies (1 needed)"
 
 
 def test_a_fault_reports_the_fault_and_not_the_policy():
     """When redundancy is lost, what the operator needs is the failure, not the configuration
     that is no longer being met."""
-    assert health.redundancy_health(_red(status="Critical"), _attrs(hot_spare="Enabled")) == (
+    assert _joined(_red(status="Critical"), _attrs(hot_spare="Enabled")) == (
         health.LEVEL_RED,
         "Redundancy lost",
     )
@@ -214,7 +224,7 @@ def test_redundancy_text_is_plain_english_with_the_counts():
 
     Every number here is reported by the server: MinNumNeeded and the size of the RedundancySet.
     """
-    assert health.redundancy_health(_red()) == (
+    assert _joined(_red()) == (
         health.LEVEL_OK,
         "Redundant, 2 supplies (1 needed)",
     )
@@ -229,34 +239,34 @@ def test_redundancy_text_translates_every_redfish_mode():
         "NotRedundant": "Not redundant",
     }
     for mode, expected in modes.items():
-        level, text = health.redundancy_health(_red(mode=mode))
+        level, text = _joined(_red(mode=mode))
         assert text.startswith(expected), (mode, text)
         assert level == health.LEVEL_OK
 
 
 def test_an_unrecognised_mode_is_shown_verbatim_rather_than_guessed():
-    _, text = health.redundancy_health(_red(mode="Frobnicated"))
+    _, text = _joined(_red(mode="Frobnicated"))
     assert text.startswith("Frobnicated")
 
 
 def test_redundancy_faults_say_what_happened():
-    assert health.redundancy_health(_red(status="Critical")) == (
+    assert _joined(_red(status="Critical")) == (
         health.LEVEL_RED,
         "Redundancy lost",
     )
-    assert health.redundancy_health(_red(status="Warning")) == (
+    assert _joined(_red(status="Warning")) == (
         health.LEVEL_ORANGE,
         "Redundancy degraded",
     )
 
 
 def test_redundancy_without_counts_still_reads_sensibly():
-    level, text = health.redundancy_health(_red(min_needed=None, supplies=None))
+    level, text = _joined(_red(min_needed=None, supplies=None))
     assert (level, text) == (health.LEVEL_OK, "Redundant")
 
 
 def test_redundancy_with_an_unknown_status_is_grey():
-    level, text = health.redundancy_health(_red(status=None))
+    level, text = _joined(_red(status=None))
     assert level == health.LEVEL_GREY
     assert "Unknown" in text
 
@@ -280,9 +290,7 @@ def test_a_healthy_group_under_a_non_redundant_policy_does_not_print_the_contrad
     configured policy says there is none. Leading with the policy would put "Not Redundant,
     2 supplies (1 needed)" on a GREEN tile, so the group's own wording wins instead.
     """
-    level, text = health.redundancy_health(
-        _red(), _attrs(policy="Not Redundant", hot_spare="Enabled")
-    )
+    level, text = _joined(_red(), _attrs(policy="Not Redundant", hot_spare="Enabled"))
     assert (level, text) == (health.LEVEL_OK, "Redundant, 2 supplies (1 needed)")
 
 
@@ -291,3 +299,20 @@ def test_is_not_redundant_tolerates_a_qualifier_on_dells_wording():
     assert health.is_not_redundant("  not redundant (something)  ")
     assert not health.is_not_redundant("A/B Grid Redundant")
     assert not health.is_not_redundant(None)
+
+
+def test_redundancy_parts_are_the_pieces_the_joined_text_is_made_of():
+    """The card puts one fact per line, so the facts have to exist separately before they are
+    joined. Splitting the finished sentence on ", " would be wrong: "hot spare, primary PSU1"
+    contains a comma and is a single fact."""
+    level, parts = health.redundancy_parts(_red(), _attrs(hot_spare="Enabled"))
+    assert level == health.LEVEL_OK
+    assert parts == [
+        "A/B Grid Redundant",
+        "2 supplies (1 needed)",
+        "hot spare, primary PSU1",
+    ]
+
+
+def test_a_fault_is_a_single_part():
+    assert health.redundancy_parts(_red(status="Critical"), _attrs())[1] == ["Redundancy lost"]

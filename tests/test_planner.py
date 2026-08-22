@@ -1,6 +1,7 @@
 import dataclasses
 import json
 
+import cardtext
 import config
 import discovery
 import health
@@ -347,7 +348,10 @@ def test_power_redundancy_reads_in_plain_english():
     got = _by_unit(
         planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     )
-    assert got[planner.UNIT_REDUNDANCY].svalue == "Redundant, 2 supplies (1 needed)"
+    assert got[planner.UNIT_REDUNDANCY].svalue == (
+        "<ul><li>Redundant</li><li>2 supplies (1 needed)</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_OK
 
 
@@ -378,7 +382,10 @@ def test_a_vanished_redundancy_group_is_reported_not_left_stale():
         planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_GREY
-    assert got[planner.UNIT_REDUNDANCY].svalue == "Not reported"
+    assert got[planner.UNIT_REDUNDANCY].svalue == (
+        "<ul><li>Not reported</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
 
 
 def test_no_redundancy_device_on_a_chassis_with_no_power_supplies():
@@ -1117,7 +1124,10 @@ def test_a_deliberately_non_redundant_supply_set_says_so():
         parts["dell_attrs"], redundancy_policy="Not Redundant"
     )
     device = _redundancy_device(parts)
-    assert device.svalue == "Not redundant (configured)"
+    assert device.svalue == (
+        "<ul><li>Not redundant (configured)</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
     assert device.nvalue == planner.health.LEVEL_GREY
 
 
@@ -1131,7 +1141,10 @@ def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
     parts["dell_attrs"] = dataclasses.replace(
         parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
     )
-    assert _redundancy_device(parts).svalue == "Not reported"
+    assert _redundancy_device(parts).svalue == (
+        "<ul><li>Not reported</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
 
 
 def test_power_redundancy_states_the_configured_policy_and_hot_spare():
@@ -1145,7 +1158,11 @@ def test_power_redundancy_states_the_configured_policy_and_hot_spare():
     parts["dell_attrs"] = model.parse_dell_attributes(load("redundant", "dell_attributes"))
     device = _redundancy_device(parts)
     assert device.nvalue == health.LEVEL_OK
-    assert device.svalue == "A/B Grid Redundant, 2 supplies (1 needed), hot spare, primary PSU1"
+    assert device.svalue == (
+        "<ul><li>A/B Grid Redundant</li><li>2 supplies (1 needed)</li>"
+        "<li>hot spare, primary PSU1</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
 
 
 def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
@@ -1165,7 +1182,10 @@ def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
     device = _redundancy_device(parts)
     assert device.nvalue == health.LEVEL_RED
     # The failure, not the configured policy: A/B Grid Redundant is no longer being met.
-    assert device.svalue == "Redundancy lost"
+    assert device.svalue == (
+        "<ul><li>Redundancy lost</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
 
 
 def test_the_supply_with_no_input_is_still_listed_and_reports_its_own_failure():
@@ -1207,7 +1227,9 @@ def test_a_four_supply_group_names_the_primaries_that_carry_the_load():
     device = _redundancy_device(parts)
     assert device.nvalue == health.LEVEL_OK
     assert device.svalue == (
-        "A/B Grid Redundant, 4 supplies (2 needed), hot spare, primary PSU2 and PSU4"
+        "<ul><li>A/B Grid Redundant</li><li>4 supplies (2 needed)</li>"
+        "<li>hot spare, primary PSU2 and PSU4</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     by_name = {psu.name: psu for psu in parts["psus"]}
     # The named supplies are the loaded ones; the unnamed pair draws a trickle and delivers zero.
@@ -1215,3 +1237,161 @@ def test_a_four_supply_group_names_the_primaries_that_carry_the_load():
     assert by_name["PS3 Status"].input_watts == 5.0
     assert by_name["PS2 Status"].input_watts > 400
     assert by_name["PS4 Status"].input_watts > 400
+
+
+def test_fault_lines_keeps_every_fault_when_they_fit():
+    faults = [model.Fault(severity="Critical", message="Fan 3 RPM is outside of range.")]
+    assert planner.fault_lines(faults) == ["Fan 3 RPM is outside of range."]
+
+
+def test_fault_lines_ignores_an_entry_with_no_message():
+    faults = [model.Fault(severity="Critical", message=None)]
+    assert planner.fault_lines(faults) == []
+
+
+def test_fault_lines_drops_whole_faults_and_says_how_many():
+    """The previous rule cut the JOINED text at 200 characters, which left a half sentence that
+    could not be told apart from a complete fault. Whole messages go instead, and the count is
+    stated so nothing disappears silently."""
+    faults = [model.Fault(severity="Critical", message="x" * 90) for _ in range(5)]
+    lines = planner.fault_lines(faults)
+    assert lines[:2] == ["x" * 90, "x" * 90]
+    assert lines[-1] == "+3 more"
+    assert all("..." not in line for line in lines)
+
+
+def test_fault_lines_always_keeps_the_first_fault_however_long_it_is():
+    """One enormous fault must still be readable, not replaced by a bare count."""
+    faults = [model.Fault(severity="Critical", message="y" * 400)]
+    assert planner.fault_lines(faults) == ["y" * 400]
+
+
+def _cfg_rich(**kwargs):
+    """A config with formatted card text on and an address for the link.
+
+    _cfg already takes keyword overrides, so this only fixes the two values these tests care
+    about and leaves everything else at the shared defaults.
+    """
+    kwargs.setdefault("address", "10.0.0.5")
+    return _cfg(rich_card_text=True, **kwargs)
+
+
+def _cfg_plain(**kwargs):
+    kwargs.setdefault("address", "10.0.0.5")
+    return _cfg(rich_card_text=False, **kwargs)
+
+
+def _system_device(parts, cfg, unit):
+    """One planned update from the SYSTEM device, by unit.
+
+    Filtering on the unit number alone is wrong: unit numbers repeat across devices, and a t550
+    plan has FIVE updates at unit 2 (System Health, Max DIMM Temp, PS2 Status, Volume HDD and a
+    NIC). Both cards here live on DEVICE_SYSTEM, so _by_unit is the correct lookup.
+    """
+    inv = _inventory(parts)
+    updates = planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=cfg, **parts)
+    return _by_unit(updates, planner.DEVICE_SYSTEM)[unit]
+
+
+def _health_device(parts, cfg):
+    return _system_device(parts, cfg, planner.UNIT_HEALTH)
+
+
+def _redundancy_device_with(parts, cfg):
+    return _system_device(parts, cfg, planner.UNIT_REDUNDANCY)
+
+
+def test_power_redundancy_lists_its_facts_as_bullets_with_the_link_last():
+    """Bullets rather than one fact per line: measured on the real card, three plain lines plus
+    the link scroll-clips the link mid-letter, while three bullets fold cleanly between items."""
+    parts = _parts("t550")
+    parts["psus"] = model.parse_power(load("quad", "power"))
+    parts["redundancy"] = model.parse_redundancy(load("quad", "power"))
+    parts["dell_attrs"] = model.parse_dell_attributes(load("quad", "dell_attributes"))
+    assert _redundancy_device_with(parts, _cfg_rich()).svalue == (
+        "<ul><li>A/B Grid Redundant</li><li>4 supplies (2 needed)</li>"
+        "<li>hot spare, primary PSU2 and PSU4</li></ul>"
+        '<a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
+
+
+def test_power_redundancy_off_is_byte_for_byte_what_it_always_was():
+    """The setting is the escape hatch for anyone whose dzVents scripts compare this string."""
+    parts = _parts("t550")
+    parts["psus"] = model.parse_power(load("quad", "power"))
+    parts["redundancy"] = model.parse_redundancy(load("quad", "power"))
+    parts["dell_attrs"] = model.parse_dell_attributes(load("quad", "dell_attributes"))
+    assert _redundancy_device_with(parts, _cfg_plain()).svalue == (
+        "A/B Grid Redundant, 4 supplies (2 needed), hot spare, primary PSU2 and PSU4"
+    )
+
+
+def test_a_configured_non_redundant_card_still_gets_the_link():
+    """The link is on every state, not only the interesting ones."""
+    parts = _parts("t550")
+    parts["redundancy"] = []
+    device = _redundancy_device_with(parts, _cfg_rich())
+    assert device.svalue.startswith("<ul><li>Not redundant (configured)</li></ul><a ")
+
+
+def test_system_health_lists_faults_as_bullets_with_the_link_last():
+    parts = _parts("t550")
+    parts["faults"] = model.parse_faults(load("input_lost", "faults"))
+    parts["system"] = dataclasses.replace(parts["system"], health="Critical")
+    svalue = _health_device(parts, _cfg_rich()).svalue
+    assert svalue.startswith("<ul><li>Power supply redundancy is lost.</li><li>")
+    assert svalue.endswith(
+        '<a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
+    assert "; " not in svalue
+
+
+def test_system_health_off_still_joins_faults_with_semicolons():
+    parts = _parts("t550")
+    parts["faults"] = model.parse_faults(load("input_lost", "faults"))
+    parts["system"] = dataclasses.replace(parts["system"], health="Critical")
+    svalue = _health_device(parts, _cfg_plain()).svalue
+    assert svalue == (
+        "Power supply redundancy is lost.; "
+        "The input voltage for the Power Supply Unit PSU.Slot.1 is not detected."
+    )
+
+
+def test_system_health_off_past_the_fault_budget_gets_a_count_not_an_ellipsis():
+    """The one place the off path is NOT byte-for-byte with the old plain behaviour: above the
+    200 character budget it now joins fault_lines() output, which drops whole faults and adds a
+    "+N more" entry, rather than cutting the joined string mid-sentence with an ellipsis. That
+    change is deliberate and documented; this pins the exact resulting shape."""
+    parts = _parts("t550")
+    parts["faults"] = [model.Fault(severity="Critical", message="x" * 90) for _ in range(5)]
+    parts["system"] = dataclasses.replace(parts["system"], health="Critical")
+    svalue = _health_device(parts, _cfg_plain()).svalue
+    assert svalue == "; ".join(["x" * 90, "x" * 90, "+3 more"])
+    assert "..." not in svalue
+
+
+def test_a_healthy_system_health_card_carries_the_link_and_no_bullets():
+    parts = _parts("t550")
+    parts["faults"] = []
+    svalue = _health_device(parts, _cfg_rich()).svalue
+    assert "<ul>" not in svalue
+    assert svalue.endswith(
+        '<a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
+
+
+def test_no_address_means_no_link_rather_than_a_broken_one():
+    parts = _parts("t550")
+    parts["faults"] = []
+    svalue = _health_device(parts, _cfg_rich(address="")).svalue
+    assert "<a " not in svalue
+
+
+def test_a_pasted_url_still_produces_one_scheme_in_the_link():
+    """config strips a pasted scheme and trailing slash before the address is stored, so the
+    link cannot end up with two. The two functions are independently changeable, so the
+    guarantee needs a test rather than a comment."""
+    cfg = config.parse_config({"Address": "https://idrac.example.invalid/"})
+    assert cardtext.idrac_link(cfg.address) == (
+        '<a href="https://idrac.example.invalid" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+    )
