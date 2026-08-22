@@ -26,7 +26,24 @@ FIXTURE_ROOT = Path(__file__).parent / "fixtures"
 # "PSU2 and PSU4". It was taken with the primaries deliberately swapped away from the default
 # PSU1/PSU3, and the load followed: PS2 and PS4 deliver while PS1 and PS3 sit at 0 W out. That
 # is the proof that RapidOnPrimaryPSU names the ACTIVE supplies rather than the spares.
-PROFILES = ("t550", "dual", "degraded", "ome", "r750", "redundant", "input_lost", "quad")
+# "sparse" is partial: one power report from an R750 that serves only TotalCPUPower and
+# TotalMemoryPower. Metric coverage is per machine, from two of the six to all six, so this is
+# the profile that proves the four missing devices are simply not created.
+# "gpubox" is partial: one power report from a DSS8440 with five GPUs and four supplies. Dell
+# reports GPU power in milliwatts, which is the unit conversion a counter would otherwise
+# multiply by time for ever.
+PROFILES = (
+    "t550",
+    "dual",
+    "degraded",
+    "ome",
+    "r750",
+    "redundant",
+    "input_lost",
+    "quad",
+    "sparse",
+    "gpubox",
+)
 
 
 def load(profile: str, name: str) -> dict:

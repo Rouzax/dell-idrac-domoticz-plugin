@@ -1445,3 +1445,23 @@ def test_a_pasted_url_still_produces_one_scheme_in_the_link():
     assert cardtext.idrac_link(cfg.address) == (
         '<a href="https://idrac.example.invalid" target="_blank">Open iDRAC</a>'  # noqa: E501
     )
+
+
+def test_only_the_reported_subsystem_metrics_get_a_device():
+    samples = model.parse_metric_report(load("sparse", "power_metrics"))
+    metrics = {
+        metric_id: model.metric_value(samples, metric_id)
+        for _unit, metric_id, _name in planner._POWER_METRIC_UNITS
+    }
+    present = {k for k, v in metrics.items() if v is not None}
+    # An R750 serves only these two. The other four devices must simply not appear.
+    assert present == {"TotalCPUPower", "TotalMemoryPower"}
+
+
+def test_gpu_power_is_read_per_card_in_watts():
+    samples = model.parse_metric_report(load("gpubox", "power_metrics"))
+    readings = planner.gpu_readings(samples)
+    assert len(readings) >= 5
+    # Dell reports GPU power in milliwatts; a counter would multiply any unit error by time.
+    for _device, (watts, _celsius) in readings.items():
+        assert watts is None or 0 <= watts < 1000

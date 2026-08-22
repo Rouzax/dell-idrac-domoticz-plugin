@@ -1,6 +1,7 @@
 """Dev-only: capture Redfish payloads from a live iDRAC and sanitize them.
 
 Usage: python3 tools/capture_fixtures.py <host> <user> <password> <out_dir>
+       python3 tools/capture_fixtures.py <host> <user> <password> <out_dir> --report <id>
 
 Never commit raw output. The sanitizer below is the only thing standing between
 a live capture and a public repository.
@@ -24,6 +25,12 @@ PATHS = {
         "/redfish/v1/Managers/iDRAC.Embedded.1/Oem/Dell/DellAttributes/System.Embedded.1"
     ),
 }
+
+# A metric report is not at a fixed path: the ids differ by licence and by whether the machine is
+# managed by OpenManage. Passing one explicitly is how a partial profile like "ome", "sparse" or
+# "gpubox" gets captured, and it goes through the same scrubber as everything else. Never
+# hand-roll one.
+REPORT_PATH = "/redfish/v1/TelemetryService/MetricReports/{report}"
 
 # Replacement map: real value pattern -> placeholder. Applied to the serialized
 # JSON so it catches identifiers wherever they are nested.
@@ -121,6 +128,20 @@ def main():
     host, user, password, out_dir = sys.argv[1:5]
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
+
+    extra = sys.argv[5:]
+    if extra:
+        if len(extra) != 2 or extra[0] != "--report":
+            sys.exit(
+                "usage: capture_fixtures.py <host> <user> <password> <out_dir> [--report <id>]"
+            )
+        report_id = extra[1]
+        payload = scrub(fetch(host, user, password, REPORT_PATH.format(report=report_id)))
+        text = json.dumps(payload, indent=1, sort_keys=True)
+        (out / "power_metrics.json").write_text(text + "\n", encoding="utf-8")
+        print(f"wrote power_metrics.json ({len(text)} b)")
+        return
+
     paths = dict(PATHS)
     storage_col = fetch(host, user, password, "/redfish/v1/Systems/System.Embedded.1/Storage")
     for member in storage_col.get("Members", []):
