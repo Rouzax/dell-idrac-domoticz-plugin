@@ -101,7 +101,23 @@ The fault clears when the underlying condition clears. Clearing the system event
 
 Power State reflects what the iDRAC reports, and a graceful shutdown request is fire-and-forget: the iDRAC accepts it and returns success even when no operating system is there to act on it. The log says the action was *accepted*, not that it succeeded. If the state does not change, the request never reached anything that could act on it. See [Power control](control.md).
 
+### My energy counter shows a negative Today figure right after upgrading
+
+This only happens on an install that upgraded from a version where these were plain watt devices, and only for the devices that were converted: CPU, memory, storage, fan, PCIe and FPGA power, each power supply, and each GPU power device.
+
+Domoticz keeps a short log of recent readings that both device types share, but the stored number means something different for each: for a watt device it was the wattage, for a counter it is the running total. Right after the conversion, the older rows from before the upgrade are read back as if they were counter readings, so the graph works out the difference between consecutive wattage values instead of real consumption. Those differences swing positive and negative, and the day's total can come out negative.
+
+The live wattage on the card stays correct throughout. Only the kWh figure and the counter graph are affected.
+
+This lasts as long as Domoticz keeps those older readings in its short log, controlled by the **Short log** history days setting under **Setup > Settings > History** (the Domoticz default is 1 day). It corrects itself with no action needed once the older readings age out.
+
+The day, month and year graphs are not affected, because Domoticz stores the long-term history for the two device types in different places. One exception: the figure recorded for the day you upgraded can stay wrong, because Domoticz works a counter's daily total out from the first and last reading of that day.
+
+Nothing needs to be done. If you would rather not wait, turning [Energy counters](settings.md#energy-counters) off converts the devices back to watt gauges, and their original graphs reappear.
+
 ### The energy counter does not match my meter
+
+If the mismatch is a negative Today figure that appeared right after upgrading, see [My energy counter shows a negative Today figure right after upgrading](#my-energy-counter-shows-a-negative-today-figure-right-after-upgrading) above instead.
 
 The counter is integrated by the plugin from the wattage the server reports, which is board power as the iDRAC measures it. It is not a revenue meter, and it does not include the conversion loss between wall and board, which is typically a few percent.
 
