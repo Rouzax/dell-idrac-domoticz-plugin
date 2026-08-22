@@ -65,7 +65,7 @@ Two devices, [System Health](devices.md#system-health) and [Power Redundancy](de
 
 With it on, System Health lists its faults as bullets instead of joining them with semicolons, and Power Redundancy lists its facts (the configured policy, the supply counts, and the hot spare line when there is one) the same way. Both cards also gain a link reading **Open iDRAC** at the end, which opens the server's own web interface in a new tab. The link appears on every state, including a fault and an unknown reading.
 
-![System Health reading OK, with the Open iDRAC link underneath](assets/cards/system-health-link.png)
+![System Health showing two faults as a bullet list](assets/cards/system-health-critical.png)
 
 With it off, both cards produce exactly the plain text the plugin has always produced, character for character.
 
