@@ -112,6 +112,34 @@ def test_there_is_no_mark_timed_out():
     assert not hasattr(domoticz_api, "mark_timed_out")
 
 
+def test_a_missing_type_attribute_degrades_the_conversion_not_the_poll():
+    """Type/SubType are read with getattr precisely because we could not establish the oldest
+    Domoticz release exposing them, and the read sits on a path hit every heartbeat. A build
+    without them must still write every unit's values instead of raising AttributeError and
+    taking the whole poll down with it."""
+    domoticz_stub.Devices.clear()
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dev"),
+        [_update(1, type_name="Usage"), _update(2, type_name="Alert", svalue="OK")],
+        {},
+    )
+    unit = domoticz_stub.Devices["dev"].Units[1]
+    del unit.Type
+    del unit.SubType
+    domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dev"),
+        [
+            _update(1, type_name="kWh", svalue="144;2500.5"),
+            _update(2, type_name="Alert", svalue="Warning"),
+        ],
+        {},
+    )
+    assert unit.sValue == "144;2500.5"
+    assert domoticz_stub.Devices["dev"].Units[2].sValue == "Warning"
+
+
 def test_apply_updates_never_touches_timedout():
     domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1)], {})
     domoticz_api.apply_updates(

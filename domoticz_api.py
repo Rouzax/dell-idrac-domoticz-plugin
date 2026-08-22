@@ -104,8 +104,20 @@ def apply_updates(
             created += 1
             continue
 
+        # Read Type/SubType defensively. They are exposed on domoticz/domoticz:beta but we could
+        # not establish the oldest release that carries them, and this file declares no minimum
+        # Domoticz version. This runs on a path reached every heartbeat, same as the mark_timed_out
+        # reasoning below: an AttributeError here would escape onHeartbeat's RedfishError-only
+        # catch and kill the whole poll, taking every device update down with it. A build without
+        # these members degrades to leaving units unconverted rather than dying.
+        live_type = getattr(unit, "Type", None)
+        live_subtype = getattr(unit, "SubType", None)
         wanted = _CONVERTIBLE.get(up.type_name)
-        if wanted is not None and (unit.Type, unit.SubType) != wanted:
+        if (
+            wanted is not None
+            and None not in (live_type, live_subtype)
+            and (live_type, live_subtype) != wanted
+        ):
             # Update(TypeName=...) is the only way a plugin can change a unit's type. It remaps
             # Type, SubType and SwitchType and RESETS nValue and sValue
             # (hardware/plugins/PythonObjectEx.cpp, CUnitEx_update), which is why the real values

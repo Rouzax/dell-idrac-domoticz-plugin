@@ -95,6 +95,17 @@ Server Power is a `kWh` counter either way; this setting does not affect it.
     the first and last reading of the day, but the watt graphs will look gappy. Leave the poll
     interval at or below 5 minutes if you want an unbroken graph.
 
+!!! note "A counter can get stuck while its watt reading keeps moving"
+    A component is not allowed to claim more power than the whole machine is drawing, with some
+    margin for measurement differences between sensors. When it does, usually briefly on a
+    server where one component's own sensor and the system total disagree, the plugin holds that
+    counter instead of writing a nonsensical total: the card's watt figure keeps updating
+    normally on every poll, but its kWh total stops advancing until a later reading is plausible
+    again. This does not happen often, but a device stuck at a fixed kWh figure with a live watt
+    reading is the sign to look for. The plugin logs one line naming the device and both figures
+    the first time this happens after a plugin start, so check the log if you want to confirm it
+    rather than guess.
+
 ### Why the fan bar maximum is a setting
 
 Redfish does not report a maximum fan speed, so the plugin cannot detect one. There is no sensible default either: on one tower server the three chassis fans topped out at 4920, 4920 and **5520** RPM, so even a single machine has no one maximum, and 1U servers run far faster again.
