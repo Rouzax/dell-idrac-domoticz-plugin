@@ -23,3 +23,43 @@ def clamp_counter(prev_wh: float, candidate_wh: float, ceiling_wh: float) -> tup
     if prev_wh - candidate_wh <= COUNTER_DEADBAND_WH:
         return prev_wh, None
     return prev_wh, f"counter held: decrease {prev_wh:.4f} -> {candidate_wh:.4f}"
+
+
+# A component cannot draw more than the chassis it sits in. The margin is not headroom for the
+# internal rails, which sit far below the total: it is there because a single power supply
+# carries nearly the whole load, and the system figure may come from the board sensor, which
+# excludes the supplies' own conversion loss. Measured on the fleet: it rejects an R7525
+# reporting 43 W of FPGA power while the whole machine drew 22 W, and clears an R750 supply at
+# 446.5 W against a 461 W total.
+CHASSIS_HEADROOM = 1.5
+
+
+def implausible(watts: float, system_watts) -> bool:
+    """True when a component claims more power than the whole machine is drawing.
+
+    An unknown or non-positive system figure returns False: with nothing to compare against,
+    refusing to count would be a guess in the other direction.
+    """
+    if system_watts is None or float(system_watts) <= 0:
+        return False
+    return float(watts) > float(system_watts) * CHASSIS_HEADROOM
+
+
+def has_moved(first_watts, watts: float) -> bool:
+    """False until a reading differs from the first one seen this run.
+
+    Dell's aggregated telemetry can report a static figure for hardware that is not there. An
+    R7525 with no FPGA reported exactly 43 W both powered off at 22 W and running at 582 W,
+    while CPU, memory and storage in the same report tracked the boot. A value that never moves
+    is not a measurement, and integrating it would invent about a kilowatt hour a day for ever.
+    """
+    if first_watts is None:
+        return False
+    return float(watts) != float(first_watts)
+
+
+def advance(prev_wh: float, watts: float, elapsed_seconds: float, ceiling_watts: float) -> tuple:
+    """One counter step: integrate, then clamp. Returns (counter_wh, warning or None)."""
+    candidate = prev_wh + integrate_wh(watts, elapsed_seconds)
+    ceiling = prev_wh + integrate_wh(ceiling_watts, elapsed_seconds)
+    return clamp_counter(prev_wh, candidate, ceiling_wh=ceiling)
