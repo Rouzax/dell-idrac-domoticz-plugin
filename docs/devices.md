@@ -86,7 +86,7 @@ Colour comes from the Domoticz alert level, so a problem is visible on the dashb
 
 Four of those, as they actually appear:
 
-![System Health showing a raised fault, red](assets/cards/system-health-critical.png)
+![System Health showing two faults listed as bullets, red](assets/cards/system-health-critical.png)
 
 ![A failed power supply reading 0 Watt](assets/cards/psu-failed.png)
 
@@ -250,6 +250,13 @@ Its level is the worst of the standard Redfish health rollup and Dell's own OEM 
 !!! info "Why the fault text matters so much"
     Dell's health rollups track **raised faults**, not instantaneous component state, so the tile can stay red for hours while every single component, both power supplies included, reports `Status.Health: OK`. Without the fault sentence you would be looking at a red square with nothing behind it that you could act on.
 
+With [Formatted card text](settings.md#formatted-card-text) on, a fault list of more than one message is shown as bullets rather than joined into one paragraph, and the card gains a link reading **Open iDRAC** that opens the server's own web interface in a new tab, on every state including `OK`:
+
+![System Health reading OK, with the Open iDRAC link underneath](assets/cards/system-health-link.png)
+
+!!! note "More faults than fit end in a count, not a cut-off sentence"
+    The card has a readability budget for fault text. Faults that fit are shown in full, and when there are more than that, the card drops whole faults rather than cutting one in half, ending with a count such as `+2 more`. That replaces an earlier version that joined every fault into one string and cut the result mid-sentence, which could leave half a fault on screen looking like a complete one. This applies whether **Formatted card text** is on or off.
+
 ## Power redundancy
 
 Reports the health of the redundancy **group**, which is a different question from whether each PSU is healthy. It can read Critical while both power supplies individually read OK, which is exactly the condition a per-component view cannot show you.
@@ -258,10 +265,15 @@ It reads in plain English rather than in Redfish terms, and it leads with **the 
 
 A server that reports no policy at all, which is any non-Dell Redfish endpoint, falls back to the generic Redfish mode and reads `Redundant, 2 supplies (1 needed)`.
 
+With [Formatted card text](settings.md#formatted-card-text) on, these facts are shown as bullets rather than run together on one line, and the card gains a link reading **Open iDRAC** that opens the server's own web interface in a new tab.
+
+!!! note "The Open iDRAC link can sit below the fold"
+    The card's text area is a fixed height and scrolls. On Power Redundancy with three facts, the **Open iDRAC** link lands just below the visible area, so reaching it needs a scroll; most browsers draw a scrollbar on the card to show there is more. The link also takes the card's own text colour and is underlined, rather than being drawn in a colour of its own, because a fixed colour cannot read well on a white card, a dark-theme card and a red alert card alike.
+
 !!! note "Hot Spare appears on the end"
     With **Hot Spare** switched on, the iDRAC parks some supplies on standby and lets the ones you nominate as **Primary** carry the whole load. The device names the primaries, which is what explains a healthy set where one supply reads a few watts and another reads everything:
 
-    ![Power Redundancy reading A/B Grid Redundant with a hot spare](assets/cards/power-redundancy-hot-spare.png)
+    ![Power Redundancy showing the policy, supply count and hot spare primary as three bullets](assets/cards/power-redundancy-hot-spare.png)
 
     The pair it describes, on the same server at the same moment. Neither supply is faulty:
 

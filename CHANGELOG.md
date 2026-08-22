@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- **A Formatted card text setting**, on by default, that renders System Health and Power Redundancy as a bullet list with a link to the iDRAC instead of a single line of text. System Health lists its faults as bullets instead of joining them with semicolons, and Power Redundancy lists its policy, supply counts and hot spare line the same way. Both cards gain a link reading `Open iDRAC` at the end, on every state, that opens the server's own web interface in a new tab. Turned off, both cards produce exactly the plain text the plugin has always produced, character for character, because that text is the device's `sValue`, which is what a dzVents script compares against and what Domoticz notifications send: anyone with a script matching text such as `Redundancy lost` should either leave the setting off or update the script. Requires Domoticz 2026.1 or newer, the version from which Domoticz renders Text and Alert device data as HTML; on an older build the markup may show as literal tags, so leave the setting off there. See [Formatted card text](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#formatted-card-text).
+
+  Independently of this setting, System Health now handles more faults than fit on the card differently: it used to join every fault into one string and cut the result mid-sentence at 200 characters, which could leave half a fault on screen looking like a complete one. It now drops whole faults instead and ends with a count such as `+2 more`.
+
 ### Changed
 
 - **Power Redundancy now states the configured policy, and names a hot spare.** The device read `Redundant, 2 supplies (1 needed)` and was built entirely from the generic Redfish redundancy group. Measured across eight Dell servers, that group reports `Mode: N+m` on every single one whatever the policy is set to, so the device rendered the identical sentence for `A/B Grid Redundant` and `PSU Redundant` and changing the setting on the iDRAC could never change the card. It now leads with Dell's own policy, for example `A/B Grid Redundant, 2 supplies (1 needed)`, and appends `, hot spare, primary PSU1` when **Hot Spare** is switched on, naming the supplies Dell nominates to carry the load. A server that reports no policy, which is any non-Dell Redfish endpoint, still falls back to the Redfish mode. A fault still reads `Redundancy lost` or `Redundancy degraded` on its own. Fixes [#7](https://github.com/Rouzax/dell-idrac-domoticz-plugin/issues/7).
