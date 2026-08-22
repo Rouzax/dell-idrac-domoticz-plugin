@@ -352,12 +352,16 @@ def test_power_redundancy_reads_in_plain_english():
 
 
 def test_a_vanished_redundancy_group_is_reported_not_left_stale():
-    """Pulling a PSU EMPTIES Power.Redundancy rather than marking it Critical.
+    """A chassis with supplies but no redundancy group must say so, not keep its last value.
 
-    Measured on real hardware. Looping over the empty list emitted nothing, so the tile kept its
-    last value and sat green saying "N+m" at the exact moment redundancy was lost. A chassis that
-    has power supplies but reports no redundancy group now says so. Grey, not red: the plugin
-    cannot know why the group vanished, and System Health carries the iDRAC's own fault text.
+    Looping over the empty list emitted nothing, so the tile kept its last value and could sit
+    green saying "N+m" while reporting nothing at all. Grey, not red: the plugin cannot know why
+    a group would be missing, and System Health carries the iDRAC's own fault text.
+
+    NOT a reproduction of observed hardware. An empty group under a redundant policy has never
+    been seen on any of the eight servers measured; a failed supply keeps the group and marks it
+    Critical (see test_a_supply_that_lost_its_mains_input_reports_redundancy_lost). This pins the
+    defensive fallback so it cannot silently regress to emitting nothing.
     """
     parts = _parts("t550")
     parts["redundancy"] = []
@@ -1118,8 +1122,10 @@ def test_a_deliberately_non_redundant_supply_set_says_so():
 
 
 def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
-    """Pulling a supply EMPTIES the list rather than marking it Critical. That must stay
-    distinguishable from the configured case, or a real redundancy loss reads as intentional."""
+    """An empty group under a redundant policy must stay distinguishable from the configured
+    case, or a machine that stopped reporting a group would read as intentionally non-redundant.
+
+    Like the test above, this is the defensive fallback rather than an observed state."""
     parts = _parts("t550")
     parts["redundancy"] = []
     parts["dell_attrs"] = dataclasses.replace(
@@ -1145,10 +1151,11 @@ def test_power_redundancy_states_the_configured_policy_and_hot_spare():
 def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
     """Captured live with one mains cord pulled from a T550.
 
-    This is NOT the "degraded" case. A supply removed from its bay empties the Redundancy array
-    and the tile reads a grey "Not reported"; a supply still seated but with no input keeps the
-    group and marks it Critical, so the tile can say what actually happened. Both look like "a
-    PSU is gone" to a human and they take different code paths, so both are pinned here.
+    A failed supply does NOT empty the Redundancy array. It stays enumerated as Critical and
+    UnavailableOffline at 0 W, and the group survives and goes Critical with it, so the tile can
+    say what actually happened. The "degraded" profile holds the same hardware condition under a
+    "Not Redundant" policy, which is what makes ITS array empty; the pair together is what shows
+    the empty array follows the policy rather than the failed supply.
     """
     parts = _parts("t550")
     parts["psus"] = model.parse_power(load("input_lost", "power"))

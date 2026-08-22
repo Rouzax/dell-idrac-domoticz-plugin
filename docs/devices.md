@@ -271,14 +271,14 @@ A server that reports no policy at all, which is any non-Dell Redfish endpoint, 
 
     Hot Spare is only shown alongside a redundant policy. Measured on four servers, switching it on while the policy is **Not Redundant** left the supplies sharing the load evenly, so the setting on its own does not mean a supply is idling and the plugin does not claim it does.
 
-!!! note "When a supply fails, there are two different readings"
-    Losing a supply is not one state on the iDRAC, it is two, and they read differently.
+!!! note "When a supply fails"
+    A failed supply is **not** removed from the iDRAC's inventory. It stays listed, drawing 0 W and reporting `Critical`, and the redundancy group stays with it and goes Critical too, so the device reads a red `Redundancy lost`. Verified by pulling a mains cord on a live T550: the supply went to 0 W and `UnavailableOffline`, and the iDRAC raised two faults, `Power supply redundancy is lost.` and `The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.`
 
-    **The mains input is lost**, by pulling the cord or losing that grid feed, while the supply stays in its bay. The iDRAC keeps the redundancy group and marks it Critical, so the device reads a red `Redundancy lost`. Verified by pulling a cord on a live T550: the supply itself went to 0 W and `UnavailableOffline`, and the iDRAC raised two faults, `Power supply redundancy is lost.` and `The input voltage for the Power Supply Unit PSU.Slot.1 is not detected.`
+    That holds whether the supply lost its input or failed outright. Taking one out of its bay reads the same way: the iDRAC keeps reporting the supply it knows about, and stays red.
 
-    **The supply is removed from its bay.** The iDRAC then **removes the redundancy group entirely** rather than marking it Critical. The device reads a grey `Not reported`, rather than keeping its last value and claiming redundancy that no longer exists. It is grey rather than red because the plugin cannot tell why the group vanished.
+    **Restarting the iDRAC re-inventories the chassis.** If a supply is physically gone at that point, the iDRAC counts only the supplies actually present and treats that as the new normal, so the fault clears and the device goes healthy for the smaller set. Put the supply back and the next inventory picks it up again. Nothing the plugin does causes this; it reports what the server reports.
 
-    In both cases System Health carries the iDRAC's own fault text, which is where the reason lives.
+    System Health carries the iDRAC's own fault text throughout, which is where the reason lives.
 
 !!! note "When redundancy is switched off"
     An empty redundancy group has a second, entirely benign cause: the server is **configured** not to be redundant, which is common on machines that need every supply delivering at once. The plugin reads Dell's own policy attribute to tell the two apart, and says so rather than leaving you to guess:

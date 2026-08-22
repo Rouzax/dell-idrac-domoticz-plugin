@@ -14,11 +14,12 @@ FIXTURE_ROOT = Path(__file__).parent / "fixtures"
 # "Not Redundant", which reports an EMPTY Redundancy array, so until this one existed no test
 # had ever seen a populated redundancy group from real hardware. It also carries Hot Spare
 # enabled, which is what makes one supply carry the whole load.
-# "input_lost" is the same T550 again with one supply's MAINS CORD pulled. It is not the same
-# state as "degraded", which had a supply physically removed from its bay: a removed supply
-# EMPTIES the Redundancy array, while a supply that is still seated but has lost its input keeps
-# the group and marks it Critical. Both are "a PSU is gone" to a human and they render
-# differently, so both are captured.
+# "input_lost" is the same T550 again with one supply's MAINS CORD pulled. It captures the SAME
+# hardware condition as "degraded", a supply enumerated as Critical and UnavailableOffline at
+# 0 W, under the OPPOSITE redundancy policy. That pairing is the point: "degraded" is configured
+# "Not Redundant" and reports no redundancy group, "input_lost" is configured redundant and
+# reports a group gone Critical, so together they show that the empty array follows the POLICY
+# and not the failed supply.
 PROFILES = ("t550", "dual", "degraded", "ome", "r750", "redundant", "input_lost")
 
 

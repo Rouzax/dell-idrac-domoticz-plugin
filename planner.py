@@ -684,13 +684,17 @@ def plan(
         # cannot tell one Dell policy from another; see redundancy_health.
         redundancy_state = health.redundancy_health(redundancy[0], dell_attrs)
     elif psus:
-        # Taking a supply OUT OF ITS BAY empties this list rather than marking it Critical,
-        # measured on real hardware. (Pulling only the mains cord does the opposite: the supply
-        # stays seated, the group survives and goes Critical, and redundancy_health reports the
-        # failure. Both are "a PSU is gone" to a human and they arrive here differently.)
-        # Emitting nothing left the tile showing its last value, so it sat green claiming
-        # redundancy at the moment redundancy was lost. Grey rather than red because the plugin
-        # cannot know WHY the group vanished; System Health carries the fault text.
+        # An EMPTY list on a chassis that has supplies has never been observed under a
+        # redundant policy. A failed supply does NOT empty it: measured twice, once by pulling a
+        # mains cord and once in the "degraded" capture, the supply stays enumerated as Critical
+        # and the group survives and goes Critical too, which redundancy_health reports as
+        # "Redundancy lost". So this branch is a DEFENSIVE fallback for a state no machine here
+        # has produced, not a documented iDRAC behaviour.
+        #
+        # It still must not emit nothing: that left the tile showing its last value, so it sat
+        # green claiming redundancy at the moment redundancy was lost. Grey rather than red
+        # because the plugin cannot know WHY the group would be missing; System Health carries
+        # the fault text either way.
         #
         # Dell's own policy attribute separates the two reasons the list can be empty. Measured
         # across six servers, the correlation was exact: every machine set to a redundant policy

@@ -163,7 +163,12 @@ def test_parse_faults_skips_entries_with_no_message():
 
 
 def test_parse_redundancy_on_the_degraded_capture_is_empty():
-    """Measured: with a PSU physically absent the iDRAC EMPTIES the Redundancy array."""
+    """The "degraded" capture has an EMPTY Redundancy array, but not because a supply failed.
+
+    PS1 is still enumerated in that capture, Critical and UnavailableOffline at 0 W, exactly as
+    in "input_lost". What empties the array is the machine's PSRedPolicy of "Not Redundant".
+    This test pins the parse, not a theory about why the array is empty.
+    """
     assert model.parse_redundancy(load("degraded", "power")) == []
 
 
