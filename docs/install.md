@@ -13,7 +13,7 @@ The plugin uses only the Python standard library. There is nothing to `pip insta
     Rather than reusing `root`, add a read-only iDRAC user for Domoticz. The password is stored in the Domoticz database in cleartext, so limiting what it can do limits what a database leak costs you. See [Security](security.md).
 
 !!! note "Bar graphs need a recent Domoticz"
-    Everything on this site works on any Domoticz with the Python plugin system. The coloured threshold bars described under [Bar graphs](devices.md#bar-graphs) additionally need a build that includes the plugin `Color` fix ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026). On an older build Domoticz discards the bands and the cards show no bar. Nothing else is affected, and no error is logged.
+    Everything on this site works on any Domoticz with the Python plugin system. The coloured threshold bars described under [Bar graphs](devices.md#bar-graphs) additionally need the plugin `Color` fix ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026), which is **not in any stable release yet**, including 2026.3. You need a beta or development build for bars. Without it Domoticz discards the bands and the cards show no bar. Nothing else is affected, and no error is logged.
 
 ## Step 1: Install the plugin
 

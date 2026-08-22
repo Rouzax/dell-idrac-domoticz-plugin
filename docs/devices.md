@@ -114,6 +114,12 @@ Switching on **Drive life % devices** in [Settings](settings.md#drive-life-devic
 
 It is off by default, and only drives that report a life figure get one, which in practice means SSDs. Each one carries a [bar](#bar-graphs) that turns red below your **Drive life warning (%)** setting.
 
+![A SAS SSD life device reading 90 percent](assets/cards/drive-life-percent.png)
+
+The same device for an NVMe drive, which reports life just as a SAS or SATA SSD does:
+
+![An NVMe life device reading 98 percent](assets/cards/drive-life-percent-nvme.png)
+
 ## Thresholds in the description
 
 Temperature and fan devices carry the server's own warning and critical thresholds in the device description, so you can see the limits without looking them up:
@@ -150,8 +156,8 @@ Three kinds of device get one:
 
 A **synthesized** threshold is never drawn. The description labels an estimated warning limit `(estimated)`, but a coloured band carries no label, so drawing one would present a guess as a reported limit. That is why the description and the bar can legitimately disagree on a sensor whose warning threshold the server omits.
 
-!!! note "Bar graphs need a recent Domoticz build"
-    They rely on a plugin being able to write the `Color` field ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026). On an older build Domoticz discards the value, so the cards show no bar and no error is logged. Everything else on this page is unaffected.
+!!! note "Bar graphs need a beta or development Domoticz build"
+    They rely on a plugin being able to write the `Color` field ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026). That fix is **not in any stable release yet**, 2026.3 included, so on a stable build Domoticz discards the value, the cards show no bar and nothing is logged. Everything else on this page is unaffected.
 
 !!! info "Your own bands are safe"
     Bands are written when a device is created, and refreshed afterwards when the underlying thresholds or your settings change. That refresh only happens while the bands are still the ones the plugin last wrote. Edit a device's bar by hand and the plugin stops touching it, the same rule it follows for names and icons.

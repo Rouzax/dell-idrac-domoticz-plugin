@@ -109,7 +109,7 @@ Energy accrued while Domoticz is not running is not recovered. The iDRAC's own l
 
 ### The fan and temperature cards have no coloured bar
 
-The bands are computed and sent, and your Domoticz build is discarding them. Plugin-supplied bar ranges need a build that includes [domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026. Nothing is logged, because from the plugin's side the write succeeded.
+The bands are computed and sent, and your Domoticz build is discarding them. Plugin-supplied bar ranges need [domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026, which is **not in any stable release yet**, 2026.3 included. A beta or development build has it. Nothing is logged, because from the plugin's side the write succeeded.
 
 Two other reasons a specific card has no bar, both correct behaviour:
 
