@@ -349,8 +349,8 @@ def test_power_redundancy_reads_in_plain_english():
         planner.plan(inventory=inv, alloc=planner.assign_units(inv, {}), cfg=_cfg(), **parts)
     )
     assert got[planner.UNIT_REDUNDANCY].svalue == (
-        "Redundant<br>2 supplies (1 needed)"
-        '<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>Redundant</li><li>2 supplies (1 needed)</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_OK
 
@@ -383,7 +383,8 @@ def test_a_vanished_redundancy_group_is_reported_not_left_stale():
     )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_GREY
     assert got[planner.UNIT_REDUNDANCY].svalue == (
-        'Not reported<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>Not reported</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1124,7 +1125,8 @@ def test_a_deliberately_non_redundant_supply_set_says_so():
     )
     device = _redundancy_device(parts)
     assert device.svalue == (
-        'Not redundant (configured)<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>Not redundant (configured)</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     assert device.nvalue == planner.health.LEVEL_GREY
 
@@ -1140,7 +1142,8 @@ def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
         parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
     )
     assert _redundancy_device(parts).svalue == (
-        'Not reported<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>Not reported</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1156,8 +1159,9 @@ def test_power_redundancy_states_the_configured_policy_and_hot_spare():
     device = _redundancy_device(parts)
     assert device.nvalue == health.LEVEL_OK
     assert device.svalue == (
-        "A/B Grid Redundant<br>2 supplies (1 needed)<br>hot spare, primary PSU1"
-        '<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>A/B Grid Redundant</li><li>2 supplies (1 needed)</li>"
+        "<li>hot spare, primary PSU1</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1179,7 +1183,8 @@ def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
     assert device.nvalue == health.LEVEL_RED
     # The failure, not the configured policy: A/B Grid Redundant is no longer being met.
     assert device.svalue == (
-        'Redundancy lost<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>Redundancy lost</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1222,8 +1227,9 @@ def test_a_four_supply_group_names_the_primaries_that_carry_the_load():
     device = _redundancy_device(parts)
     assert device.nvalue == health.LEVEL_OK
     assert device.svalue == (
-        "A/B Grid Redundant<br>4 supplies (2 needed)<br>hot spare, primary PSU2 and PSU4"
-        '<br><a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>A/B Grid Redundant</li><li>4 supplies (2 needed)</li>"
+        "<li>hot spare, primary PSU2 and PSU4</li></ul>"
+        '<a href="https://h" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
     by_name = {psu.name: psu for psu in parts["psus"]}
     # The named supplies are the loaded ones; the unnamed pair draws a trickle and delivers zero.
@@ -1295,14 +1301,17 @@ def _redundancy_device_with(parts, cfg):
     return _system_device(parts, cfg, planner.UNIT_REDUNDANCY)
 
 
-def test_power_redundancy_puts_one_fact_per_line_with_the_link_last():
+def test_power_redundancy_lists_its_facts_as_bullets_with_the_link_last():
+    """Bullets rather than one fact per line: measured on the real card, three plain lines plus
+    the link scroll-clips the link mid-letter, while three bullets fold cleanly between items."""
     parts = _parts("t550")
     parts["psus"] = model.parse_power(load("quad", "power"))
     parts["redundancy"] = model.parse_redundancy(load("quad", "power"))
     parts["dell_attrs"] = model.parse_dell_attributes(load("quad", "dell_attributes"))
     assert _redundancy_device_with(parts, _cfg_rich()).svalue == (
-        "A/B Grid Redundant<br>4 supplies (2 needed)<br>hot spare, primary PSU2 and PSU4"
-        '<br><a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
+        "<ul><li>A/B Grid Redundant</li><li>4 supplies (2 needed)</li>"
+        "<li>hot spare, primary PSU2 and PSU4</li></ul>"
+        '<a href="https://10.0.0.5" target="_blank" style="color:inherit;text-decoration:underline">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1322,7 +1331,7 @@ def test_a_configured_non_redundant_card_still_gets_the_link():
     parts = _parts("t550")
     parts["redundancy"] = []
     device = _redundancy_device_with(parts, _cfg_rich())
-    assert device.svalue.startswith("Not redundant (configured)<br><a ")
+    assert device.svalue.startswith("<ul><li>Not redundant (configured)</li></ul><a ")
 
 
 def test_system_health_lists_faults_as_bullets_with_the_link_last():

@@ -738,7 +738,12 @@ def plan(
             redundancy_state = (health.LEVEL_GREY, ["Not reported"])
     if redundancy_state is not None:
         level, parts = redundancy_state
-        svalue = cardtext.lines(parts, link) if cfg.rich_card_text else ", ".join(parts)
+        # Bullets rather than one fact per line, decided by measuring the real card. The text box
+        # caps at 60px and scrolls: three plain lines plus the link is 68px and cuts the link
+        # horizontally through its letters, while three bullets is 87px but the fold falls
+        # BETWEEN list items, so the visible area stays clean and the link is reached by
+        # scrolling. Merging facts onto one line does not help; that line then wraps.
+        svalue = cardtext.bullets(parts, link) if cfg.rich_card_text else ", ".join(parts)
         out.append(
             DeviceUpdate(
                 unit=UNIT_REDUNDANCY,
