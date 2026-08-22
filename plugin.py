@@ -163,8 +163,10 @@ class _PluginState:
         # which costs at most one interval per component and saves a persisted field.
         self.first_watts = {}
         self.moved = set()
-        # Counter keys already warned about, so a machine reporting a permanently bad figure
-        # costs one log line per plugin start instead of one per poll.
+        # (counter key, reason) pairs already warned about, so a machine reporting a permanently
+        # bad figure costs one log line per plugin start per reason instead of one per poll, and
+        # one reason firing first does not permanently silence a different reason on the same
+        # device.
         self.counter_warned = set()
         self.reset_slow()
 
@@ -536,12 +538,15 @@ def report_duplicate_names(updates) -> None:
     _state.duplicates_reported = duplicates
 
 
-def _warn_counter_once(key: str, message: str) -> None:
-    """One line per counter per plugin start. A machine reporting a permanently implausible
-    figure would otherwise fill the log every poll and bury whatever else went wrong."""
-    if key in _state.counter_warned:
+def _warn_counter_once(key: str, reason: str, message: str) -> None:
+    """One line per counter per plugin start, PER REASON. Keying on the device alone would let
+    the first condition to fire (say, an unreadable previous value) permanently silence the
+    other three for that device; a component that later goes implausible would then log nothing
+    at all. Keying on (key, reason) keeps each condition's own one-line-per-start latch."""
+    latch = (key, reason)
+    if latch in _state.counter_warned:
         return
-    _state.counter_warned.add(key)
+    _state.counter_warned.add(latch)
     Domoticz.Error(message)
 
 
@@ -566,7 +571,9 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
         watts = float(up.svalue)
         prev_wh = domoticz_api.read_prev_counter_wh(devices, dev_id, up.unit)
         if prev_wh is None:
-            _warn_counter_once(key, f"{up.name}: energy counter unreadable, not written")
+            _warn_counter_once(
+                key, "unreadable", f"{up.name}: energy counter unreadable, not written"
+            )
             continue
         first = _state.first_watts.setdefault(key, watts)
         if energy.has_moved(first, watts):
@@ -574,6 +581,7 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
         if up.counter == planner.COUNTER_GATED and key not in _state.moved:
             _warn_counter_once(
                 key,
+                "static",
                 f"{up.name}: {watts} W has not changed since start, treating it as a static "
                 "figure rather than a measurement and not counting it",
             )
@@ -582,6 +590,7 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
         if energy.implausible(watts, system_watts):
             _warn_counter_once(
                 key,
+                "implausible",
                 f"{up.name}: {watts} W exceeds the {system_watts} W the machine is drawing, "
                 "counter held",
             )
@@ -589,7 +598,7 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
             continue
         counter_wh, warning = energy.advance(prev_wh, watts, elapsed_s, peak_w * 2)
         if warning:
-            _warn_counter_once(key, f"{up.name}: {warning}")
+            _warn_counter_once(key, "advance", f"{up.name}: {warning}")
         out.append(dataclasses.replace(up, svalue=f"{up.svalue};{counter_wh}"))
     return out
 

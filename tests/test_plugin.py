@@ -274,6 +274,54 @@ def test_energy_counter_never_decreases(started):
     assert second >= first
 
 
+def test_the_first_poll_integrates_nothing(started):
+    """No prior heartbeat means no measured interval, and there is nothing honest to integrate
+    over. Server Board Power on the t550 fixture is 144.0 W; if this ever measured from a
+    fictitious interval it would show up here as a nonzero first reading."""
+    assert started.last_poll_monotonic is None
+    _beat_once(started)
+    energy_wh = float(_units()[plugin.planner.UNIT_POWER].sValue.split(";")[1])
+    assert energy_wh == 0.0
+    # The clock is stamped only AFTER a successful poll, so the next one has something to measure.
+    assert started.last_poll_monotonic is not None
+
+
+def test_a_late_poll_integrates_the_measured_interval_not_the_nominal_one(started, monkeypatch):
+    """PollInterval is 30s here. A poll that actually took 45s (a slow iDRAC, a GC pause, a busy
+    heartbeat thread) must count 45s of energy, not 30s worth, or every counter quietly under- or
+    over-reports by however late polls tend to run."""
+    times = iter([1000.0, 1000.0 + 45.0])
+    monkeypatch.setattr(plugin.time, "monotonic", lambda: next(times))
+    _beat_once(started)  # first poll: elapsed_s forced to 0.0, stamps last_poll_monotonic=1000.0
+    _beat_once(started)  # second poll: 45s later by the (fake) clock
+    watts, energy_wh = (float(v) for v in _units()[plugin.planner.UNIT_POWER].sValue.split(";"))
+    assert watts == 144.0
+    expected = 144.0 * 45.0 / 3600.0
+    assert energy_wh == pytest.approx(expected)
+    # Had the nominal PollInterval driven the integration instead of the measured gap, a 45s-late
+    # poll would have under-counted against what actually elapsed.
+    assert energy_wh > 144.0 * started.cfg.poll_interval / 3600.0
+
+
+def test_a_long_outage_is_capped_at_two_poll_intervals(started, monkeypatch):
+    """The plugin writes nothing while the iDRAC is unreachable (deliberate: see the RedfishError
+    branch in onHeartbeat) and does not stamp the clock during an outage. So when it finally
+    recovers, the real gap since the last successful poll can be huge, and the design compromise
+    is to under-count that gap rather than book the whole outage as one energy step."""
+    times = iter([1000.0, 1000.0 + 10_000.0])
+    monkeypatch.setattr(plugin.time, "monotonic", lambda: next(times))
+    _beat_once(started)  # success, stamps last_poll_monotonic=1000.0
+    started.client = FakeClient(fail_paths=("/Sensors",))
+    _beat_once(started)  # fails: returns before time.monotonic() is ever reached
+    _drain_backoff(started)  # burns the countdown; still no poll attempt, so no clock read
+    started.client = FakeClient()  # the iDRAC is back
+    _beat_once(started)  # 10_000s after the last successful poll by the (fake) clock
+    energy_wh = float(_units()[plugin.planner.UNIT_POWER].sValue.split(";")[1])
+    cap_seconds = started.cfg.poll_interval * 2
+    expected = 144.0 * cap_seconds / 3600.0
+    assert energy_wh == pytest.approx(expected)
+
+
 def test_password_never_reaches_the_log(started):
     started.client = FakeClient(fail_paths=("/Sensors",))
     _beat_once(started)
