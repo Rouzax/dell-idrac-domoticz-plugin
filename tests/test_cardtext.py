@@ -93,6 +93,12 @@ def test_a_fault_message_containing_markup_is_escaped():
     assert cardtext.bullets(["<b>bad</b>"]) == "<ul><li>&lt;b&gt;bad&lt;/b&gt;</li></ul>"
 
 
+def test_lines_also_escapes_its_facts():
+    """Escaping is exercised through bullets() and idrac_link() elsewhere; lines() needs its own
+    pin, since the shipped caller passes it a single server-reported fact."""
+    assert cardtext.lines(["<b>bad</b>"]) == "&lt;b&gt;bad&lt;/b&gt;"
+
+
 def test_the_link_itself_is_not_escaped():
     """It is markup we built, not data. Escaping it would print the tag on the card."""
     link = cardtext.idrac_link("10.0.0.5")

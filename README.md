@@ -54,6 +54,7 @@ Devices appear after the first successful poll, which is one poll interval later
 | Network interfaces | on | Create a device per NIC port. |
 | Drive life warning (%) | 10 | Warn when a drive reports less predicted media life remaining than this. |
 | Drive life % devices | off | Add a second device per drive showing predicted media life as a graphable percentage. |
+| Formatted card text | on | Renders System Health and Power Redundancy as a bullet list with a link to the iDRAC, instead of a single line of text. Changes the device `sValue`; turn it off if a dzVents script or notification matches the old plain text. |
 | Fan bar maximum (RPM) | 6000 | Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no fan maximum, so it cannot be detected. A faster fan still reads full and green. |
 | Allow Force Off and Power Cycle | off | Adds the two hard power actions. Inert unless Allow Control is Yes. |
 | Verify TLS certificate | off | See [Security](#security). |
@@ -98,6 +99,8 @@ Where telemetry reports GPUs, each card also gets a power device and a temperatu
 Fan, temperature and drive-life cards show a coloured bar built from the server's own thresholds: red beyond critical, amber in the warning band, green in between. Devices with no server-reported thresholds get no bar rather than an invented one.
 
 Bar graphs need a Domoticz build that includes the plugin `Color` fix ([domoticz/domoticz#6968](https://github.com/domoticz/domoticz/pull/6968), merged 19 August 2026). On an older build Domoticz discards the bands and the cards simply show no bar; everything else works exactly the same.
+
+**Formatted card text** needs Domoticz 2026.1 or newer, the version from which Domoticz renders Text and Alert device data as HTML. On an older build the markup may show as literal tags on the System Health and Power Redundancy cards instead of a bullet list, so turn the setting off there.
 
 ### Icons
 

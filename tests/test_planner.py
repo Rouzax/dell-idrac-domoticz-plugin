@@ -1357,6 +1357,19 @@ def test_system_health_off_still_joins_faults_with_semicolons():
     )
 
 
+def test_system_health_off_past_the_fault_budget_gets_a_count_not_an_ellipsis():
+    """The one place the off path is NOT byte-for-byte with the old plain behaviour: above the
+    200 character budget it now joins fault_lines() output, which drops whole faults and adds a
+    "+N more" entry, rather than cutting the joined string mid-sentence with an ellipsis. That
+    change is deliberate and documented; this pins the exact resulting shape."""
+    parts = _parts("t550")
+    parts["faults"] = [model.Fault(severity="Critical", message="x" * 90) for _ in range(5)]
+    parts["system"] = dataclasses.replace(parts["system"], health="Critical")
+    svalue = _health_device(parts, _cfg_plain()).svalue
+    assert svalue == "; ".join(["x" * 90, "x" * 90, "+3 more"])
+    assert "..." not in svalue
+
+
 def test_a_healthy_system_health_card_carries_the_link_and_no_bullets():
     parts = _parts("t550")
     parts["faults"] = []

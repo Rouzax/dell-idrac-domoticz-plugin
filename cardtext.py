@@ -53,7 +53,13 @@ def idrac_link(address) -> str:
 
 
 def lines(parts, link: str = "") -> str:
-    """One fact per line, link last. Empty facts are dropped rather than leaving a blank line."""
+    """Facts joined with <br>, link last. Empty facts are dropped rather than leaving a blank line.
+
+    The shipped caller passes exactly one fact plus the link, since both cards use bullets(), not
+    lines(), for a list of several facts. The multi-fact <br> join is exercised only by this
+    function's own tests; it is kept as a general-purpose primitive, not because production joins
+    more than one line today.
+    """
     items = [escape(part) for part in parts if part]
     if link:
         items.append(link)

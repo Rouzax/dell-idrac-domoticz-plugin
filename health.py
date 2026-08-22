@@ -189,9 +189,3 @@ def redundancy_parts(entry, dell_attrs=None) -> tuple:
     if spare:
         parts.append(spare)
     return level, parts
-
-
-def redundancy_health(entry, dell_attrs=None) -> tuple:
-    """The parts above as the single sentence the plugin has always written."""
-    level, parts = redundancy_parts(entry, dell_attrs)
-    return level, ", ".join(parts)

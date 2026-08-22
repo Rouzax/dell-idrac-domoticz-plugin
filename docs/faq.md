@@ -118,6 +118,12 @@ Two other reasons a specific card has no bar, both correct behaviour:
 
 See [Bar graphs](devices.md#bar-graphs).
 
+### The System Health or Power Redundancy card shows literal `<ul><li>` or `<a href=...>` text
+
+**Formatted card text** needs a Domoticz build that renders Text and Alert device data as HTML, which is Domoticz 2026.1 or newer. On an older build the markup is not rendered and shows up on the card as raw tags instead of a bullet list and a link.
+
+Update Domoticz to 2026.1 or newer, or turn [Formatted card text](settings.md#formatted-card-text) off to go back to plain single-line text.
+
 ### Power Redundancy stopped updating
 
 The redundancy group arrives in the same payload as the power supplies, so switching **Power supplies** off in [Settings](settings.md#devices) stops it being read. The device is not deleted, it just stops receiving values, and Domoticz eventually marks it stale.

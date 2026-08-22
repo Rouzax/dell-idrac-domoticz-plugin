@@ -716,7 +716,7 @@ def plan(
         # An EMPTY list on a chassis that has supplies has never been observed under a
         # redundant policy. A failed supply does NOT empty it: measured twice, once by pulling a
         # mains cord and once in the "degraded" capture, the supply stays enumerated as Critical
-        # and the group survives and goes Critical too, which redundancy_health reports as
+        # and the group survives and goes Critical too, which redundancy_parts reports as
         # "Redundancy lost". So this branch is a DEFENSIVE fallback for a state no machine here
         # has produced, not a documented iDRAC behaviour.
         #
