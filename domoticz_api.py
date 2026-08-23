@@ -236,6 +236,41 @@ def names_used_by_other_hardware(db_path: str, hardware_id, names) -> tuple:
     return tuple(sorted({(str(name), str(owner)) for name, owner in rows}))
 
 
+# pTypeGeneral 0xF3 / sTypeKwh 0x1D from hardware/hardwaretypes.h. The one pair whose sValue
+# carries an energy half.
+_KWH_TYPE = (243, 29)
+
+
+def is_counter(devices, dev_id: str, unit_no: int) -> bool:
+    """Whether this unit's sValue carries an energy total, judged by what the device IS.
+
+    The plugin no longer changes a live device's type (domoticz#6981), so the stored type is
+    the authority on what may be written to it, not the setting the user picked.
+    """
+    unit = _existing_unit(devices, dev_id, unit_no)
+    if unit is None:
+        # About to be created, and every per-component power device created now is a counter.
+        return True
+    # Type and SubType are read through getattr for the same reason as everywhere else in this
+    # module: they are exposed on domoticz/domoticz:beta, but the oldest release carrying them
+    # could not be established and this runs every heartbeat, where an AttributeError would
+    # escape onHeartbeat's RedfishError-only catch and stop every device update.
+    live_type = getattr(unit, "Type", None)
+    live_subtype = getattr(unit, "SubType", None)
+    if None not in (live_type, live_subtype):
+        return (live_type, live_subtype) == _KWH_TYPE
+    # No Type member to read. The sValue's own shape still answers it: every counter write this
+    # plugin makes emits both halves, so a parseable second field means a counter.
+    parts = str(unit.sValue).split(";")
+    if len(parts) < 2:
+        return False
+    try:
+        float(parts[1])
+    except ValueError:
+        return False
+    return True
+
+
 def read_prev_counter_wh(devices, dev_id, unit_no):
     """Energy half of a "POWER;ENERGY" sValue, or None when it cannot be read.
 

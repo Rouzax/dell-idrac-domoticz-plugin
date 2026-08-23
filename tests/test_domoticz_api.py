@@ -620,3 +620,44 @@ def test_apply_never_converts_a_device_whose_type_is_not_convertible():
         {"dellidrac_1_system:2": "System Health"},
     )
     assert not any("TypeName" in call for call in unit.updates)
+
+
+def _seed(dev_id, unit, type_name, svalue):
+    u = domoticz_stub.Unit(Name="X", DeviceID=dev_id, Unit=unit, TypeName=type_name)
+    u.Create()
+    u.sValue = svalue
+    u.Update(Log=False)
+    return domoticz_stub.Devices[dev_id].Units[unit]
+
+
+def test_is_counter_reads_a_kwh_device_as_a_counter():
+    _seed("dellidrac_1_system", 14, "kWh", "41.0;12.5")
+    assert domoticz_api.is_counter(domoticz_stub.Devices, "dellidrac_1_system", 14) is True
+
+
+def test_is_counter_reads_a_usage_device_as_a_gauge():
+    _seed("dellidrac_1_system", 14, "Usage", "41.0")
+    assert domoticz_api.is_counter(domoticz_stub.Devices, "dellidrac_1_system", 14) is False
+
+
+def test_is_counter_treats_a_missing_unit_as_a_counter():
+    """It is about to be created, and every device this plugin creates now is a counter."""
+    assert domoticz_api.is_counter(domoticz_stub.Devices, "dellidrac_1_system", 14) is True
+
+
+def test_is_counter_falls_back_to_the_svalue_shape_without_a_type_member():
+    """A Domoticz build that exposes no Type member must still get a real answer, not a guess."""
+    counter = _seed("dellidrac_1_system", 14, "kWh", "41.0;12.5")
+    gauge = _seed("dellidrac_1_system", 15, "Usage", "41.0")
+    for unit in (counter, gauge):
+        del unit.Type
+        del unit.SubType
+    assert domoticz_api.is_counter(domoticz_stub.Devices, "dellidrac_1_system", 14) is True
+    assert domoticz_api.is_counter(domoticz_stub.Devices, "dellidrac_1_system", 15) is False
+
+
+def test_is_counter_reads_an_unparseable_energy_half_as_a_gauge():
+    unit = _seed("dellidrac_1_system", 14, "kWh", "41.0;nonsense")
+    del unit.Type
+    del unit.SubType
+    assert domoticz_api.is_counter(domoticz_stub.Devices, "dellidrac_1_system", 14) is False
