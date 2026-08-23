@@ -55,7 +55,6 @@ Devices appear after the first successful poll, which is one poll interval later
 | Drive life warning (%) | 10 | Warn when a drive reports less predicted media life remaining than this. |
 | Drive life % devices | off | Add a second device per drive showing predicted media life as a graphable percentage. |
 | Formatted card text | on | Renders System Health and Power Redundancy as a bullet list with a link to the iDRAC, instead of a single line of text. Changes the device `sValue`; turn it off if a dzVents script or notification matches the old plain text. |
-| Energy counters | on | Reports per-component power, each power supply and each GPU as a kWh counter with a running total, instead of a plain watt gauge. Changes the device `sValue`; turn it off if a dzVents script reads it as a plain number. |
 | Fan bar maximum (RPM) | 6000 | Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no fan maximum, so it cannot be detected. A faster fan still reads full and green. |
 | Allow Force Off and Power Cycle | off | Adds the two hard power actions. Inert unless Allow Control is Yes. |
 | Verify TLS certificate | off | See [Security](#security). |
@@ -95,7 +94,7 @@ Where the iDRAC licence allows it, six more devices break system power down by s
 
 Where telemetry reports GPUs, each card also gets a power device and a temperature device.
 
-The six subsystem devices and each GPU power device also report a running kWh total alongside live watts, so they show up in Domoticz's energy report; turn **Energy counters** off for plain watt gauges instead.
+The six subsystem devices and each GPU power device also report a running kWh total alongside live watts, so they show up in Domoticz's energy report.
 
 ### Bar graphs
 
