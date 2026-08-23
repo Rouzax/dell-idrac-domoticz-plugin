@@ -44,6 +44,7 @@ python3 -m vulture . .vulture_whitelist.py --min-confidence 80 --exclude tests,_
 - **Selector levels in `control.ACTION_SLOTS` are fixed slots.** Never reorder or remove an entry, append only. Domoticz stores the level number inside scenes and timers and replays them for years, so a positional mapping would let a saved "graceful restart" become "force off".
 - **Verify any new Domoticz device attribute against the core source** before relying on it. The test stub accepts any attribute, so a nonexistent one passes every test and raises against real Domoticz on every heartbeat.
 - **Anything at the repo root that ends in `.py` ships to users.** The release workflow copies `*.py` into the plugin package. Dev-only Python belongs in `tests/` or `tools/`.
+- **`Unit.Delete()` from a plugin is not the same as deleting a device in the web UI.** `CUnitEx_delete` (`hardware/plugins/PythonObjectEx.cpp:1004`) runs a bare `DELETE FROM DeviceStatus` and never calls `CSQLHelper::DeleteDevices`, so every history, notification, timer, scene and floorplan row survives, and because `DeviceStatus.ID` is a plain rowid, the next device created can take the freed idx and inherit them. Reproduced on the beta image; reported as [domoticz/domoticz#6982](https://github.com/domoticz/domoticz/issues/6982). The plugin must never call it.
 
 ## Capturing fixtures from your hardware
 

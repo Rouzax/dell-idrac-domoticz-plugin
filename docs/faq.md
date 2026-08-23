@@ -113,7 +113,7 @@ This lasts as long as Domoticz keeps those older readings in its short log, cont
 
 The day, month and year graphs are not affected, because Domoticz stores the long-term history for the two device types in different places. One exception: the figure recorded for the day you upgraded can stay wrong, because Domoticz works a counter's daily total out from the first and last reading of that day.
 
-Nothing needs to be done. If you would rather not wait, turning [Energy counters](settings.md#energy-counters) off converts the devices back to watt gauges, and their original graphs reappear.
+Nothing needs to be done. The plugin no longer changes any device's type once it exists, so this cannot happen again on a later upgrade. If you would rather have a clean device now than wait for the short log to age out, delete it under **Setup > Devices**; the plugin recreates it as a fresh counter on its next poll, though at the cost of its history, its idx and its room membership.
 
 ### The energy counter does not match my meter
 
@@ -123,7 +123,7 @@ The counter is integrated by the plugin from the wattage the server reports, whi
 
 Energy accrued while Domoticz is not running is not recovered. The iDRAC's own lifetime counter is not used, because it does not accumulate continuously and would produce invented plateaus and jumps. See [Energy](devices.md#energy).
 
-With [Energy counters](settings.md#energy-counters) on, up to fifteen devices carry a counter this way: Server Power, the six subsystem power devices, each power supply and each GPU. The subsystem, power supply and GPU counters are not meant to add up to Server Power and will not: each measures one internal rail, and together they never account for the whole machine. See [Why the component counters do not add up to Server Power](devices.md#why-the-component-counters-do-not-add-up-to-server-power) for the actual shortfall measured across a fleet of test servers, rather than repeating it here.
+Up to fifteen devices carry a counter this way: Server Power, the six subsystem power devices, each power supply and each GPU. The subsystem, power supply and GPU counters are not meant to add up to Server Power and will not: each measures one internal rail, and together they never account for the whole machine. See [Why the component counters do not add up to Server Power](devices.md#why-the-component-counters-do-not-add-up-to-server-power) for the actual shortfall measured across a fleet of test servers, rather than repeating it here.
 
 ### The fan and temperature cards have no coloured bar
 

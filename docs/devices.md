@@ -13,7 +13,7 @@ Every non-temperature device the plugin created for one PowerEdge, on Domoticz's
 
 The example values below come from that same machine: a tower PowerEdge with three fans, two power supplies, three RAID volumes, two NIC ports and ten drives. Yours will differ in the per-hardware rows, because those follow what your server has. Fans, drives, volumes and NICs are re-discovered on every slow poll, so hardware you add later appears on its own.
 
-Power supply, per-component power and GPU power devices read as `kWh` counters by default, carrying both a live watt figure and an accumulating total, the same way Server Power always has. Turn off [Energy counters](settings.md#energy-counters) to get plain watt gauges instead, the way earlier versions of the plugin worked.
+Power supply, per-component power and GPU power devices read as `kWh` counters, carrying both a live watt figure and an accumulating total, the same way Server Power always has.
 
 ### Always, where the server reports the value
 
@@ -307,7 +307,9 @@ Only the first redundancy group is reported. Chassis that expose several groups 
 
 ## Energy
 
-Server Power always carries both live watts and an accumulating kWh counter. With [Energy counters](settings.md#energy-counters) on, which is the default, the per-component power devices, each power supply and each GPU carry the same pair of figures.
+Server Power always carries both live watts and an accumulating kWh counter. The per-component power devices, each power supply and each GPU carry the same pair of figures, because a device this plugin creates is always a `kWh` counter.
+
+A device that already existed as a plain watt gauge before you upgraded keeps working exactly as it did, receiving only a wattage: the plugin never changes a device's type once created. To move such a device to a counter, delete it under **Setup > Devices** and the plugin recreates it as a counter on its next poll. That costs the device's watt history, its idx and its room membership, so only do this if you want a clean start. There is no setting to control this any more.
 
 Every counter is integrated by the plugin itself, over the **measured** interval since its last successful poll rather than the configured poll interval, capped at twice that interval. A poll that runs late is counted for the time that actually passed rather than for the time you configured, and an unreachable iDRAC does not stamp the clock at all, so an outage is under-counted rather than having its silence booked as either a full interval of load or none.
 
@@ -316,6 +318,15 @@ It does **not** use the lifetime energy figure the iDRAC reports. That counter d
 The trade-off is that energy accrued while Domoticz is not running is not recovered. Every counter is guarded so it can only move forwards, and an implausibly large jump is held back and reported rather than accepted.
 
 A component counter carries one further guard: a reading above one and a half times what the whole machine is drawing is not counted, because a component cannot draw more than the chassis it sits in. The counter is held at its last value, and the plugin logs one line per counter per plugin start rather than repeating it on every poll.
+
+!!! note "If you poll less often than every 5 minutes"
+    Domoticz's **Settings > Log History > Only add newly received values to the Log** skips a
+    device from a 5 minute log bucket when it has not reported since the last one. With a poll
+    interval above 5 minutes and that option enabled, roughly every other bucket is skipped, for
+    Server Power and for every other counter this plugin writes. The kWh totals still come out
+    right, because Domoticz takes a counter's daily figure from the first and last reading of the
+    day, but the watt graphs will look gappy. Leave the poll interval at or below 5 minutes if you
+    want an unbroken graph.
 
 ### Why the component counters do not add up to Server Power
 

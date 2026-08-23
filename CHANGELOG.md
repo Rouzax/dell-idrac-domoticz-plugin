@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **The plugin no longer converts per-component power devices between watt gauges and kWh counters.** Each device's stored type now decides what is written to it: a device this version creates is a `kWh` counter, and a device that is already a watt gauge stays one and keeps receiving a plain wattage. To move an existing watt device to a counter, delete it under **Setup > Devices**; the plugin recreates it as a counter on the next poll, at the cost of its watt history, its idx and its room membership.
+
+  Domoticz does not clear a device's short log when its type changes, and will not: [domoticz/domoticz#6981](https://github.com/domoticz/domoticz/issues/6981). That is what produced the negative Today figure v0.3.0's FAQ documented, and is why this conversion is withdrawn rather than fixed. Installs already running v0.3.0 keep their counters and need no action.
+
+### Removed
+
+- **The Energy counters setting.** With conversion gone, it could only have chosen what newly created devices are, which is no longer a choice: every device the plugin creates is a `kWh` counter.
+
 ## [0.3.0] - 2026-08-22
 
 ### Added
@@ -10,7 +22,7 @@ All notable changes to this project are documented here. The format is based on 
 
   Independently of this setting, System Health now handles more faults than fit on the card differently: it used to join every fault into one string and cut the result mid-sentence at 200 characters, which could leave half a fault on screen looking like a complete one. It now drops whole faults instead and ends with a count such as `+2 more`.
 
-- **An Energy counters setting**, on by default, that reports the per-component power devices (CPU, memory, storage, fan, PCIe and FPGA), each power supply and each GPU as a `kWh` counter with a running total, the same device type Server Power has always used, instead of a plain watt gauge. Each counter then appears in Domoticz's energy report with a total and a cost. Existing devices are converted in place, keeping their idx, name and room; the counter starts from zero, and the previous watt history is hidden rather than deleted, because Domoticz keeps a `kWh` device's day history in a different table from a `Usage` device's. Turn it off and the devices convert back to watt gauges, with the original watt graphs reappearing exactly as they were. See [Energy counters](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#energy-counters).
+- **An Energy counters setting**, on by default, that reports the per-component power devices (CPU, memory, storage, fan, PCIe and FPGA), each power supply and each GPU as a `kWh` counter with a running total, the same device type Server Power has always used, instead of a plain watt gauge. Each counter then appears in Domoticz's energy report with a total and a cost. Existing devices are converted in place, keeping their idx, name and room; the counter starts from zero, and the previous watt history is hidden rather than deleted, because Domoticz keeps a `kWh` device's day history in a different table from a `Usage` device's. Turn it off and the devices convert back to watt gauges, with the original watt graphs reappearing exactly as they were. See Energy counters.
 
   **This changes the device's `sValue`** from a bare watt figure such as `41.0` to `41.0;1234.5`, watts then the running total separated by a semicolon. Any dzVents script doing `tonumber(device.sValue)` on the CPU, memory, storage, fan, PCIe or FPGA power devices, on a power supply, or on a GPU power device needs updating, or it will error the first time this setting converts the device.
 

@@ -110,8 +110,10 @@ class DeviceUpdate:
     device: str = DEVICE_SYSTEM
     image: int = 0
     switchtype: int = 0
-    # True when `svalue` holds the watts ALONE and the caller's counter pass must append the
-    # energy half before the update is applied.
+    # True when this update is a per-component power reading, so `svalue` holds the watts ALONE
+    # and the caller's reconciliation pass decides whether to append an energy half. The planner
+    # is pure and cannot see live device state, so eligibility is all it can assert: whether the
+    # device IS a counter is settled in plugin.reconcile_counters.
     counter: bool = False
 
 
@@ -550,13 +552,13 @@ def plan(
                 out.append(
                     DeviceUpdate(
                         unit=unit,
-                        type_name="kWh" if cfg.energy_counters else "Usage",
+                        type_name="kWh",
                         name=f"GPU {device} Power",
                         device=DEVICE_GPU,
                         nvalue=0,
                         svalue=_fmt_reading(watts),
-                        options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
-                        counter=cfg.energy_counters,
+                        options={"EnergyMeterMode": "0"},
+                        counter=True,
                     )
                 )
         if celsius is not None:
@@ -616,14 +618,14 @@ def plan(
         out.append(
             DeviceUpdate(
                 unit=unit,
-                type_name="kWh" if cfg.energy_counters else "Usage",
+                type_name="kWh",
                 name=name,
                 nvalue=0,
                 # Telemetry values carry float32 noise, e.g. storage power arrives as
                 # "63.600002". A tenth of a watt is well past anything meaningful here.
                 svalue=_fmt_reading(round(value, 1)),
-                options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
-                counter=cfg.energy_counters,
+                options={"EnergyMeterMode": "0"},
+                counter=True,
             )
         )
 
@@ -803,14 +805,14 @@ def plan(
             out.append(
                 DeviceUpdate(
                     unit=unit,
-                    type_name="kWh" if cfg.energy_counters else "Usage",
+                    type_name="kWh",
                     name=psu.name,
                     device=DEVICE_POWER,
                     nvalue=0,
                     svalue=_fmt_reading(psu.input_watts),
-                    options={"EnergyMeterMode": "0"} if cfg.energy_counters else {},
+                    options={"EnergyMeterMode": "0"},
                     description=text,
-                    counter=cfg.energy_counters,
+                    counter=True,
                 )
             )
 

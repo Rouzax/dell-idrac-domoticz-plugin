@@ -1,3 +1,5 @@
+import dataclasses
+
 import pytest
 
 import control
@@ -784,10 +786,59 @@ def _seed_counter_device(dev_id, unit, svalue):
     u.Update(Log=False)
 
 
-def test_attach_counters_appends_the_integrated_energy():
+def _seed_gauge_device(dev_id, unit, svalue):
+    u = domoticz_stub.Unit(Name="X", DeviceID=dev_id, Unit=unit, TypeName="Usage")
+    u.Create()
+    u.sValue = svalue
+    u.Update(Log=False)
+
+
+def test_reconcile_leaves_a_watt_gauge_as_a_bare_wattage():
+    """An install that never converted keeps watt devices, and a counter sValue would break it."""
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_gauge_device("dellidrac_1_system", 14, "40.0")
+    out = plugin.reconcile_counters(
+        domoticz_stub.Devices,
+        [_counter_update(14, "36.0", True)],
+        elapsed_s=3600.0,
+        system_watts=150.0,
+        peak_w=200.0,
+    )
+    assert out[0].svalue == "36.0"
+
+
+def test_reconcile_writes_no_energy_meter_mode_onto_a_watt_gauge():
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    _seed_gauge_device("dellidrac_1_system", 14, "40.0")
+    update = dataclasses.replace(
+        _counter_update(14, "36.0", True), options={"EnergyMeterMode": "0"}
+    )
+    out = plugin.reconcile_counters(
+        domoticz_stub.Devices,
+        [update],
+        elapsed_s=3600.0,
+        system_watts=150.0,
+        peak_w=200.0,
+    )
+    assert out[0].options == {}
+
+
+def test_reconcile_starts_a_device_that_does_not_exist_yet_at_zero():
+    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
+    out = plugin.reconcile_counters(
+        domoticz_stub.Devices,
+        [_counter_update(14, "36.0", True)],
+        elapsed_s=3600.0,
+        system_watts=150.0,
+        peak_w=200.0,
+    )
+    assert out[0].svalue == "36.0;36.0"
+
+
+def test_reconcile_appends_the_integrated_energy():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
     _seed_counter_device("dellidrac_1_system", 14, "40.0;100.0")
-    out = plugin.attach_counters(
+    out = plugin.reconcile_counters(
         domoticz_stub.Devices,
         [_counter_update(14, "36.0", True)],
         elapsed_s=3600.0,
@@ -797,22 +848,22 @@ def test_attach_counters_appends_the_integrated_energy():
     assert out[0].svalue == "36.0;136.0"
 
 
-def test_attach_counters_leaves_a_non_counter_update_alone():
+def test_reconcile_leaves_a_non_counter_update_alone():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
     update = planner.DeviceUpdate(
         unit=2, type_name="Alert", name="System Health", nvalue=1, svalue="OK"
     )
-    assert plugin.attach_counters(
+    assert plugin.reconcile_counters(
         domoticz_stub.Devices, [update], elapsed_s=30.0, system_watts=150.0, peak_w=200.0
     ) == [update]
 
 
-def test_attach_counters_counts_a_flat_standby_reading():
+def test_reconcile_counts_a_flat_standby_reading():
     # An R750 hot spare supply can sit at exactly 5.0 W for hours. That is real standby energy,
     # and this is now a regression test proving nothing gates any counter.
     plugin._state.dev_ids = {planner.DEVICE_POWER: "dellidrac_1_power"}
     _seed_counter_device("dellidrac_1_power", 1, "5.0;10.0")
-    out = plugin.attach_counters(
+    out = plugin.reconcile_counters(
         domoticz_stub.Devices,
         [_counter_update(1, "5.0", True, name="PS2 Status", device=planner.DEVICE_POWER)],
         elapsed_s=3600.0,
@@ -822,20 +873,20 @@ def test_attach_counters_counts_a_flat_standby_reading():
     assert out[0].svalue == "5.0;15.0"
 
 
-def test_attach_counters_counts_a_reading_that_never_changes():
+def test_reconcile_counts_a_reading_that_never_changes():
     # The movement gate was removed deliberately: it delayed real energy for as long as a
     # component held a steady value, and the fabricated reading it targeted moved anyway.
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
     _seed_counter_device("dellidrac_1_system", 19, "42.0;500.0")
     args = (domoticz_stub.Devices, [_counter_update(19, "42.0", True, name="FPGA Power")])
-    first = plugin.attach_counters(*args, elapsed_s=3600.0, system_watts=330.0, peak_w=800.0)
+    first = plugin.reconcile_counters(*args, elapsed_s=3600.0, system_watts=330.0, peak_w=800.0)
     assert first[0].svalue == "42.0;542.0"
 
 
-def test_attach_counters_holds_a_reading_above_the_chassis_draw():
+def test_reconcile_holds_a_reading_above_the_chassis_draw():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
     _seed_counter_device("dellidrac_1_system", 19, "43.0;500.0")
-    out = plugin.attach_counters(
+    out = plugin.reconcile_counters(
         domoticz_stub.Devices,
         [_counter_update(19, "43.0", True, name="FPGA Power")],
         elapsed_s=3600.0,
@@ -845,12 +896,12 @@ def test_attach_counters_holds_a_reading_above_the_chassis_draw():
     assert out[0].svalue == "43.0;500.0"
 
 
-def test_attach_counters_drops_an_update_whose_previous_value_is_unreadable():
+def test_reconcile_drops_an_update_whose_previous_value_is_unreadable():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
     _seed_counter_device("dellidrac_1_system", 14, "40.0;not-a-number")
     # Writing anything here would reset a counter whose whole contract is that it only climbs.
     assert (
-        plugin.attach_counters(
+        plugin.reconcile_counters(
             domoticz_stub.Devices,
             [_counter_update(14, "36.0", True)],
             elapsed_s=3600.0,

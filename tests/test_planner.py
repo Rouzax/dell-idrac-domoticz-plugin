@@ -194,7 +194,9 @@ def test_psu_power_devices_are_direct_counters():
         assert psu.description
 
 
-def test_energy_counters_off_keeps_the_watt_devices():
+def test_per_component_power_is_always_planned_as_a_counter():
+    """The plan does not depend on any setting. What a device already IS decides what gets
+    written to it, and that is resolved against live Domoticz in plugin.reconcile_counters."""
     parts = _parts("t550")
     parts["metrics"] = _metrics()
     inv = _inventory(parts)
@@ -202,16 +204,15 @@ def test_energy_counters_off_keeps_the_watt_devices():
         planner.plan(
             inventory=inv,
             alloc=planner.assign_units(inv, {}),
-            cfg=_cfg(energy_counters=False),
+            cfg=_cfg(),
             **parts,
         )
     )
-    for unit in (planner.UNIT_POWER,):
-        assert got[unit].type_name == "kWh"  # Server Power ignores the setting
     cpu = got[planner.UNIT_CPU_POWER]
-    assert cpu.type_name == "Usage"
-    assert cpu.counter is False
-    assert cpu.options == {}
+    assert cpu.type_name == "kWh"
+    assert cpu.counter is True
+    assert cpu.options == {"EnergyMeterMode": "0"}
+    assert got[planner.UNIT_POWER].type_name == "kWh"
 
 
 def test_single_socket_plans_one_cpu_temp_and_dual_plans_two():
