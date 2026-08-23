@@ -94,7 +94,7 @@ Where the iDRAC licence allows it, six more devices break system power down by s
 
 Where telemetry reports GPUs, each card also gets a power device and a temperature device.
 
-The six subsystem devices and each GPU power device also report a running kWh total alongside live watts, so they show up in Domoticz's energy report.
+The six subsystem devices and each GPU power device also report a running kWh total alongside live watts, so they show up in Domoticz's energy report. That is true of a device this version of the plugin creates; a device from an earlier version keeps reporting watts only until you recreate it, see [Energy](https://rouzax.github.io/dell-idrac-domoticz-plugin/devices/#energy).
 
 ### Bar graphs
 

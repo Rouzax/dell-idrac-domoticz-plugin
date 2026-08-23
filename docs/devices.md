@@ -319,6 +319,15 @@ The trade-off is that energy accrued while Domoticz is not running is not recove
 
 A component counter carries one further guard: a reading above one and a half times what the whole machine is drawing is not counted, because a component cannot draw more than the chassis it sits in. The counter is held at its last value, and the plugin logs one line per counter per plugin start rather than repeating it on every poll.
 
+!!! note "If you poll less often than every 5 minutes"
+    Domoticz's **Settings > Log History > Only add newly received values to the Log** skips a
+    device from a 5 minute log bucket when it has not reported since the last one. With a poll
+    interval above 5 minutes and that option enabled, roughly every other bucket is skipped, for
+    Server Power and for every other counter this plugin writes. The kWh totals still come out
+    right, because Domoticz takes a counter's daily figure from the first and last reading of the
+    day, but the watt graphs will look gappy. Leave the poll interval at or below 5 minutes if you
+    want an unbroken graph.
+
 ### Why the component counters do not add up to Server Power
 
 Each component counter measures one internal rail. Together they never account for the whole machine, and the shortfall is not a fixed proportion: measured across a fleet of eight servers the subsystem figures covered 74% of the wall draw on a T550, 79% on an R740xd2, 48% on an R440 and 18% on a DSS8440, where the GPUs carry most of the load and no subsystem metric covers them.
