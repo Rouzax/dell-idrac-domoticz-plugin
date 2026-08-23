@@ -1,6 +1,6 @@
 # pyright: reportMissingImports=false, reportUndefinedVariable=false, reportAttributeAccessIssue=false
 """\
-<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.3.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
+<plugin key="dellidrac" name="Dell iDRAC Monitor" author="Rouzax" version="0.4.0" externallink="https://github.com/Rouzax/dell-idrac-domoticz-plugin">
     <description>
         <!-- Inlined as a data URI so no asset has to be web-served from the plugin folder.
              A PNG rather than an inline SVG deliberately: an inline SVG style block is DOCUMENT
@@ -55,9 +55,6 @@
             </param>
             <param field="RichCardText" type="boolean" label="Formatted card text" default="true">
                 <description>Renders the System Health and Power Redundancy cards as a bullet list with a link to the iDRAC, instead of a single line of text. Turn it off to go back to plain single-line text, which is what any dzVents script written before this setting existed will be comparing against. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#formatted-card-text" target="_blank">details</a>).</description>
-            </param>
-            <param field="EnergyCounters" type="boolean" label="Energy counters" default="true">
-                <description>Reports per-component power as kWh counters instead of plain watt gauges, so each one appears in Domoticz's energy report with a total and a cost. Applies to the CPU, memory, storage, fan, PCIe and FPGA power devices, to each power supply and to each GPU. Existing devices are converted in place and keep their name and history. Turn it off to go back to watt gauges (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#energy-counters" target="_blank">details</a>).</description>
             </param>
             <param field="FanBarMax" type="number" label="Fan bar maximum (RPM)" min="0" max="60000" step="500" default="6000" width="100px">
                 <description>Top of the scale on fan bar graphs; 0 turns them off. Redfish reports no maximum fan speed, so it cannot be detected. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#why-the-fan-bar-maximum-is-a-setting" target="_blank">choosing a value</a>).</description>
@@ -545,8 +542,13 @@ def _warn_counter_once(key: str, reason: str, message: str) -> None:
     Domoticz.Error(message)
 
 
-def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
-    """Fill in the energy half of every counter device's sValue.
+def reconcile_counters(devices, updates, elapsed_s, system_watts, peak_w):
+    """Reconcile each per-component power update against the device that actually exists.
+
+    The plan always asks for a kWh counter, because that is what a newly created device becomes.
+    A device that is already a watt gauge stays one: the plugin no longer changes a live
+    device's type (domoticz#6981), so it adapts the write instead. A gauge gets the bare
+    wattage and no EnergyMeterMode, a counter gets the energy half appended.
 
     The previous total is read back off the device itself, so no counter state is persisted and
     a device the user deleted simply starts again from zero. Returns the updates to apply: a
@@ -563,6 +565,12 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
         # family alone is not what identifies a device on the wire.
         dev_id = _state.dev_ids[up.device]
         key = f"{dev_id}:{up.unit}"
+        if not domoticz_api.is_counter(devices, dev_id, up.unit):
+            # A watt gauge. type_name is left alone deliberately: apply_updates only reads it
+            # when CREATING a unit, and this one exists. Clearing the options is what matters,
+            # so a counter setting is never written onto a device that is not one.
+            out.append(dataclasses.replace(up, options={}))
+            continue
         watts = float(up.svalue)
         prev_wh = domoticz_api.read_prev_counter_wh(devices, dev_id, up.unit)
         if prev_wh is None:
@@ -691,7 +699,7 @@ def onHeartbeat():
         gpus=_state.gpus,
         **parts,
     )
-    updates = attach_counters(devices, updates, elapsed_s, system_watts, peak_w)
+    updates = reconcile_counters(devices, updates, elapsed_s, system_watts, peak_w)
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
     # ONE choke point for naming, after the control devices are appended so nothing is missed.
     prefix, suffix = resolve_affixes(cfg, _state, parts["system"])
