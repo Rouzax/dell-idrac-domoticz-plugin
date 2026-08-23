@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **The plugin no longer converts per-component power devices between watt gauges and kWh counters.** Each device's stored type now decides what is written to it: a device this version creates is a `kWh` counter, and a device that is already a watt gauge stays one and keeps receiving a plain wattage. To move an existing watt device to a counter, delete it under **Setup > Devices**; the plugin recreates it as a counter on the next poll, at the cost of its watt history, its idx and its room membership.
+
+  Domoticz does not clear a device's short log when its type changes, and will not: [domoticz/domoticz#6981](https://github.com/domoticz/domoticz/issues/6981). That is what produced the negative Today figure v0.3.0's FAQ documented, and is why this conversion is withdrawn rather than fixed. Installs already running v0.3.0 keep their counters and need no action.
+
+### Removed
+
+- **The Energy counters setting.** With conversion gone, it could only have chosen what newly created devices are, which is no longer a choice: every device the plugin creates is a `kWh` counter.
+
 ## [0.3.0] - 2026-08-22
 
 ### Added
