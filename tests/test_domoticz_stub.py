@@ -40,7 +40,8 @@ def test_update_with_a_typename_remaps_the_numeric_type_and_resets_the_value():
 
 
 def test_an_unmodelled_typename_leaves_the_numeric_type_alone():
-    # Only kWh and Usage are modelled, because they are the only two the plugin converts between.
+    # Only kWh and Usage are modelled, because they are the only two TypeName values the
+    # plugin's own code ever inspects (see domoticz_api.is_counter).
     unit = domoticz_stub.Unit(Name="A", DeviceID="d", Unit=1, TypeName="Alert")
     assert (unit.Type, unit.SubType) == (0, 0)
     unit.Update(TypeName="Alert")

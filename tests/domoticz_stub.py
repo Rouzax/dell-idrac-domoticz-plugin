@@ -4,7 +4,9 @@ import sys
 import types
 
 # TypeName -> (Type, SubType, sValue after a type change), mirroring maptypename in the core
-# (hardware/plugins/PythonObjects.cpp) for the ONLY two names the plugin ever converts between.
+# (hardware/plugins/PythonObjects.cpp) for the only two names the plugin's own code ever tells
+# apart: kWh counters and Usage watt gauges (see domoticz_api.is_counter). The core's remapping
+# applies to every TypeName; these are just the two this test double needs modelled.
 # Numeric values from hardware/hardwaretypes.h: pTypeGeneral 0xF3, sTypeKwh 0x1D,
 # pTypeUsage 0xF8, sTypeElectric 0x01. Every other type name maps to (0, 0), because nothing in
 # the plugin inspects those, and inventing numbers for them would put unverified constants in a
@@ -34,8 +36,8 @@ class Unit:
         self.Unit = Unit
         self.TypeName = TypeName
         # Real CUnitEx exposes Type and SubType as writable members (PythonObjectEx.h), and the
-        # plugin now reads them to decide whether a unit needs converting. A stub without them
-        # cannot fail that code.
+        # plugin reads them to tell whether an existing unit already is a kWh counter
+        # (domoticz_api.is_counter). A stub without them cannot fail that code.
         mapped = TYPE_MAP.get(TypeName)
         self.Type, self.SubType = (mapped[0], mapped[1]) if mapped else (0, 0)
         self.Options = Options or {}

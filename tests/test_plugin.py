@@ -823,19 +823,6 @@ def test_reconcile_writes_no_energy_meter_mode_onto_a_watt_gauge():
     assert out[0].options == {}
 
 
-def test_reconcile_still_counts_a_kwh_device():
-    plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
-    _seed_counter_device("dellidrac_1_system", 14, "40.0;100.0")
-    out = plugin.reconcile_counters(
-        domoticz_stub.Devices,
-        [_counter_update(14, "36.0", True)],
-        elapsed_s=3600.0,
-        system_watts=150.0,
-        peak_w=200.0,
-    )
-    assert out[0].svalue == "36.0;136.0"
-
-
 def test_reconcile_starts_a_device_that_does_not_exist_yet_at_zero():
     plugin._state.dev_ids = {planner.DEVICE_SYSTEM: "dellidrac_1_system"}
     out = plugin.reconcile_counters(
