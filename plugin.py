@@ -545,8 +545,13 @@ def _warn_counter_once(key: str, reason: str, message: str) -> None:
     Domoticz.Error(message)
 
 
-def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
-    """Fill in the energy half of every counter device's sValue.
+def reconcile_counters(devices, updates, elapsed_s, system_watts, peak_w):
+    """Reconcile each per-component power update against the device that actually exists.
+
+    The plan always asks for a kWh counter, because that is what a newly created device becomes.
+    A device that is already a watt gauge stays one: the plugin no longer changes a live
+    device's type (domoticz#6981), so it adapts the write instead. A gauge gets the bare
+    wattage and no EnergyMeterMode, a counter gets the energy half appended.
 
     The previous total is read back off the device itself, so no counter state is persisted and
     a device the user deleted simply starts again from zero. Returns the updates to apply: a
@@ -563,6 +568,12 @@ def attach_counters(devices, updates, elapsed_s, system_watts, peak_w):
         # family alone is not what identifies a device on the wire.
         dev_id = _state.dev_ids[up.device]
         key = f"{dev_id}:{up.unit}"
+        if not domoticz_api.is_counter(devices, dev_id, up.unit):
+            # A watt gauge. type_name is left alone deliberately: apply_updates only reads it
+            # when CREATING a unit, and this one exists. Clearing the options is what matters,
+            # so a counter setting is never written onto a device that is not one.
+            out.append(dataclasses.replace(up, options={}))
+            continue
         watts = float(up.svalue)
         prev_wh = domoticz_api.read_prev_counter_wh(devices, dev_id, up.unit)
         if prev_wh is None:
@@ -691,7 +702,7 @@ def onHeartbeat():
         gpus=_state.gpus,
         **parts,
     )
-    updates = attach_counters(devices, updates, elapsed_s, system_watts, peak_w)
+    updates = reconcile_counters(devices, updates, elapsed_s, system_watts, peak_w)
     updates.extend(control.control_updates(cfg, _state.allowable, parts["chassis"].identify_on))
     # ONE choke point for naming, after the control devices are appended so nothing is missed.
     prefix, suffix = resolve_affixes(cfg, _state, parts["system"])
