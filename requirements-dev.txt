@@ -5,4 +5,4 @@ pytest-cov==7.1.0
 vulture==2.16
 pre-commit==4.6.2
 # docs site (mkdocs) - dev/publishing only, excluded from the plugin package via .gitattributes
-mkdocs-material==9.6.23
+mkdocs-material==9.7.7
