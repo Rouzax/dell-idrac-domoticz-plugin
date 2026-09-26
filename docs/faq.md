@@ -56,6 +56,8 @@ Look for `iDRAC unreachable, backing off` in the log. The wait doubles on each c
 
 If it never recovers, the address, credentials or network path is the problem, not a transient outage.
 
+If the message ends in `HTTP 500 for /redfish/...`, the iDRAC was reached and signed in, but its own web service failed while answering that one request. A reset of the iDRAC usually clears it: **Maintenance > Diagnostics > Reboot iDRAC** in the iDRAC web interface, or `racadm racreset`. This restarts only the management controller; the server keeps running. The legacy `Thermal` resource is known to do this on some iDRAC 9 firmware; since 0.4.1 the plugin reads the temperature and fan thresholds from the `Sensors` collection instead when it happens, logs one line saying so, and keeps polling.
+
 ### The log says the plugin thread ended unexpectedly
 
 ```

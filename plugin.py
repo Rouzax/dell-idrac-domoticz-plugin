@@ -141,6 +141,11 @@ class _PluginState:
         self.backoff = 0.0
         self.backoff_level = 0.0
         self.slow_parts = {}
+        # Whether the slow tier has completed since the last reset. Its own flag, because an
+        # empty threshold map is a legitimate result and must not re-run the tier every poll.
+        self.slow_loaded = False
+        # Latches the "Thermal failed" message to one line per plugin start.
+        self.thermal_fallback_logged = False
         self.alloc = {}
         self.resolved = False
         self.orphaned_reported = ()
@@ -174,6 +179,7 @@ class _PluginState:
             "volumes": [],
             "nics": [],
         }
+        self.slow_loaded = False
         self.allowable = []
 
 
@@ -429,6 +435,21 @@ def resolve_affixes(cfg, state, system) -> tuple:
     return prefix, suffix
 
 
+def _thresholds(client) -> dict:
+    """Thresholds only label bars and descriptions, so a failure here must not fail the poll."""
+    try:
+        return model.parse_thermal_thresholds(client.get(client.thermal))
+    except redfish_client.RedfishError as exc:
+        if not _state.thermal_fallback_logged:
+            _state.thermal_fallback_logged = True
+            Domoticz.Status(f"Thermal resource unavailable, reading thresholds from Sensors: {exc}")
+    try:
+        return model.parse_sensor_thresholds(client.get_expanded(client.sensors))
+    except redfish_client.RedfishError as exc:
+        Domoticz.Debug(f"sensor thresholds unavailable: {exc}")
+        return {}
+
+
 def poll_slow(client, cfg) -> dict:
     system_payload = client.get(client.system)
     reset_action = (system_payload.get("Actions") or {}).get("#ComputerSystem.Reset") or {}
@@ -439,7 +460,7 @@ def poll_slow(client, cfg) -> dict:
         "redundancy": model.parse_redundancy(power_payload),
         "faults": [],
         "dell_attrs": model.parse_dell_attributes(client.get(client.dell_attributes)),
-        "threshold_map": model.parse_thermal_thresholds(client.get(client.thermal)),
+        "threshold_map": _thresholds(client),
         "allowable": reset_action.get("ResetType@Redfish.AllowableValues") or [],
         "psus": [],
         "drives": [],
@@ -620,10 +641,11 @@ def onHeartbeat():
         if not metrics and cfg.setup_telemetry and not _state.telemetry_setup_tried:
             setup_telemetry(_state.client, _state)
         _state.slow_tick += 1
-        if _state.slow_tick >= cfg.slow_every or not _state.slow_parts["threshold_map"]:
+        if _state.slow_tick >= cfg.slow_every or not _state.slow_loaded:
             # Reset only AFTER the call returns. Resetting first means a transient slow-tier
             # failure pushes the next refresh out by a whole extra cycle instead of retrying.
             _state.slow_parts = poll_slow(_state.client, cfg)
+            _state.slow_loaded = True
             _state.slow_tick = 0
     except redfish_client.RedfishError as exc:
         _state.backoff_level = min(

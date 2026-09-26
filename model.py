@@ -186,6 +186,32 @@ def parse_thermal_thresholds(payload: dict) -> dict:
     return out
 
 
+def parse_sensor_thresholds(payload: dict) -> dict:
+    """The same thresholds as parse_thermal_thresholds, read from the expanded Sensors collection.
+
+    Fallback for when the legacy Thermal resource fails: a T550 on iDRAC 7.30.10.50 answered it
+    with a persistent HTTP 500 while Sensors stayed healthy. Redfish calls the non-critical level
+    "Caution". Names match the Thermal resource, which is what the threshold map is keyed on.
+    """
+    out = {}
+    for member in payload.get("Members", []):
+        block = member.get("Thresholds")
+        name = member.get("Name")
+        if not block or not name:
+            continue
+
+        def level(key, block=block):
+            return _number((block.get(key) or {}).get("Reading"))
+
+        out[name] = Threshold(
+            upper_critical=level("UpperCritical"),
+            upper_non_critical=level("UpperCaution"),
+            lower_critical=level("LowerCritical"),
+            lower_non_critical=level("LowerCaution"),
+        )
+    return out
+
+
 def parse_system(payload: dict) -> SystemInfo:
     dell = (payload.get("Oem") or {}).get("Dell") or {}
     dell_system = dell.get("DellSystem") or {}

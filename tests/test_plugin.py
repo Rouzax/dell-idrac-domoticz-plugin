@@ -14,9 +14,16 @@ class FakeClient:
     """Replays fixtures by path. Raises for paths the test did not stub."""
 
     def __init__(
-        self, profile="t550", fail_paths=(), telemetry_available=False, report_name="PowerMetrics"
+        self,
+        profile="t550",
+        fail_paths=(),
+        telemetry_available=False,
+        report_name="PowerMetrics",
+        sensor_thresholds=True,
     ):
         self.profile = profile
+        # Older iDRAC firmware lists sensors without a Thresholds block.
+        self.sensor_thresholds = sensor_thresholds
         self.fail_paths = set(fail_paths)
         self.telemetry_available = telemetry_available
         # Report ids differ by licence and management. "PowerMetrics" is what a Datacenter iDRAC
@@ -79,7 +86,11 @@ class FakeClient:
     def get_expanded(self, path, levels=1):
         self._maybe_fail(path)
         if path == self.sensors:
-            return load(self.profile, "sensors_expanded")
+            payload = load(self.profile, "sensors_expanded")
+            if not self.sensor_thresholds:
+                for member in payload.get("Members", []):
+                    member.pop("Thresholds", None)
+            return payload
         if path == self.ethernet:
             return load(self.profile, "ethernet")
         if path == "/ctrl":
@@ -248,6 +259,41 @@ def test_a_failing_storage_subcall_does_not_cost_the_rest_of_the_slow_tier(start
     units = _units()
     assert plugin.planner.UNIT_HEALTH in units
     assert not [u for u in units if u >= plugin.planner.BLOCK_DRIVES]
+
+
+def test_a_failing_thermal_resource_falls_back_to_sensor_thresholds(started):
+    """Seen live on a T550 (iDRAC 7.30.10.50): the legacy Thermal resource answered HTTP 500
+    GeneralError on every request while every other resource was healthy. It only supplies
+    thresholds, so it must not take the whole poll down with it."""
+    expected = plugin.model.parse_thermal_thresholds(load("t550", "thermal"))
+    started.client = FakeClient(fail_paths=("/Thermal",))
+    _beat_once(started)
+    assert started.backoff == 0.0
+    assert plugin.planner.UNIT_HEALTH in _units()
+    assert started.slow_parts["threshold_map"]["Inlet Temp"] == expected["Inlet Temp"]
+
+
+def test_a_failing_thermal_resource_does_not_rerun_the_slow_tier_every_poll(started):
+    started.client = FakeClient(fail_paths=("/Thermal",), sensor_thresholds=False)
+    _beat_once(started)
+    assert started.slow_parts["threshold_map"] == {}
+    _beat_once(started)
+    assert started.backoff == 0.0
+    # Two fast polls plus the one fallback read: both polls ran, the slow tier only once.
+    assert started.client.calls.count(started.client.sensors) == 3
+    assert started.client.calls.count(started.client.thermal) == 1
+
+
+def test_a_failing_thermal_resource_is_logged_once_per_plugin_start(started):
+    import DomoticzEx
+
+    DomoticzEx._log.clear()
+    started.client = FakeClient(fail_paths=("/Thermal",))
+    _beat_once(started)
+    started.slow_tick = started.cfg.slow_every
+    _beat_once(started)
+    assert started.client.calls.count(started.client.thermal) == 2
+    assert sum("reading thresholds from Sensors" in line for line in DomoticzEx._log) == 1
 
 
 def test_uptime_and_intrusion_devices_are_created(started):

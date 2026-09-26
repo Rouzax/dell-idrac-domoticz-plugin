@@ -30,6 +30,26 @@ def test_parse_thermal_thresholds_keyed_by_name():
     assert th["System Board Fan1"].lower_non_critical == 840
 
 
+def test_sensor_thresholds_agree_with_the_legacy_thermal_resource():
+    """The fallback must be a like-for-like substitute, keyed by the same names."""
+    from_thermal = model.parse_thermal_thresholds(load("t550", "thermal"))
+    from_sensors = model.parse_sensor_thresholds(load("t550", "sensors_expanded"))
+    assert from_thermal
+    for name, threshold in from_thermal.items():
+        assert from_sensors[name] == threshold
+
+
+def test_sensor_thresholds_skip_a_sensor_that_reports_none():
+    """Older firmware lists sensors without a Thresholds block; they get no entry at all."""
+    payload = {
+        "Members": [
+            {"Id": "A", "Name": "A"},
+            {"Id": "B", "Name": "B", "Thresholds": {"UpperCritical": {"Reading": 42}}},
+        ]
+    }
+    assert model.parse_sensor_thresholds(payload) == {"B": model.Threshold(upper_critical=42)}
+
+
 def test_parse_system_reads_state_and_rollups():
     info = model.parse_system(load("t550", "system"))
     assert info.power_state == "On"

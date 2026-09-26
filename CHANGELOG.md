@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A failing `Thermal` resource no longer stops every device from updating.** On a PowerEdge T550 running iDRAC firmware 7.30.10.50, `/redfish/v1/Chassis/System.Embedded.1/Thermal` answered `HTTP 500` on every request while the rest of the iDRAC stayed healthy, and the plugin treated that as the whole iDRAC being unreachable: it logged `iDRAC unreachable, backing off` and wrote nothing. That resource only supplies the warning and critical thresholds behind the temperature and fan descriptions and bar bands, so the plugin now reads the same thresholds from the `Sensors` collection instead, logs one line per plugin start saying so, and carries on. On firmware whose `Sensors` carry no thresholds either, the devices update as normal without threshold bands.
+
 ## [0.4.0] - 2026-08-23
 
 ### Changed
