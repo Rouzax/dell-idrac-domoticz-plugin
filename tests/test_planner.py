@@ -435,7 +435,7 @@ def test_a_vanished_redundancy_group_is_reported_not_left_stale():
     )
     assert got[planner.UNIT_REDUNDANCY].nvalue == health.LEVEL_GREY
     assert got[planner.UNIT_REDUNDANCY].svalue == (
-        "<ul><li>Not reported</li></ul>" '<a href="https://h" target="_blank">Open iDRAC</a>'  # noqa: E501
+        '<ul><li>Not reported</li></ul><a href="https://h" target="_blank">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -848,9 +848,9 @@ def test_blocks_may_share_numbers_across_devices_but_never_within_one():
         ordered = sorted(spans)
         for i, (lo, hi) in enumerate(ordered):
             for other_lo, other_hi in ordered[i + 1 :]:
-                assert (
-                    hi < other_lo or other_hi < lo
-                ), f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
+                assert hi < other_lo or other_hi < lo, (
+                    f"{device}: {lo}-{hi} overlaps {other_lo}-{other_hi}"
+                )
     # And the split is actually being used: at least one number appears on more than one device.
     bases = [base for _, base in planner._BLOCK_LIMITS]
     assert len(bases) > len(set(bases))
@@ -1195,7 +1195,7 @@ def test_an_empty_group_under_a_redundant_policy_still_reads_as_unreported():
         parts["dell_attrs"], redundancy_policy="A/B Grid Redundant"
     )
     assert _redundancy_device(parts).svalue == (
-        "<ul><li>Not reported</li></ul>" '<a href="https://h" target="_blank">Open iDRAC</a>'  # noqa: E501
+        '<ul><li>Not reported</li></ul><a href="https://h" target="_blank">Open iDRAC</a>'  # noqa: E501
     )
 
 
@@ -1235,7 +1235,7 @@ def test_a_supply_that_lost_its_mains_input_reports_redundancy_lost():
     assert device.nvalue == health.LEVEL_RED
     # The failure, not the configured policy: A/B Grid Redundant is no longer being met.
     assert device.svalue == (
-        "<ul><li>Redundancy lost</li></ul>" '<a href="https://h" target="_blank">Open iDRAC</a>'  # noqa: E501
+        '<ul><li>Redundancy lost</li></ul><a href="https://h" target="_blank">Open iDRAC</a>'  # noqa: E501
     )
 
 

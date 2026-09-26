@@ -25,7 +25,7 @@ def test_a_link_points_at_the_idrac_over_https():
     """The scheme is always https: redfish_client builds every request that way whatever the
     VerifyTLS setting says, so the configured address never carries one."""
     assert cardtext.idrac_link("10.0.0.5") == (
-        '<a href="https://10.0.0.5" target="_blank"' ">Open iDRAC</a>"
+        '<a href="https://10.0.0.5" target="_blank">Open iDRAC</a>'
     )
 
 
