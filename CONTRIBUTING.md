@@ -56,7 +56,7 @@ Never commit the local literals file. It is gitignored and a test asserts it is 
 
 ## Docs
 
-The site under `docs/` is built with mkdocs-material and published to GitHub Pages by `.github/workflows/docs.yml` on every push to `main` that touches `docs/` or `mkdocs.yml`.
+The site under `docs/` is built with mkdocs-material and published to GitHub Pages by `.github/workflows/docs.yml` on every push to `main` that touches `docs/`, `mkdocs.yml` or `requirements-dev.txt`, which holds the mkdocs-material pin the workflow installs.
 
 Preview locally:
 
