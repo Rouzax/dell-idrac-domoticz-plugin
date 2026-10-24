@@ -2,16 +2,16 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-10-24
+
+### Added
+
+- **An Update check setting**, on by default (`Automatic`). Once a day the plugin asks GitHub whether a newer version has been released, and announces each new version once: a Status line in the Domoticz log and one notification through every Domoticz notification system, linking to the release page. The notification needs Domoticz 2026.1 or newer; older builds get the log line only. `Automatic` reports betas only while you run a beta, `Stable releases only` and `Including betas` fix the choice, and `Off` stops the check. This is the plugin's first connection to anything other than your iDRAC: it reads the public release list from `api.github.com` and sends nothing about your server. A failed check is logged only at debug level and never affects monitoring. On an existing install the setting shows blank on the hardware page until you pick a value and press Update; blank means `Automatic`. Each hardware entry checks on its own, so with several iDRAC entries leave the check on for one and set the others to `Off`, or every release is announced once per entry. See [Update check](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#update-check).
 
 ### Fixed
 
 - **Debug Level `Basic` now adds detail to the log.** It used to log exactly what `None` logs, although the setting promised more. `Basic` now shows the plugin's own diagnostic lines, such as a resource it could not read or a fallback it took; `Verbose` keeps showing those plus Domoticz's plugin framework tracing, as before.
 - **The plugin no longer stops updating every device when Domoticz refuses to create one.** With **Accept new Hardware Devices** switched off in the Domoticz settings, Domoticz declines to create a device the plugin has not made yet, and the plugin then failed every poll with a `KeyError`, so even the devices that already existed stopped updating. It now skips the device Domoticz refused and keeps the rest current; Domoticz's own log line says which device it declined.
-
-### Added
-
-- **An Update check setting**, on by default (`Automatic`). Once a day the plugin asks GitHub whether a newer version has been released, and announces each new version once: a Status line in the Domoticz log and one notification through every Domoticz notification system, linking to the release page. The notification needs Domoticz 2026.1 or newer; older builds get the log line only. `Automatic` reports betas only while you run a beta, `Stable releases only` and `Including betas` fix the choice, and `Off` stops the check. This is the plugin's first connection to anything other than your iDRAC: it reads the public release list from `api.github.com` and sends nothing about your server. A failed check is logged only at debug level and never affects monitoring. On an existing install the setting shows blank on the hardware page until you pick a value and press Update; blank means `Automatic`. Each hardware entry checks on its own, so with several iDRAC entries leave the check on for one and set the others to `Off`, or every release is announced once per entry. See [Update check](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#update-check).
 
 ## [0.4.1] - 2026-09-26
 
@@ -129,6 +129,7 @@ First release.
 - Turning `Allow Control` back off leaves the two control devices in place, inert but visible.
 - The iDRAC cannot see UPS battery health, charge or runtime. Add NUT or apcupsd alongside for that.
 
+[0.5.0]: https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.5.0
 [0.4.1]: https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.4.1
 [0.4.0]: https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.4.0
 [0.3.0]: https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.3.0
