@@ -6,6 +6,7 @@ import control
 import planner
 import plugin
 import redfish_client
+import update_check
 from tests import domoticz_stub
 from tests.fixture_loader import load
 
@@ -956,3 +957,144 @@ def test_reconcile_drops_an_update_whose_previous_value_is_unreadable():
         )
         == []
     )
+
+
+# -- update check -------------------------------------------------------------------------------
+
+
+class FakeChecker:
+    """Stands in for update_check.UpdateChecker: records how it was made, never touches the
+    network, and lets a test post results the way the real thread would."""
+
+    made = []
+
+    def __init__(self, current, channel, results):
+        self.current, self.channel, self.results = current, channel, results
+        self.started = self.stopped = False
+        FakeChecker.made.append(self)
+
+    def start(self):
+        self.started = True
+
+    def stop(self):
+        self.stopped = True
+
+
+@pytest.fixture
+def checker_start(monkeypatch):
+    FakeChecker.made = []
+    monkeypatch.setattr(plugin, "_new_update_checker", FakeChecker)
+    monkeypatch.setattr(plugin, "Devices", domoticz_stub.Devices, raising=False)
+
+    def start(**overrides):
+        params = {**_PARAMS, "Version": "0.4.1", **overrides}
+        monkeypatch.setattr(plugin, "Parameters", params, raising=False)
+        plugin.onStart()
+        plugin._state.client = FakeClient()
+        return FakeChecker.made[-1] if FakeChecker.made else None
+
+    return start
+
+
+@pytest.fixture
+def sent(domoticz, monkeypatch):
+    calls = []
+    monkeypatch.setattr(domoticz, "SendNotification", lambda *a: calls.append(a), raising=False)
+    return calls
+
+
+def _post(**result):
+    plugin._state.updates.put_nowait(update_check.UpdateResult(**result))
+
+
+def test_the_update_check_starts_with_the_running_version_and_channel(checker_start):
+    checker = checker_start(UpdateCheck="stable")
+    assert checker.started
+    assert (checker.current, checker.channel) == ("0.4.1", "stable")
+
+
+@pytest.mark.parametrize("overrides", [{"UpdateCheck": "off"}, {"Version": ""}])
+def test_no_update_check_runs_when_off_or_without_a_version(checker_start, overrides):
+    assert checker_start(**overrides) is None
+
+
+def test_stopping_the_plugin_stops_the_check(checker_start):
+    checker = checker_start()
+    plugin.onStop()
+    assert checker.stopped
+
+
+def test_a_restart_stops_the_previous_check(checker_start):
+    first = checker_start()
+    second = checker_start()
+    assert first.stopped and not second.stopped
+
+
+def test_a_new_version_is_announced_once_in_the_log_and_to_every_notifier(
+    checker_start, domoticz, sent
+):
+    checker_start()
+    url = "https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.5.0"
+    _post(version="0.5.0", url=url)
+    plugin.onHeartbeat()
+    _post(version="0.5.0", url=url)
+    plugin.onHeartbeat()
+    assert len(sent) == 1
+    subject, body, priority, sound, image, subsystem = sent[0]
+    assert "0.5.0" in subject and "0.4.1" in body and url in body
+    assert (priority, sound, image, subsystem) == (0, "", "", "")
+    assert sum("0.5.0 is available" in line for line in domoticz._log) == 1
+
+
+def test_an_announced_version_is_not_repeated_after_a_restart(checker_start, sent):
+    checker_start()
+    _post(version="0.5.0", url="u")
+    plugin.onHeartbeat()
+    checker_start()
+    _post(version="0.5.0", url="u")
+    plugin.onHeartbeat()
+    _post(version="0.5.1", url="u")
+    plugin.onHeartbeat()
+    assert [call[0] for call in sent] == [
+        "Dell iDRAC Monitor 0.5.0 is available",
+        "Dell iDRAC Monitor 0.5.1 is available",
+    ]
+
+
+def test_a_failed_check_is_debug_only(checker_start, domoticz, sent):
+    checker_start()
+    _post(version=None, error="URLError")
+    plugin.onHeartbeat()
+    assert sent == []
+    assert not any("available" in line for line in domoticz._log)
+
+
+def test_without_send_notification_the_version_is_still_logged_and_remembered(
+    checker_start, domoticz
+):
+    assert not hasattr(domoticz, "SendNotification")
+    checker_start()
+    _post(version="0.5.0", url="u")
+    plugin.onHeartbeat()
+    assert any("0.5.0 is available" in line for line in domoticz._log)
+    assert plugin.domoticz_api.load_state().update_notified == "0.5.0"
+
+
+def test_an_announcement_is_not_held_back_by_an_unreachable_idrac(checker_start, sent):
+    checker_start()
+    plugin._state.backoff = 900.0
+    _post(version="0.5.0", url="u")
+    plugin.onHeartbeat()
+    assert len(sent) == 1
+
+
+def test_a_failing_announcement_never_stops_polling(checker_start, monkeypatch):
+    checker_start()
+
+    def broken():
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(plugin, "_announce_updates", broken)
+    plugin._state.beat = 100
+    plugin.onHeartbeat()
+    assert plugin._state.client.calls

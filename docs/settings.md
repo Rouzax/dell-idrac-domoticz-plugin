@@ -176,6 +176,7 @@ This is inert while **Allow Control** is `No`: with control off, no control devi
 | **Verify TLS certificate** | off | | Off because an iDRAC ships a self-signed certificate. While off, traffic is encrypted but **not authenticated**. See [Security](security.md). |
 | **Configure iDRAC telemetry** | off | | Switches Dell telemetry on so per-component power devices can appear. The only setting that writes configuration to your server. See below. |
 | **Request Timeout (s)** | 30 | 5 to 120, step 5 | Per-request timeout. |
+| **Update check** | `Automatic` | | Once a day, asks GitHub whether a newer version exists and announces it. `Off` stops it. See below. |
 | **Debug Level** | `None` | | `Basic` and `Verbose` add detail to the Domoticz log. The password is never logged at any level. |
 
 ### Configure iDRAC telemetry
@@ -197,6 +198,26 @@ does not allow it: ...
 ```
 
 Leave this off if OpenManage manages the server, or if you would rather set the two attributes yourself from the iDRAC interface or with `racadm`.
+
+### Update check
+
+Once a day the plugin asks GitHub whether a newer version of the plugin has been released. When one has, it tells you once:
+
+- a Status line in the Domoticz log, for example `Status: Dell iDRAC Monitor: version 0.6.0 is available (running 0.5.0): https://github.com/Rouzax/dell-idrac-domoticz-plugin/releases/tag/v0.6.0`
+- one notification through every notification system you have set up in Domoticz (email, Telegram, Pushover, the browser, and so on), with the release page as the link. This part needs Domoticz 2026.1 or newer; on an older build you get the log line only.
+
+Each version is announced once, and that is remembered across restarts. Nothing is installed or changed: updating is still up to you, the same way you installed the plugin.
+
+| Choice | What it reports |
+|---|---|
+| `Automatic` | Stable releases while you run a stable version, and betas too while you run a beta. |
+| `Stable releases only` | Stable releases, never betas. |
+| `Including betas` | Every release, betas included. |
+| `Off` | Nothing. The plugin never contacts GitHub. |
+
+**Monitoring more than one server?** Each hardware entry runs its own check and remembers on its own what it has announced, so with three iDRAC entries a new release arrives as three identical notifications. Leave **Update check** on for one entry and set the others to `Off`.
+
+The first check runs five minutes after the plugin starts, then every 24 hours. A check that fails, for example because Domoticz has no internet access, is noted only in the debug log and tried again the next day; it never affects monitoring. What the request contains is described under [Security](security.md#what-the-plugin-sends-and-where).
 
 !!! danger "Do not lower Request Timeout much"
     A recovering iDRAC can take several seconds to answer its first request after a restart, sometimes the better part of ten. A short timeout turns a normal recovery into a failed poll and starts a backoff you did not need. The 30 second default is deliberate.

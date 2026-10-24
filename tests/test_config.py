@@ -1,3 +1,5 @@
+import pytest
+
 import config
 
 
@@ -127,3 +129,34 @@ def test_an_unrecognised_formatted_card_text_value_keeps_the_default():
     cfg = config.parse_config({"RichCardText": "perhaps"})
     assert cfg.rich_card_text is True
     assert any("RichCardText" in note for note in cfg.warnings)
+
+
+def test_update_check_defaults_to_automatic():
+    cfg = config.parse_config({})
+    assert cfg.update_check == "auto"
+    assert cfg.plugin_version == ""
+
+
+@pytest.mark.parametrize("value", ["auto", "stable", "beta", "off"])
+def test_every_update_check_choice_is_accepted(value):
+    cfg = config.parse_config({"UpdateCheck": value})
+    assert cfg.update_check == value
+    assert cfg.warnings == ()
+
+
+def test_an_unknown_update_check_choice_falls_back_to_automatic_and_says_so():
+    cfg = config.parse_config({"UpdateCheck": "nightly"})
+    assert cfg.update_check == "auto"
+    assert any("UpdateCheck" in note for note in cfg.warnings)
+
+
+def test_the_running_version_comes_from_the_manifest_version_domoticz_passes():
+    assert config.parse_config({"Version": " 0.4.1 "}).plugin_version == "0.4.1"
+
+
+def test_a_blank_update_check_means_automatic_without_a_note():
+    """An install upgrading from a version without this setting has no stored value, and
+    Domoticz shows the select blank; saving the form as it stands sends an empty value."""
+    cfg = config.parse_config({"UpdateCheck": ""})
+    assert cfg.update_check == "auto"
+    assert cfg.warnings == ()

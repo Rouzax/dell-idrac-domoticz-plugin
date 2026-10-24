@@ -60,6 +60,7 @@ Devices appear after the first successful poll, which is one poll interval later
 | Verify TLS certificate | off | See [Security](#security). |
 | Configure iDRAC telemetry | off | The one setting that writes configuration to your server, to unlock per-component power. See [Per-component power](#per-component-power-needs-a-licence). |
 | Request Timeout (s) | 30 | Per-request timeout, 5 to 120. Do not lower it much; see [Troubleshooting](#troubleshooting). |
+| Update check | Automatic | Once a day, asks GitHub whether a newer version exists and announces each new one once, in the log and through your Domoticz notifications. `Automatic` reports betas only while you run a beta; `Off` stops it. See [Update check](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#update-check). |
 | Debug Level | None | `Basic` and `Verbose` add detail to the Domoticz log. The password is never logged at any level. |
 
 Changing a setting restarts the plugin. Your devices and their history are kept.
@@ -129,6 +130,7 @@ Two things worth knowing before you enable control:
 - **The iDRAC password is stored in cleartext in the Domoticz database.** This is how Domoticz stores hardware credentials generally, not something this plugin chose. Treat your Domoticz database and its backups as secrets, and prefer a dedicated read-only iDRAC account over an administrator one.
 - The password is never written to the Domoticz log at any debug level. Error messages are redacted before they are logged.
 - **Verify TLS certificate is off by default.** An iDRAC ships with a self-signed certificate, so verification would fail on a stock machine. While it is off the connection is still encrypted but it is **not authenticated**, which means a host on your network could impersonate the iDRAC. If you have installed a certificate the Domoticz machine trusts, turn verification on.
+- Besides the iDRAC, the plugin contacts one other host: `api.github.com`, once a day, for the update check. It reads the public release list and sends nothing about your server. Set **Update check** to `Off` and it is never contacted.
 - The plugin writes to your server in exactly two situations, both opt-in: the power actions and identify LED behind **Allow Control**, and one telemetry configuration write behind **Configure iDRAC telemetry**. With both off, every request is a `GET`.
 
 ## Troubleshooting

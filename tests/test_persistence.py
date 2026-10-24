@@ -12,6 +12,7 @@ def test_round_trip_preserves_every_field():
         base_wh={"1": 12.5},
         control_shown=True,
         energy_scale=1.0,
+        update_notified="0.5.0",
     )
     restored = persistence.loads(persistence.dumps(state))
     assert restored == state
@@ -88,3 +89,15 @@ def test_a_payload_written_before_auto_descriptions_existed_still_loads():
     state = persistence.loads(old)
     assert state.auto_descriptions == {}
     assert state.unit_alloc == {"PSU.Slot.1": 5}
+
+
+def test_the_announced_version_round_trips():
+    state = persistence.PluginState(update_notified="0.5.0")
+    assert persistence.loads(persistence.dumps(state)).update_notified == "0.5.0"
+
+
+@pytest.mark.parametrize("stored", ["", '"update_notified":5,', '"update_notified":null,'])
+def test_a_missing_or_wrong_typed_announced_version_reads_as_none_announced(stored):
+    state = persistence.loads('{"version":1,' + stored + '"unit_alloc":{"a":1}}')
+    assert state.update_notified == ""
+    assert state.unit_alloc == {"a": 1}

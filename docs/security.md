@@ -27,9 +27,12 @@ If you have installed a certificate that the machine running Domoticz trusts, tu
 
 ## What the plugin sends and where
 
-The plugin talks to exactly one host: the address you configure. It uses HTTP Basic authentication over HTTPS, which is what Dell's own tooling does.
+The plugin talks to two hosts:
 
-It makes no other outbound connections. There is no telemetry back to anyone, no update check and no third-party service.
+- **The iDRAC**, at the address you configure, for everything it monitors and controls. It uses HTTP Basic authentication over HTTPS, which is what Dell's own tooling does.
+- **`api.github.com`**, once a day, for the [update check](settings.md#update-check). It reads the public list of this plugin's releases over HTTPS and sends nothing about your server: no address, no credentials, no hardware details. The only identifying detail in the request is the plugin's own version, in its User-Agent header. Set **Update check** to `Off` and this connection is never made.
+
+There is no telemetry back to anyone and no other third-party service. On an isolated management network where Domoticz cannot reach the internet, either set **Update check** to `Off` or leave it: a check that cannot connect is noted only in the debug log and retried a day later, and monitoring is not affected.
 
 ## What it reads and writes
 

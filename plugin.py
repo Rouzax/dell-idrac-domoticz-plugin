@@ -83,6 +83,15 @@
             <param field="RequestTimeout" type="number" label="Request Timeout (s)" min="5" max="120" step="5" default="30" width="100px">
                 <description>Per-request timeout. Do not lower it much: a recovering iDRAC can take several seconds to answer its first request, so a short timeout turns a normal recovery into a failed poll. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#advanced" target="_blank">why 30 is the default</a>).</description>
             </param>
+            <param field="UpdateCheck" label="Update check" width="220px">
+                <description>Once a day the plugin asks GitHub whether a newer version exists, and announces each new version once, in the log and through every Domoticz notification system. Automatic reports betas only while you run a beta. It sends nothing about your server; Off stops the check. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#update-check" target="_blank">details</a>).</description>
+                <options>
+                    <option label="Automatic" value="auto" default="true"/>
+                    <option label="Stable releases only" value="stable"/>
+                    <option label="Including betas" value="beta"/>
+                    <option label="Off" value="off"/>
+                </options>
+            </param>
             <param field="DebugLevel" label="Debug Level" width="150px">
                 <description>Logging verbosity. The iDRAC password is never written to the log at any level. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/faq/" target="_blank">troubleshooting by symptom</a>).</description>
                 <options>
@@ -97,6 +106,7 @@
 """
 
 import dataclasses
+import queue
 import time
 
 import DomoticzEx as Domoticz
@@ -109,10 +119,12 @@ import energy
 import model
 import planner
 import redfish_client
+import update_check
 
 _BACKOFF_INITIAL = 20.0
 _BACKOFF_CAP = 900.0
 _HEARTBEAT_SECONDS = 10
+REPOSITORY = "Rouzax/dell-idrac-domoticz-plugin"
 
 
 class _PluginState:
@@ -165,6 +177,9 @@ class _PluginState:
         # one reason firing first does not permanently silence a different reason on the same
         # device.
         self.counter_warned = set()
+        # Update check: its thread posts here; read on the heartbeat (update_check.py).
+        self.updates = queue.Queue()
+        self.checker = None
         self.reset_slow()
 
     def reset_slow(self):
@@ -190,8 +205,59 @@ def _devices():
     return globals().get("Devices")
 
 
+def _new_update_checker(current: str, channel: str, results: queue.Queue):
+    return update_check.UpdateChecker(
+        REPOSITORY, current, channel, results, user_agent=f"dellidrac/{current} update-check"
+    )
+
+
+def _start_update_check() -> None:
+    cfg = _state.cfg
+    # Domoticz passes the manifest version; without it there is nothing to compare against.
+    if cfg.update_check == "off" or not cfg.plugin_version:
+        return
+    _state.checker = _new_update_checker(cfg.plugin_version, cfg.update_check, _state.updates)
+    _state.checker.start()
+
+
+def _announce_updates() -> None:
+    """Announce each newer version once: a log line and one notification through every
+    notification system Domoticz has (an empty subsystem), the browser included."""
+    while True:
+        try:
+            result = _state.updates.get_nowait()
+        except queue.Empty:
+            return
+        if result.error:
+            Domoticz.Debug(f"update check failed: {result.error}")
+            continue
+        saved = domoticz_api.load_state()
+        if result.version is None or result.version == saved.update_notified:
+            continue
+        current = _state.cfg.plugin_version
+        Domoticz.Status(f"version {result.version} is available (running {current}): {result.url}")
+        # Domoticz before 2026.1 gives plugins no SendNotification; the log line still stands.
+        send = getattr(Domoticz, "SendNotification", None)
+        if send is not None:
+            try:
+                send(
+                    f"Dell iDRAC Monitor {result.version} is available",
+                    f"You run {current}. What changed and how to update: {result.url}",
+                    0,
+                    "",
+                    "",
+                    "",
+                )
+            except Exception as exc:
+                Domoticz.Debug(f"update notification failed: {type(exc).__name__}")
+        saved.update_notified = result.version
+        domoticz_api.save_state(saved)
+
+
 def onStart():
     global _state
+    if _state.checker is not None:
+        _state.checker.stop()
     _state = _PluginState()
     _state.cfg = config.parse_config(Parameters)
     if _state.cfg.debug_level >= 2:
@@ -219,10 +285,15 @@ def onStart():
     saved = domoticz_api.load_state()
     _state.alloc = dict(saved.unit_alloc)
     Domoticz.Heartbeat(_HEARTBEAT_SECONDS)
+    # A thread, not I/O: its first request is minutes away, so onStart still blocks on nothing.
+    _start_update_check()
     Domoticz.Status(f"Dell iDRAC Monitor started for {_state.cfg.address}")
 
 
 def onStop():
+    # Not joined: a daemon thread, and a check in flight may take its full timeout.
+    if _state.checker is not None:
+        _state.checker.stop()
     Domoticz.Status("Dell iDRAC Monitor stopped")
 
 
@@ -619,6 +690,12 @@ def onHeartbeat():
     cfg = _state.cfg
     if cfg is None:
         return
+    # Before the backoff and poll-interval returns, and on its own guard: onHeartbeat catches
+    # only RedfishError below, so anything escaping here would otherwise stop every poll.
+    try:
+        _announce_updates()
+    except Exception as exc:
+        Domoticz.Debug(f"update announcement failed: {type(exc).__name__}")
     _state.beat += 1
     if _state.backoff > 0:
         _state.backoff -= _HEARTBEAT_SECONDS

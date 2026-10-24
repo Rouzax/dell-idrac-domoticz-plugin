@@ -23,6 +23,7 @@ If you have one, a report saying it worked is as useful as one saying it did not
 - Dell PowerEdge with an iDRAC that speaks Redfish, built for iDRAC 9 and 10.
 - Domoticz with the Python plugin system enabled, Python 3.11 or newer.
 - Standard library only. No third-party runtime dependencies.
+- [Update check](settings.md#update-check) notifications through Domoticz's notification systems need Domoticz 2026.1 or newer. On an older build the announcement appears in the log only.
 - The coloured [bar graphs](devices.md#bar-graphs) additionally need a Domoticz build from 19 August 2026 or later. Everything else works on any Domoticz with plugin support.
 
 ## Contributing

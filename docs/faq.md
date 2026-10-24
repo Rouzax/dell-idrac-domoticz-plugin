@@ -58,6 +58,22 @@ If it never recovers, the address, credentials or network path is the problem, n
 
 If the message ends in `HTTP 500 for /redfish/...`, the iDRAC was reached and signed in, but its own web service failed while answering that one request. A reset of the iDRAC usually clears it: **Maintenance > Diagnostics > Reboot iDRAC** in the iDRAC web interface, or `racadm racreset`. This restarts only the management controller; the server keeps running. The legacy `Thermal` resource is known to do this on some iDRAC 9 firmware; since 0.4.1 the plugin reads the temperature and fan thresholds from the `Sensors` collection instead when it happens, logs one line saying so, and keeps polling.
 
+### I got a notification that a new version is available
+
+That is the [update check](settings.md#update-check). Open the link in the notification: the release page says what changed and whether anything on your devices changes. Then update the way you installed, as described under [Updating](install.md#updating). The plugin never installs anything itself.
+
+Each version is announced once, so the notification will not repeat for the same release. To skip betas, set **Update check** to `Stable releases only`; to stop the notifications altogether, set it to `Off`.
+
+If the same notification arrived several times at once, you have several iDRAC hardware entries and each checks on its own. Set **Update check** to `Off` on all but one of them.
+
+### The debug log says the update check failed
+
+```
+Debug: Dell iDRAC Monitor: update check failed: URLError
+```
+
+This line only appears with **Debug Level** set to `Verbose`. It means Domoticz could not reach `api.github.com`, usually because it has no internet access, or DNS, a proxy or a firewall is in the way. It is harmless: monitoring is not affected, and the check simply tries again a day later. On a network where Domoticz is deliberately kept offline, set **Update check** to `Off` and the plugin never tries.
+
 ### The log says the plugin thread ended unexpectedly
 
 ```

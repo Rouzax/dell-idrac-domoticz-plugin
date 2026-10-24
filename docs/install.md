@@ -106,6 +106,8 @@ which tells you the address, credentials or network path needs attention. See [T
 
 ## Updating
 
+You do not have to watch for new versions: the plugin checks once a day and tells you, in the log and through your Domoticz notifications, when one is out. See [Update check](settings.md#update-check).
+
 If you installed from the `dist` branch:
 
 ```bash
