@@ -59,6 +59,23 @@ def test_allow_create_false_does_not_create():
     assert "dellidrac_1" not in domoticz_stub.Devices
 
 
+def test_a_refused_creation_is_skipped_and_the_rest_still_update(monkeypatch):
+    """With "Accept new Hardware Devices" off, Domoticz's Create() inserts nothing. The plugin
+    must carry on with the units that do exist instead of raising on the missing one."""
+    domoticz_api.apply_updates(domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1)], {})
+    monkeypatch.setattr(domoticz_stub.Unit, "Create", lambda self: None)
+    names, _, _ = domoticz_api.apply_updates(
+        domoticz_stub.Devices,
+        _ids("dellidrac_1"),
+        [_update(1, svalue="Critical"), _update(2, name="New")],
+        {},
+    )
+    units = domoticz_stub.Devices["dellidrac_1"].Units
+    assert 2 not in units
+    assert units[1].sValue == "Critical"
+    assert domoticz_api.name_key("dellidrac_1", 2) not in names
+
+
 def test_existing_unit_gets_new_values():
     domoticz_api.apply_updates(
         domoticz_stub.Devices, _ids("dellidrac_1"), [_update(1, svalue="OK")], {}

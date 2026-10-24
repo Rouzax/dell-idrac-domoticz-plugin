@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on 
 ### Fixed
 
 - **Debug Level `Basic` now adds detail to the log.** It used to log exactly what `None` logs, although the setting promised more. `Basic` now shows the plugin's own diagnostic lines, such as a resource it could not read or a fallback it took; `Verbose` keeps showing those plus Domoticz's plugin framework tracing, as before.
+- **The plugin no longer stops updating every device when Domoticz refuses to create one.** With **Accept new Hardware Devices** switched off in the Domoticz settings, Domoticz declines to create a device the plugin has not made yet, and the plugin then failed every poll with a `KeyError`, so even the devices that already existed stopped updating. It now skips the device Domoticz refused and keeps the rest current; Domoticz's own log line says which device it declined.
 
 ### Added
 
