@@ -69,10 +69,10 @@ If the same notification arrived several times at once, you have several iDRAC h
 ### The debug log says the update check failed
 
 ```
-Debug: Dell iDRAC Monitor: update check failed: URLError
+Dell iDRAC Monitor: update check failed: URLError
 ```
 
-This line only appears with **Debug Level** set to `Verbose`. It means Domoticz could not reach `api.github.com`, usually because it has no internet access, or DNS, a proxy or a firewall is in the way. It is harmless: monitoring is not affected, and the check simply tries again a day later. On a network where Domoticz is deliberately kept offline, set **Update check** to `Off` and the plugin never tries.
+This line only appears with **Debug Level** set to `Basic` or `Verbose`, and is written at Info level, without a `Debug:` prefix. It means Domoticz could not reach `api.github.com`, usually because it has no internet access, or DNS, a proxy or a firewall is in the way. It is harmless: monitoring is not affected, and the check simply tries again a day later. On a network where Domoticz is deliberately kept offline, set **Update check** to `Off` and the plugin never tries.
 
 ### The log says the plugin thread ended unexpectedly
 

@@ -1098,3 +1098,14 @@ def test_a_failing_announcement_never_stops_polling(checker_start, monkeypatch):
     plugin._state.beat = 100
     plugin.onHeartbeat()
     assert plugin._state.client.calls
+
+
+@pytest.mark.parametrize(("level", "mask"), [("0", None), ("1", 2), ("2", 1)])
+def test_each_debug_level_sets_its_own_domoticz_debug_mask(monkeypatch, domoticz, level, mask):
+    """Basic is PDM_PYTHON (the plugin's own Debug lines); Verbose is 1, which Domoticz maps to
+    PDM_ALL. None leaves the mask alone, so the stub's value stays unset."""
+    monkeypatch.setattr(domoticz, "_debugging", None, raising=False)
+    monkeypatch.setattr(plugin, "Parameters", {**_PARAMS, "DebugLevel": level}, raising=False)
+    monkeypatch.setattr(plugin, "Devices", domoticz_stub.Devices, raising=False)
+    plugin.onStart()
+    assert domoticz._debugging == mask

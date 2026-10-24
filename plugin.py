@@ -93,7 +93,7 @@
                 </options>
             </param>
             <param field="DebugLevel" label="Debug Level" width="150px">
-                <description>Logging verbosity. The iDRAC password is never written to the log at any level. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/faq/" target="_blank">troubleshooting by symptom</a>).</description>
+                <description>Basic adds the plugin's own diagnostic lines to the log; Verbose also lets Domoticz trace its plugin framework, which it writes only with its own Python debug logging on. The iDRAC password is never written to the log at any level. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/faq/" target="_blank">troubleshooting by symptom</a>).</description>
                 <options>
                     <option label="None" value="0" default="true"/>
                     <option label="Basic" value="1"/>
@@ -124,6 +124,10 @@ import update_check
 _BACKOFF_INITIAL = 20.0
 _BACKOFF_CAP = 900.0
 _HEARTBEAT_SECONDS = 10
+# Domoticz.Debugging() masks (hardware/plugins/Plugins.h). Basic is the plugin's own Debug lines
+# only; Verbose adds the framework's device, connection and queue tracing. Domoticz maps 1 to
+# PDM_ALL, the value plugins have always passed, so it stays the safest choice for "everything".
+_DEBUG_MASKS = {1: 2, 2: 1}
 REPOSITORY = "Rouzax/dell-idrac-domoticz-plugin"
 
 
@@ -260,8 +264,8 @@ def onStart():
         _state.checker.stop()
     _state = _PluginState()
     _state.cfg = config.parse_config(Parameters)
-    if _state.cfg.debug_level >= 2:
-        Domoticz.Debugging(1)
+    if _state.cfg.debug_level in _DEBUG_MASKS:
+        Domoticz.Debugging(_DEBUG_MASKS[_state.cfg.debug_level])
     _state.dev_ids = {
         family: domoticz_api.device_id(Parameters["HardwareID"], family)
         for family in planner.DEVICE_FAMILIES

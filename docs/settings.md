@@ -177,7 +177,7 @@ This is inert while **Allow Control** is `No`: with control off, no control devi
 | **Configure iDRAC telemetry** | off | | Switches Dell telemetry on so per-component power devices can appear. The only setting that writes configuration to your server. See below. |
 | **Request Timeout (s)** | 30 | 5 to 120, step 5 | Per-request timeout. |
 | **Update check** | `Automatic` | | Once a day, asks GitHub whether a newer version exists and announces it. `Off` stops it. See below. |
-| **Debug Level** | `None` | | `Basic` and `Verbose` add detail to the Domoticz log. The password is never logged at any level. |
+| **Debug Level** | `None` | | `Basic` adds the plugin's own diagnostic lines to the Domoticz log, such as a resource it could not read or a fallback it took. They are written at Info level, so the hardware's **Log Level** must include Info, as it does by default. `Verbose` adds the same lines and also lets Domoticz trace the plugin framework itself (every heartbeat, queue message and lock), which Domoticz only writes while its own debug logging for Python is on (the `-debuglevel python` start-up option); without that, `Verbose` logs the same as `Basic`. The password is never logged at any level. |
 
 ### Configure iDRAC telemetry
 

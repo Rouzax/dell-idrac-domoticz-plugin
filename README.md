@@ -61,7 +61,7 @@ Devices appear after the first successful poll, which is one poll interval later
 | Configure iDRAC telemetry | off | The one setting that writes configuration to your server, to unlock per-component power. See [Per-component power](#per-component-power-needs-a-licence). |
 | Request Timeout (s) | 30 | Per-request timeout, 5 to 120. Do not lower it much; see [Troubleshooting](#troubleshooting). |
 | Update check | Automatic | Once a day, asks GitHub whether a newer version exists and announces each new one once, in the log and through your Domoticz notifications. `Automatic` reports betas only while you run a beta; `Off` stops it. See [Update check](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#update-check). |
-| Debug Level | None | `Basic` and `Verbose` add detail to the Domoticz log. The password is never logged at any level. |
+| Debug Level | None | `Basic` adds the plugin's own diagnostic lines to the Domoticz log (needs the hardware's Info log level, on by default). `Verbose` also lets Domoticz trace its plugin framework, which it only writes with its own Python debug logging on. The password is never logged at any level. |
 
 Changing a setting restarts the plugin. Your devices and their history are kept.
 

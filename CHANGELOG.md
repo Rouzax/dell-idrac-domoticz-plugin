@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Fixed
+
+- **Debug Level `Basic` now adds detail to the log.** It used to log exactly what `None` logs, although the setting promised more. `Basic` now shows the plugin's own diagnostic lines, such as a resource it could not read or a fallback it took; `Verbose` keeps showing those plus Domoticz's plugin framework tracing, as before.
+
 ### Added
 
 - **An Update check setting**, on by default (`Automatic`). Once a day the plugin asks GitHub whether a newer version has been released, and announces each new version once: a Status line in the Domoticz log and one notification through every Domoticz notification system, linking to the release page. The notification needs Domoticz 2026.1 or newer; older builds get the log line only. `Automatic` reports betas only while you run a beta, `Stable releases only` and `Including betas` fix the choice, and `Off` stops the check. This is the plugin's first connection to anything other than your iDRAC: it reads the public release list from `api.github.com` and sends nothing about your server. A failed check is logged only at debug level and never affects monitoring. On an existing install the setting shows blank on the hardware page until you pick a value and press Update; blank means `Automatic`. Each hardware entry checks on its own, so with several iDRAC entries leave the check on for one and set the others to `Off`, or every release is announced once per entry. See [Update check](https://rouzax.github.io/dell-idrac-domoticz-plugin/settings/#update-check).
