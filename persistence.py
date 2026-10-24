@@ -18,6 +18,7 @@ class PluginState:
     - control_shown: whether control units are currently shown by us, so the show/hide runs once
       per AllowControl transition and a manual hide sticks.
     - energy_scale: multiplier turning a raw counter into Wh, once measured.
+    - update_notified: the newest release already announced, so each one is announced once.
     """
 
     unit_alloc: dict[str, int] = field(default_factory=dict)
@@ -31,6 +32,7 @@ class PluginState:
     base_wh: dict[str, float] = field(default_factory=dict)
     control_shown: bool = False
     energy_scale: float | None = None
+    update_notified: str = ""
 
 
 def migrate(raw: dict) -> dict:
@@ -44,6 +46,7 @@ def migrate(raw: dict) -> dict:
     raw.setdefault("base_wh", {})
     raw.setdefault("control_shown", False)
     raw.setdefault("energy_scale", None)
+    raw.setdefault("update_notified", "")
     raw.setdefault("version", STATE_VERSION)
     return raw
 
@@ -59,6 +62,7 @@ def dumps(state: PluginState) -> str:
             "base_wh": state.base_wh,
             "control_shown": state.control_shown,
             "energy_scale": state.energy_scale,
+            "update_notified": state.update_notified,
         },
         separators=(",", ":"),
     )
@@ -68,6 +72,10 @@ def _number(value):
     if isinstance(value, bool) or not isinstance(value, int | float):
         return None
     return value
+
+
+def _text(value) -> str:
+    return value if isinstance(value, str) else ""
 
 
 def _str_keyed(node, want) -> dict:
@@ -112,4 +120,5 @@ def loads(text: str) -> PluginState:
         base_wh={k: float(v) for k, v in _str_keyed(raw.get("base_wh"), int | float).items()},
         control_shown=raw.get("control_shown") is True,
         energy_scale=_number(raw.get("energy_scale")),
+        update_notified=_text(raw.get("update_notified")),
     )

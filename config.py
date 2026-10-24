@@ -10,6 +10,9 @@ _FALSE = {"false", "no", "0", "off"}
 # real slack. A longer value is far more likely to be a mistake than an intention.
 MAX_AFFIX = 24
 
+# Which releases the update check reports (update_check.CHANNELS).
+_UPDATE_CHECKS = ("auto", "stable", "beta", "off")
+
 
 @dataclass(frozen=True)
 class PluginConfig:
@@ -41,6 +44,9 @@ class PluginConfig:
     # byte for byte, which matters because sValue is what dzVents compares and what Domoticz
     # notifications send.
     rich_card_text: bool = True
+    update_check: str = "auto"
+    # The manifest version Domoticz passes in; empty means there is nothing to compare against.
+    plugin_version: str = ""
     # Every value this module quietly changed from what the user typed. The module is pure and
     # cannot log, so it reports instead and the caller logs at onStart. A silently rewritten
     # setting the user never sees is worse than a wrong one they can spot.
@@ -92,6 +98,14 @@ def _affix(params: dict, key: str, notes: list) -> str:
     return text
 
 
+def _update_check(params: dict, notes: list) -> str:
+    raw = str(params.get("UpdateCheck", "auto")).strip() or "auto"
+    if raw in _UPDATE_CHECKS:
+        return raw
+    notes.append(f"UpdateCheck: unrecognised value {raw!r}, using auto")
+    return "auto"
+
+
 def _address(raw: str) -> str:
     text = str(raw).strip()
     for scheme in ("https://", "http://"):
@@ -124,5 +138,7 @@ def parse_config(parameters: dict) -> PluginConfig:
         name_prefix=_affix(parameters, "NamePrefix", notes),
         name_suffix=_affix(parameters, "NameSuffix", notes),
         rich_card_text=_bool(parameters, "RichCardText", True, notes),
+        update_check=_update_check(parameters, notes),
+        plugin_version=str(parameters.get("Version", "")).strip(),
         warnings=tuple(notes),
     )

@@ -82,7 +82,12 @@ def apply_updates(
                 new_unit.Color = up.color
                 colors[key] = up.color
             new_unit.Create()
-            unit = devices[dev_id].Units[up.unit]
+            # Domoticz refuses the INSERT, and logs why itself, while "Accept new Hardware
+            # Devices" is off. Skip the unit rather than raise: onHeartbeat catches only
+            # RedfishError, so a KeyError here would stop every existing device updating too.
+            unit = _existing_unit(devices, dev_id, up.unit)
+            if unit is None:
+                continue
             unit.nValue = up.nvalue
             unit.sValue = up.svalue
             unit.Update(Log=False)
