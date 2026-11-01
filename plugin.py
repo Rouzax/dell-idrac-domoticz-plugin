@@ -69,7 +69,7 @@
             </param>
         </group>
         <group label="Control">
-            <param field="AllowHardPowerActions" type="boolean" label="Allow Force Off and Power Cycle" default="false">
+            <param field="AllowHardPowerActions" type="boolean" label="Allow Force Off and Power Cycle" default="false" visible_when="AllowControl=true">
                 <description>Adds Force Off and Power Cycle, which cut power with no warning and can lose data. Graceful actions are always offered. No effect while Allow Control is No. (<a href="https://rouzax.github.io/dell-idrac-domoticz-plugin/control/#graceful-versus-hard" target="_blank">details</a>).</description>
             </param>
         </group>

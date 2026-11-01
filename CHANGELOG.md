@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Allow Force Off and Power Cycle is shown only while Allow Control is Yes.** The setting has no effect while control is off, so the hardware page now hides it, together with its help text and the Control heading, until you set Allow Control to Yes. Its saved value is kept either way. This needs Domoticz 2026.4 or newer: 2026.1 to 2026.3 hide the setting but leave its help text and the Control heading behind, and older builds always show it.
+
 ## [0.5.0] - 2026-10-24
 
 ### Added

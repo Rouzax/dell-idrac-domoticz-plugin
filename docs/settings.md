@@ -169,6 +169,8 @@ The plugin only warns. It does not rename anything automatically to dodge a coll
 
 This is inert while **Allow Control** is `No`: with control off, no control device is created at all and every command is refused. Read [Power control](control.md) before enabling either.
 
+The hardware page shows this setting only while **Allow Control** is `Yes`; a value saved earlier is kept while it is hidden. That needs Domoticz 2026.4 or newer. On 2026.1 to 2026.3 the field is hidden but its help text and the Control heading stay visible, and older builds always show it.
+
 ## Advanced
 
 | Setting | Default | Range | What it does |
